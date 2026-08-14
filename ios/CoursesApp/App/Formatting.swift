@@ -46,6 +46,16 @@ enum Fmt {
         }
     }
 
+    /// Секунди → «1:23:45» / «12:07» (позиція в записі).
+    static func clock(_ seconds: Double) -> String {
+        guard seconds.isFinite, seconds >= 0 else { return "0:00" }
+        let total = Int(seconds)
+        let (h, m, s) = (total / 3600, (total % 3600) / 60, total % 60)
+        return h > 0
+            ? String(format: "%d:%02d:%02d", h, m, s)
+            : String(format: "%d:%02d", m, s)
+    }
+
     static func paymentLabel(_ p: PaymentStatus) -> String {
         switch p {
         case .unpaid: return "не оплачено"

@@ -13,6 +13,7 @@ struct MaterialRow: View {
     @Environment(\.openURL) private var openURL
     @State private var access: AccessState?
     @State private var showPlayer = false
+    @State private var progress: PlaybackPosition?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -34,6 +35,7 @@ struct MaterialRow: View {
                 Text(desc).font(.subheadline).foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
+            watchProgress
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -42,12 +44,44 @@ struct MaterialRow: View {
         .onTapGesture(perform: handleTap)
         .task {
             if material.hasVideo {
+                progress = PlaybackProgressStore.position(for: material.id)
                 access = (try? await repo.access(materialId: material.id))?.access ?? .unknown
+                // Демо/скриншоти: одразу відкрити плеєр потрібного матеріалу.
+                if ProcessInfo.processInfo.environment["OPEN_MATERIAL"] == material.id {
+                    showPlayer = true
+                }
             }
         }
         .sheet(isPresented: $showPlayer) {
             VideoPlayerView(materialId: material.id, title: material.title)
         }
+        // Плеєр закрили — підхопити нову позицію перегляду.
+        .onChange(of: showPlayer) { _, shown in
+            if !shown { progress = PlaybackProgressStore.position(for: material.id) }
+        }
+    }
+
+    /// Смужка «де я зупинився» під відео-матеріалом.
+    @ViewBuilder private var watchProgress: some View {
+        if material.hasVideo, let progress, progress.seconds > 10 {
+            if progress.isFinished {
+                Label("Переглянуто", systemImage: "checkmark.circle.fill")
+                    .font(.caption).foregroundStyle(.green)
+            } else {
+                VStack(alignment: .leading, spacing: 4) {
+                    ProgressView(value: progress.fraction).tint(.sea)
+                    Text(remainingLabel(progress)).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    private func remainingLabel(_ p: PlaybackPosition) -> String {
+        guard p.duration > 0 else {
+            return "Продовжити з \(Fmt.clock(p.seconds))"
+        }
+        let left = Int((p.duration - p.seconds) / 60)
+        return left <= 1 ? "Лишилося менше хвилини" : "Лишилося \(left) хв"
     }
 
     @ViewBuilder private var trailing: some View {

@@ -45,7 +45,7 @@ struct VideoPlayerView: View {
         switch descriptor {
         case .direct(let url):
             if let u = URL(string: url) {
-                VideoPlayer(player: AVPlayer(url: u)).ignoresSafeArea(edges: .bottom)
+                DirectVideoPlayer(url: u, materialId: materialId).ignoresSafeArea(edges: .bottom)
             } else { invalid }
         case .youtube(let videoId):
             WebPlayer(url: URL(string: "https://www.youtube.com/embed/\(videoId)?playsinline=1")!)
@@ -66,6 +66,61 @@ struct VideoPlayerView: View {
         } catch {
             state = .failed(error.localizedDescription)
         }
+    }
+}
+
+/// Плеєр для `direct`-джерела: продовжує з місця, де зупинилися минулого разу,
+/// і дописує позицію під час перегляду. Записи по дві години — починати їх
+/// щоразу з нуля означає щоразу шукати те місце вручну.
+///
+/// Для youtube/drive позиція поки не зберігається: там грає веб-в'ю, чий стан
+/// нам не видно. Коли Drive поїде через AVPlayer (задача про доступ до Drive),
+/// він потрапить сюди й отримає те саме безкоштовно.
+struct DirectVideoPlayer: View {
+    let url: URL
+    let materialId: String
+
+    @State private var player = AVPlayer()
+    @State private var timeObserver: Any?
+    @State private var duration: Double = 0
+
+    var body: some View {
+        VideoPlayer(player: player)
+            .task { await start() }
+            .onDisappear(perform: stop)
+    }
+
+    private func start() async {
+        player.replaceCurrentItem(with: AVPlayerItem(url: url))
+
+        if let saved = PlaybackProgressStore.position(for: materialId), saved.resumeSeconds > 0 {
+            await player.seek(to: CMTime(seconds: saved.resumeSeconds, preferredTimescale: 600))
+        }
+        player.play()
+
+        // Раз на 5 с — досить, щоб не загубити місце, і не смикає диск дарма.
+        timeObserver = player.addPeriodicTimeObserver(
+            forInterval: CMTime(seconds: 5, preferredTimescale: 600), queue: .main
+        ) { time in
+            PlaybackProgressStore.save(
+                seconds: time.seconds, duration: knownDuration(), for: materialId)
+        }
+    }
+
+    /// Тривалість стає відомою не одразу (у HLS — після завантаження плейлиста),
+    /// тож питаємо айтем щоразу, а не один раз на старті.
+    private func knownDuration() -> Double {
+        guard let d = player.currentItem?.duration.seconds, d.isFinite, d > 0 else { return duration }
+        duration = d
+        return d
+    }
+
+    private func stop() {
+        if let timeObserver { player.removeTimeObserver(timeObserver) }
+        timeObserver = nil
+        PlaybackProgressStore.save(
+            seconds: player.currentTime().seconds, duration: knownDuration(), for: materialId)
+        player.pause()
     }
 }
 
