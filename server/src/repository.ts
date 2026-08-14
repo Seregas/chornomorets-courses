@@ -13,8 +13,10 @@ import type {
   CourseCard,
   CourseDetail,
   Enrollment,
+  HomeDigest,
   Material,
   MaterialDTO,
+  MaterialInContext,
   MaterialType,
   ResolvedStream,
   ScheduleItem,
@@ -44,6 +46,8 @@ export interface CourseRepository {
   getCourseDetail(courseId: string): Promise<CourseDetail | null>;
   getStreamDetail(streamId: string): Promise<StreamDetail | null>;
   getSchedule(deviceId: string): Promise<ScheduleItem[]>;
+  /** Зведення для екрана «Моє навчання». */
+  getHomeDigest(deviceId: string): Promise<HomeDigest>;
   listEnrollments(deviceId: string): Promise<ResolvedStream[]>;
   listMaterialTypes(): Promise<MaterialType[]>;
   /** Сирий матеріал з videoRef — лише для відео-шару (playback). Не віддавати клієнту. */
@@ -279,6 +283,60 @@ export class DrizzleCourseRepository implements CourseRepository {
       courseId: r.courseId,
       courseTitle: r.courseTitle,
     }));
+  }
+
+  /**
+   * Зведення «Моє навчання». Каталог — вітрина для нових; тому, хто вже вчиться,
+   * потрібне інше: коли наступне заняття, що не здано і які записи є.
+   */
+  async getHomeDigest(deviceId: string): Promise<HomeDigest> {
+    const schedule = await this.getSchedule(deviceId);
+    const [nextSession, ...upcoming] = schedule;
+
+    const streamRows = this.db
+      .select({ streamId: streams.id, streamTitle: streams.title, courseId: courses.id, courseTitle: courses.title })
+      .from(enrollments)
+      .innerJoin(streams, eq(enrollments.streamId, streams.id))
+      .innerJoin(courses, eq(streams.courseId, courses.id))
+      .where(eq(enrollments.deviceId, deviceId))
+      .all();
+    if (streamRows.length === 0) {
+      return { nextSession: null, upcoming: [], homework: [], recordings: [] };
+    }
+
+    const context = new Map(streamRows.map((r) => [r.streamId, r]));
+    const streamMaterials = this.db
+      .select()
+      .from(materials)
+      .where(
+        and(
+          eq(materials.ownerType, "stream"),
+          inArray(materials.ownerId, [...context.keys()]),
+        ),
+      )
+      .orderBy(asc(materials.order))
+      .all();
+
+    const withContext = (m: Material): MaterialInContext => {
+      const c = context.get(m.ownerId)!;
+      return { material: toMaterialDTO(m), ...c };
+    };
+
+    // Щойно прострочену домашку теж показуємо: зникнути рівно о дедлайні —
+    // найгірший момент, саме тоді про неї згадують.
+    const graceFrom = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const homework = streamMaterials
+      .filter((m) => m.dueAt && m.dueAt >= graceFrom)
+      .sort((a, b) => (a.dueAt! < b.dueAt! ? -1 : 1))
+      .slice(0, 5)
+      .map(withContext);
+
+    const recordings = streamMaterials
+      .filter((m) => m.videoRef)
+      .slice(0, 5)
+      .map(withContext);
+
+    return { nextSession: nextSession ?? null, upcoming: upcoming.slice(0, 3), homework, recordings };
   }
 
   async listEnrollments(deviceId: string): Promise<ResolvedStream[]> {

@@ -33,17 +33,21 @@ struct CoursesApp: App {
 
 struct RootView: View {
     @Environment(AuthStore.self) private var auth
-    // Стартова вкладка (для демо/скриншотів через env START_TAB=0|1|2).
-    @State private var selection = Int(ProcessInfo.processInfo.environment["START_TAB"] ?? "1") ?? 1
+    // Стартова вкладка (для демо/скриншотів через env START_TAB=0|1|2|3).
+    // За замовчуванням «Навчання»: у нього ж вбудований порожній стан, який
+    // веде новачка в каталог, тож окремої перевірки підписок на старті не треба.
+    @State private var selection = Int(ProcessInfo.processInfo.environment["START_TAB"] ?? "0") ?? 0
 
     var body: some View {
         TabView(selection: $selection) {
+            HomeView(openCatalog: { selection = 2 })
+                .tabItem { Label("Навчання", systemImage: "graduationcap") }.tag(0)
             ScheduleView()
-                .tabItem { Label("Розклад", systemImage: "calendar") }.tag(0)
+                .tabItem { Label("Розклад", systemImage: "calendar") }.tag(1)
             CatalogView()
-                .tabItem { Label("Курси", systemImage: "book") }.tag(1)
+                .tabItem { Label("Курси", systemImage: "book") }.tag(2)
             SettingsView()
-                .tabItem { Label("Налаштування", systemImage: "gearshape") }.tag(2)
+                .tabItem { Label("Налаштування", systemImage: "gearshape") }.tag(3)
         }
     }
 }

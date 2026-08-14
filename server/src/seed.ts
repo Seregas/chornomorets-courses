@@ -160,10 +160,16 @@ function seed() {
     { id: "m-s4-yt", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Бонусна лекція (YouTube)", videoProvider: "youtube", videoRef: "dQw4w9WgXcQ", order: 3 },
     { id: "m-s4-doc", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-doc", title: "Конспект заняття 1", url: "https://docs.google.com/document/d/EXAMPLE", order: 4 },
     { id: "m-s4-hw", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-hw", title: "Домашнє завдання до заняття 1", description: "Протягом тижня занотуйте 3 ситуації, де ви заїдали емоції, і що передувало.", dueAt: S4[1], order: 5 },
+
+    // Підготовка до майбутнього потоку — жива домашка з дедлайном попереду.
+    { id: "m-s5-hw", ownerType: "stream", ownerId: "s-stress-5", typeId: "mt-hw", title: "Підготовка до заняття 1", description: "До першого заняття занотуйте, у які моменти тижня втома накриває найсильніше.", dueAt: S5[0], order: 1 },
   ]).run();
 
   // — Демо-підписка для розкладу —
   db.insert(enrollments).values([
+    // Правдоподібна історія студента: пройшов минулий потік «Стресу» (звідти
+    // записи й домашка), записався на наступний і ще на «Самооцінку».
+    { id: "en-demo-0", deviceId: "demo-device", streamId: "s-stress-4", subscribedAt: new Date().toISOString() },
     { id: "en-demo-1", deviceId: "demo-device", streamId: "s-stress-5", subscribedAt: new Date().toISOString() },
     { id: "en-demo-2", deviceId: "demo-device", streamId: "s-esteem-3", subscribedAt: new Date().toISOString() },
   ]).run();

@@ -8,6 +8,7 @@ protocol CourseRepository {
     func course(id: String) async throws -> CourseDetail
     func stream(id: String) async throws -> StreamDetail
     func schedule() async throws -> [ScheduleItem]
+    func home() async throws -> HomeDigest
     func subscriptions() async throws -> [ResolvedStream]
     func materialTypes() async throws -> [MaterialType]
 
@@ -58,6 +59,7 @@ final class RemoteCourseRepository: CourseRepository {
     func course(id: String) async throws -> CourseDetail { try await api.get("courses/\(id)") }
     func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)") }
     func schedule() async throws -> [ScheduleItem] { try await api.get("schedule?deviceId=\(deviceId)") }
+    func home() async throws -> HomeDigest { try await api.get("home?deviceId=\(deviceId)") }
     func subscriptions() async throws -> [ResolvedStream] { try await api.get("subscriptions?deviceId=\(deviceId)") }
     func materialTypes() async throws -> [MaterialType] { try await api.get("material-types") }
 

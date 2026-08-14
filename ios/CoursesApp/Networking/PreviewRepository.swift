@@ -57,6 +57,10 @@ final class PreviewRepository: CourseRepository {
                       streamId: "s-stress-5", streamTitle: "Потік 5",
                       courseId: "c-stress", courseTitle: "Стрес, втома і піклування про себе")]
     }
+    func home() async throws -> HomeDigest {
+        let items = try await schedule()
+        return HomeDigest(nextSession: items.first, upcoming: [], homework: [], recordings: [])
+    }
     func subscriptions() async throws -> [ResolvedStream] { [Self.stream5] }
     func materialTypes() async throws -> [MaterialType] {
         [MaterialType(id: "mt-video", name: "Відеозапис", icon: "play.rectangle.fill", color: "#0E7C86", order: 1)]

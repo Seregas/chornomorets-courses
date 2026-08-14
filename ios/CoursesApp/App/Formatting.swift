@@ -46,6 +46,19 @@ enum Fmt {
         }
     }
 
+    /// «Сьогодні, 20:00» / «Завтра, 20:00» / «19 серп., 20:00».
+    /// Для найближчого заняття «сьогодні» важливіше за дату — саме його шукають очима.
+    static func relativeDayTime(_ iso: String) -> String {
+        guard let d = date(iso) else { return "" }
+        let cal = Calendar.current
+        let time = DateFormatter()
+        time.locale = Locale(identifier: "uk_UA")
+        time.dateFormat = "HH:mm"
+        if cal.isDateInToday(d) { return "Сьогодні, \(time.string(from: d))" }
+        if cal.isDateInTomorrow(d) { return "Завтра, \(time.string(from: d))" }
+        return dayTime(iso)
+    }
+
     /// Секунди → «1:23:45» / «12:07» (позиція в записі).
     static func clock(_ seconds: Double) -> String {
         guard seconds.isFinite, seconds >= 0 else { return "0:00" }

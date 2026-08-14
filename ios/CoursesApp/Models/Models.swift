@@ -124,6 +124,28 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+/// Матеріал разом із потоком/курсом, звідки він.
+struct MaterialInContext: Codable, Identifiable, Hashable {
+    var id: String { material.id }
+    let material: MaterialDTO
+    let streamId: String
+    let streamTitle: String
+    let courseId: String
+    let courseTitle: String
+}
+
+/// Зведення для екрана «Моє навчання».
+struct HomeDigest: Codable, Hashable {
+    let nextSession: ScheduleItem?
+    let upcoming: [ScheduleItem]
+    let homework: [MaterialInContext]
+    let recordings: [MaterialInContext]
+
+    var isEmpty: Bool {
+        nextSession == nil && upcoming.isEmpty && homework.isEmpty && recordings.isEmpty
+    }
+}
+
 struct MaterialType: Codable, Identifiable, Hashable {
     let id: String
     let name: String

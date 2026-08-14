@@ -43,6 +43,10 @@ app.get("/schedule", zValidator("query", deviceQuery), async (c) =>
   c.json(await repo.getSchedule(c.req.valid("query").deviceId)),
 );
 
+app.get("/home", zValidator("query", deviceQuery), async (c) =>
+  c.json(await repo.getHomeDigest(c.req.valid("query").deviceId)),
+);
+
 app.get("/material-types", async (c) => c.json(await repo.listMaterialTypes()));
 
 // ───────────────────────── Підписки (deviceId) ─────────────────────────

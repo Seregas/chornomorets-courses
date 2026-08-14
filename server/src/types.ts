@@ -95,4 +95,27 @@ export interface ScheduleItem {
   courseTitle: string;
 }
 
+/** Матеріал разом із потоком/курсом, з якого він походить. */
+export interface MaterialInContext {
+  material: MaterialDTO;
+  streamId: string;
+  streamTitle: string;
+  courseId: string;
+  courseTitle: string;
+}
+
+/**
+ * Зведення для екрана «Моє навчання»: усе, що стосується того, хто ВЖЕ вчиться.
+ * Каталог відповідає на питання «що взяти», а це — на «що зараз і що я пропустив».
+ */
+export interface HomeDigest {
+  nextSession: ScheduleItem | null;
+  /** Наступні заняття після найближчого. */
+  upcoming: ScheduleItem[];
+  /** Домашка з дедлайном: спершу найближчі; щойно прострочені теж показуємо. */
+  homework: MaterialInContext[];
+  /** Записи занять підписаних потоків. */
+  recordings: MaterialInContext[];
+}
+
 export type { Course, Stream, Session, Material, MaterialType, Enrollment };
