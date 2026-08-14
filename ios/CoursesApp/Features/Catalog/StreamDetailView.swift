@@ -43,10 +43,12 @@ final class StreamDetailViewModel {
 }
 
 private enum StreamSheet: Identifiable {
-    case editStream, newSession, editSession(String), newMaterial, editMaterial(String)
+    case editStream, cloneStream, newSession, sessionsBatch, editSession(String), newMaterial, editMaterial(String)
     var id: String {
         switch self {
         case .editStream: return "es"
+        case .cloneStream: return "cs"
+        case .sessionsBatch: return "sb"
         case .newSession: return "nss"
         case .editSession(let id): return "ess-\(id)"
         case .newMaterial: return "nm"
@@ -84,7 +86,21 @@ struct StreamDetailView: View {
 
                     if !stream.sessions.isEmpty || auth.isAdmin {
                         VStack(alignment: .leading, spacing: 10) {
-                            adminSectionHeader("Заняття") { sheet = .newSession }
+                            // Заняття додають і поштучно, і серією — тому меню, а не проста «+».
+                            HStack {
+                                SectionHeader(title: "Заняття")
+                                Spacer()
+                                if auth.isAdmin {
+                                    Menu {
+                                        Button { sheet = .newSession } label: {
+                                            Label("Одне заняття", systemImage: "calendar.badge.plus")
+                                        }
+                                        Button { sheet = .sessionsBatch } label: {
+                                            Label("Серія занять", systemImage: "calendar.badge.clock")
+                                        }
+                                    } label: { Image(systemName: "plus.circle.fill") }
+                                }
+                            }
                             ForEach(stream.sessions) { session in
                                 SessionRow(
                                     session: session,
@@ -130,6 +146,9 @@ struct StreamDetailView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button { sheet = .editStream } label: { Label("Редагувати потік", systemImage: "pencil") }
+                        Button { sheet = .cloneStream } label: {
+                            Label("Клонувати потік", systemImage: "doc.on.doc")
+                        }
                         Button(role: .destructive) {
                             Task { try? await repo.deleteStream(id: streamId); dismiss() }
                         } label: { Label("Видалити потік", systemImage: "trash") }
@@ -143,8 +162,14 @@ struct StreamDetailView: View {
                 if let s = vm.current {
                     StreamFormView(courseId: s.courseId, existing: s) { await reload() }
                 }
+            case .cloneStream:
+                if let s = vm.current {
+                    CloneStreamFormView(source: s) { await reload() }
+                }
             case .newSession:
                 SessionFormView(streamId: streamId, existing: nil) { await reload() }
+            case .sessionsBatch:
+                SessionsBatchFormView(streamId: streamId) { await reload() }
             case .editSession(let id):
                 SessionFormView(streamId: streamId,
                                 existing: vm.current?.sessions.first { $0.id == id }) { await reload() }

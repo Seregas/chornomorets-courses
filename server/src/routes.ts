@@ -192,10 +192,32 @@ admin.delete("/streams/:id", async (c) =>
   (await repo.deleteStream(c.req.param("id"))) ? c.body(null, 204) : c.json(notFound, 404),
 );
 
+const cloneStreamInput = z.object({
+  title: z.string().min(1),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+});
+admin.post("/streams/:id/clone", zValidator("json", cloneStreamInput), async (c) => {
+  const r = await repo.cloneStream(c.req.param("id"), c.req.valid("json"));
+  return r ? c.json(r, 201) : c.json(notFound, 404);
+});
+
 // sessions
 admin.post("/sessions", zValidator("json", sessionInput), async (c) =>
   c.json(await repo.createSession(c.req.valid("json")), 201),
 );
+const sessionsBatchInput = z.object({
+  streamId: z.string().min(1),
+  titlePrefix: z.string().min(1),
+  startAt: z.string().min(1),
+  count: z.number().int().min(1).max(52),
+  intervalDays: z.number().int().min(1).max(365),
+  durationMinutes: z.number().int().positive(),
+  joinURL: z.string().url().nullish(),
+});
+admin.post("/sessions/batch", zValidator("json", sessionsBatchInput), async (c) =>
+  c.json(await repo.createSessionsBatch(c.req.valid("json")), 201),
+);
+
 admin.put("/sessions/:id", zValidator("json", sessionInput.partial()), async (c) => {
   const r = await repo.updateSession(c.req.param("id"), c.req.valid("json"));
   return r ? c.json(r) : c.json(notFound, 404);

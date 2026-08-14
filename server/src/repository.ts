@@ -25,6 +25,27 @@ import type {
   StreamDetail,
 } from "./types.js";
 
+/** Що задає адмін, клонуючи потік. */
+export interface CloneStreamInput {
+  title: string;
+  /** Дата першого заняття нового потоку (ISO-дата). Решта зсувається на ту саму дельту. */
+  startDate: string;
+}
+
+/** Серія однотипних занять. */
+export interface SessionsBatchInput {
+  streamId: string;
+  /** Шаблон назви: до нього додається номер («Заняття» → «Заняття 1»). */
+  titlePrefix: string;
+  /** Початок першого заняття, ISO 8601 UTC. */
+  startAt: string;
+  count: number;
+  /** Крок між заняттями в днях (7 = щотижня). */
+  intervalDays: number;
+  durationMinutes: number;
+  joinURL?: string | null;
+}
+
 // Insert-форми (без id/createdAt — їх генерує схема).
 type CourseInsert = Omit<typeof courses.$inferInsert, "id" | "createdAt">;
 type StreamInsert = Omit<typeof streams.$inferInsert, "id" | "createdAt">;
@@ -67,7 +88,16 @@ export interface CourseRepository {
   updateStream(id: string, patch: Partial<StreamInsert>): Promise<Stream | null>;
   deleteStream(id: string): Promise<boolean>;
 
+  /**
+   * Копія потоку зі зсувом розкладу: потоки повторюються, і збирати наступний
+   * руками щоразу — марна робота. Записи занять НЕ копіюються (вони належать
+   * тому потоку, який їх записав), решта матеріалів — так.
+   */
+  cloneStream(streamId: string, input: CloneStreamInput): Promise<Stream | null>;
+
   createSession(input: SessionInsert): Promise<Session>;
+  /** Серія занять «щочетверга о 20:00 × N» одним кроком. */
+  createSessionsBatch(input: SessionsBatchInput): Promise<Session[]>;
   updateSession(
     id: string,
     patch: Partial<SessionInsert>,
@@ -455,8 +485,114 @@ export class DrizzleCourseRepository implements CourseRepository {
   }
 
   // — CRUD: sessions —
+  async cloneStream(
+    streamId: string,
+    input: CloneStreamInput,
+  ): Promise<Stream | null> {
+    const source = this.db
+      .select()
+      .from(streams)
+      .where(eq(streams.id, streamId))
+      .get();
+    if (!source) return null;
+
+    const sourceSessions = this.db
+      .select()
+      .from(sessions)
+      .where(eq(sessions.streamId, streamId))
+      .orderBy(asc(sessions.startAt))
+      .all();
+
+    const created = this.db
+      .insert(streams)
+      .values({
+        courseId: source.courseId,
+        title: input.title,
+        startDate: input.startDate,
+        status: "upcoming",
+        telegramGroupURL: source.telegramGroupURL,
+        priceFull: source.priceFull,
+        pricePerSession: source.pricePerSession,
+        summaryOverride: source.summaryOverride,
+        descriptionOverride: source.descriptionOverride,
+        programOverride: source.programOverride,
+        coverImageOverride: source.coverImageOverride,
+        order: source.order + 1,
+      })
+      .returning()
+      .get();
+
+    // Зсуваємо весь розклад на ту саму дельту, зберігаючи час доби й проміжки
+    // між заняттями: «той самий курс, просто починається іншого дня».
+    const first = sourceSessions[0];
+    if (first) {
+      const shiftMs = Date.parse(`${input.startDate}T00:00:00Z`) -
+        Date.parse(`${first.startAt.slice(0, 10)}T00:00:00Z`);
+      this.db
+        .insert(sessions)
+        .values(
+          sourceSessions.map((s) => ({
+            streamId: created.id,
+            title: s.title,
+            startAt: new Date(Date.parse(s.startAt) + shiftMs).toISOString()
+              .replace(".000Z", "Z"),
+            durationMinutes: s.durationMinutes,
+            format: s.format,
+            joinURL: s.joinURL,
+            paymentStatus: "unpaid" as const,
+            order: s.order,
+          })),
+        )
+        .run();
+    }
+
+    // Записи занять не копіюємо — вони належать тому потоку, який їх записав.
+    // Домашка, конспекти й посилання переносяться: вони про курс, не про потік.
+    const carried = this.db
+      .select()
+      .from(materials)
+      .where(and(eq(materials.ownerType, "stream"), eq(materials.ownerId, streamId)))
+      .all()
+      .filter((m) => !m.videoRef);
+    if (carried.length > 0) {
+      this.db
+        .insert(materials)
+        .values(
+          carried.map((m) => ({
+            ownerType: "stream" as const,
+            ownerId: created.id,
+            typeId: m.typeId,
+            title: m.title,
+            description: m.description,
+            url: m.url,
+            // Дедлайн прив'язаний до старого розкладу — переносити його наосліп
+            // гірше, ніж лишити порожнім: адмін виставить під новий потік.
+            dueAt: null,
+            order: m.order,
+          })),
+        )
+        .run();
+    }
+
+    return created;
+  }
+
   async createSession(input: SessionInsert): Promise<Session> {
     return this.db.insert(sessions).values(input).returning().get();
+  }
+
+  async createSessionsBatch(input: SessionsBatchInput): Promise<Session[]> {
+    const start = Date.parse(input.startAt);
+    const step = input.intervalDays * 86_400_000;
+    const rows = Array.from({ length: input.count }, (_, i) => ({
+      streamId: input.streamId,
+      title: `${input.titlePrefix} ${i + 1}`.trim(),
+      startAt: new Date(start + i * step).toISOString().replace(".000Z", "Z"),
+      durationMinutes: input.durationMinutes,
+      joinURL: input.joinURL ?? null,
+      order: i + 1,
+    }));
+    return this.db.insert(sessions).values(rows).returning().all();
   }
   async updateSession(
     id: string,

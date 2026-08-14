@@ -231,6 +231,118 @@ struct SessionFormView: View {
     }
 }
 
+// MARK: - Клон потоку
+
+/// Потоки повторюються щосезону з тим самим розкладом. Замість «створити потік +
+/// N разів створити заняття» — назва й дата початку, решта переноситься зі зсувом.
+struct CloneStreamFormView: View {
+    let source: StreamDetail
+    let onDone: () async -> Void
+    @Environment(\.repository) private var repo
+
+    @State private var title: String
+    @State private var startDate: Date
+    @State private var error: String?
+
+    init(source: StreamDetail, onDone: @escaping () async -> Void) {
+        self.source = source
+        self.onDone = onDone
+        _title = State(initialValue: Self.nextTitle(after: source.title))
+        // За замовчуванням — через тиждень після останнього заняття джерела.
+        let lastSession = source.sessions.compactMap { Fmt.date($0.startAt) }.max()
+        _startDate = State(initialValue: (lastSession ?? Date()).addingTimeInterval(7 * 86_400))
+    }
+
+    /// «Потік 4» → «Потік 5»; якщо номера немає — лишаємо як є, адмін виправить.
+    private static func nextTitle(after title: String) -> String {
+        guard let range = title.range(of: #"\d+$"#, options: .regularExpression),
+              let n = Int(title[range]) else { return title }
+        return title.replacingCharacters(in: range, with: String(n + 1))
+    }
+
+    var body: some View {
+        FormScaffold(titleText: "Клонувати потік", canSave: !title.isEmpty, onSave: save) {
+            Section {
+                TextField("Назва нового потоку", text: $title)
+                DatePicker("Перше заняття", selection: $startDate, displayedComponents: .date)
+            } footer: {
+                Text("Заняття скопіюються з тим самим кроком і часом доби. "
+                     + "Записи не переносяться; конспекти, посилання й домашка — так, без дедлайнів.")
+            }
+            if let error { Text(error).foregroundStyle(.red).font(.footnote) }
+        }
+    }
+
+    private func save() async {
+        let day = DateFormatter()
+        day.dateFormat = "yyyy-MM-dd"
+        day.timeZone = TimeZone(secondsFromGMT: 0)
+        do {
+            try await repo.cloneStream(
+                id: source.id,
+                CloneStreamInput(title: title, startDate: day.string(from: startDate)))
+            await onDone()
+        } catch { self.error = error.localizedDescription }
+    }
+}
+
+// MARK: - Серія занять
+
+/// «Щочетверга о 20:00, три заняття» — одна форма замість трьох однакових.
+struct SessionsBatchFormView: View {
+    let streamId: String
+    let onDone: () async -> Void
+    @Environment(\.repository) private var repo
+
+    @State private var titlePrefix = "Заняття"
+    @State private var startAt = Date()
+    @State private var count = 3
+    @State private var intervalDays = 7
+    @State private var duration = "120"
+    @State private var joinURL = ""
+    @State private var error: String?
+
+    var body: some View {
+        FormScaffold(titleText: "Серія занять",
+                     canSave: !titlePrefix.isEmpty && Int(duration) != nil, onSave: save) {
+            Section {
+                TextField("Назва (додасться номер)", text: $titlePrefix)
+                DatePicker("Перше заняття", selection: $startAt)
+                Stepper("Кількість: \(count)", value: $count, in: 1...52)
+                Picker("Крок", selection: $intervalDays) {
+                    Text("щодня").tag(1)
+                    Text("щотижня").tag(7)
+                    Text("раз на 2 тижні").tag(14)
+                }
+                TextField("Тривалість, хв", text: $duration).keyboardType(.numberPad)
+            } footer: {
+                Text("Створить \(count) занять: «\(titlePrefix) 1» … «\(titlePrefix) \(count)».")
+            }
+            Section {
+                TextField("Посилання на зустріч (URL)", text: $joinURL)
+                    .keyboardType(.URL).autocapitalization(.none)
+            } footer: {
+                Text("Одне на всі заняття серії — зазвичай так і буває.")
+            }
+            if let error { Text(error).foregroundStyle(.red).font(.footnote) }
+        }
+    }
+
+    private func save() async {
+        do {
+            try await repo.createSessionsBatch(SessionsBatchInput(
+                streamId: streamId,
+                titlePrefix: titlePrefix,
+                startAt: ISO8601DateFormatter().string(from: startAt),
+                count: count,
+                intervalDays: intervalDays,
+                durationMinutes: Int(duration) ?? 120,
+                joinURL: nilIfEmpty(joinURL)))
+            await onDone()
+        } catch { self.error = error.localizedDescription }
+    }
+}
+
 // MARK: - Матеріал
 
 struct MaterialFormView: View {

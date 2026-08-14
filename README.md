@@ -79,7 +79,12 @@ npm run dev            # старт на http://localhost:3000
 
 **Адмін (потрібен admin Google-акаунт):** `POST` / `PUT :id` / `DELETE :id` під
 `/admin/courses`, `/admin/streams`, `/admin/sessions`, `/admin/materials`, `/admin/material-types`.
-Плюс `GET /admin/materials/:id` — сирий матеріал (із `videoRef`) для префілу форм редагування.
+Плюс:
+- `GET /admin/materials/:id` — сирий матеріал (із `videoRef`) для префілу форм редагування;
+- `POST /admin/streams/:id/clone` `{title, startDate}` — копія потоку зі зсувом розкладу
+  (записи не копіюються, решта матеріалів — так);
+- `POST /admin/sessions/batch` `{streamId, titlePrefix, startAt, count, intervalDays, durationMinutes}`
+  — серія занять одним запитом.
 `GET /streams/:id` віддає поряд зі злитим описом ще й сирі `*Override`-поля (`null` = успадковано),
 щоб адмін-форма показувала, що успадковано, а що перевизначено.
 

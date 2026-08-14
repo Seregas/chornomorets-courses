@@ -86,7 +86,9 @@ final class PreviewRepository: CourseRepository {
     func createStream(_ input: StreamInput) async throws {}
     func updateStream(id: String, _ input: StreamInput) async throws {}
     func deleteStream(id: String) async throws {}
+    func cloneStream(id: String, _ input: CloneStreamInput) async throws {}
     func createSession(_ input: SessionInput) async throws {}
+    func createSessionsBatch(_ input: SessionsBatchInput) async throws {}
     func updateSession(id: String, _ input: SessionInput) async throws {}
     func deleteSession(id: String) async throws {}
     func createMaterial(_ input: MaterialInput) async throws {}

@@ -29,7 +29,12 @@ protocol CourseRepository {
     func updateStream(id: String, _ input: StreamInput) async throws
     func deleteStream(id: String) async throws
 
+    /// Копія потоку зі зсувом розкладу — потоки повторюються щосезону.
+    func cloneStream(id: String, _ input: CloneStreamInput) async throws
+
     func createSession(_ input: SessionInput) async throws
+    /// Серія занять одним кроком замість N однакових форм.
+    func createSessionsBatch(_ input: SessionsBatchInput) async throws
     func updateSession(id: String, _ input: SessionInput) async throws
     func deleteSession(id: String) async throws
 
@@ -88,7 +93,12 @@ final class RemoteCourseRepository: CourseRepository {
     func updateStream(id: String, _ input: StreamInput) async throws { try await api.mutate("PUT", "admin/streams/\(id)", body: input) }
     func deleteStream(id: String) async throws { try await api.mutate("DELETE", "admin/streams/\(id)") }
 
+    func cloneStream(id: String, _ input: CloneStreamInput) async throws {
+        try await api.mutate("POST", "admin/streams/\(id)/clone", body: input)
+    }
+
     func createSession(_ input: SessionInput) async throws { try await api.mutate("POST", "admin/sessions", body: input) }
+    func createSessionsBatch(_ input: SessionsBatchInput) async throws { try await api.mutate("POST", "admin/sessions/batch", body: input) }
     func updateSession(id: String, _ input: SessionInput) async throws { try await api.mutate("PUT", "admin/sessions/\(id)", body: input) }
     func deleteSession(id: String) async throws { try await api.mutate("DELETE", "admin/sessions/\(id)") }
 

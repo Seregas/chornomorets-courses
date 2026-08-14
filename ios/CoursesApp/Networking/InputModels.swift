@@ -39,6 +39,23 @@ struct SessionInput: Encodable {
     var order: Int?
 }
 
+/// Копія потоку: назва нового й дата його першого заняття.
+struct CloneStreamInput: Encodable {
+    var title: String
+    var startDate: String
+}
+
+/// Серія однотипних занять («щочетверга о 20:00 × N»).
+struct SessionsBatchInput: Encodable {
+    var streamId: String
+    var titlePrefix: String
+    var startAt: String
+    var count: Int
+    var intervalDays: Int
+    var durationMinutes: Int
+    var joinURL: String?
+}
+
 struct MaterialInput: Encodable {
     var ownerType: String?
     var ownerId: String?
