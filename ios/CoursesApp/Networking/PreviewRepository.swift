@@ -1,0 +1,94 @@
+import Foundation
+
+/// Канонічні дані для SwiftUI-прев'ю й офлайн-розробки UI без бекенду.
+final class PreviewRepository: CourseRepository {
+    static let stressCard = CourseCard(
+        id: "c-stress", title: "Стрес, втома і піклування про себе",
+        summary: "Міні-курс на 3 заняття про тактики й стратегії життя замість стресу.",
+        format: .online, coverImageURL: nil,
+        nextStream: StreamBrief(id: "s-stress-5", title: "Потік 5", startDate: "2026-07-08", status: .upcoming))
+
+    static let esteemCard = CourseCard(
+        id: "c-esteem", title: "Самооцінка",
+        summary: "Міні-курс на 2 заняття про самоцінність і як її підвищити.",
+        format: .online, coverImageURL: nil,
+        nextStream: StreamBrief(id: "s-esteem-3", title: "Потік 3", startDate: "2026-07-10", status: .upcoming))
+
+    static let stream5 = ResolvedStream(
+        id: "s-stress-5", courseId: "c-stress", title: "Потік 5", startDate: "2026-07-08",
+        status: .upcoming, telegramGroupURL: "https://t.me/petro_chornomorets",
+        priceFull: 900, pricePerSession: 350,
+        summary: "Міні-курс на 3 заняття.", description: "Розбираємо стрес із біологічної точки зору.",
+        program: "1) Емоції; 2) Дихання; 3) Відновлення.", coverImageURL: nil)
+
+    static let videoMaterial = MaterialDTO(
+        id: "m-s4-rec1", title: "Запис заняття 1", typeId: "mt-video",
+        description: "Як не заїдати емоції — повний запис.", url: nil, dueAt: nil,
+        order: 1, hasVideo: true, videoProvider: .drive, durationMinutes: 118)
+
+    func me() async throws -> Me { Me(deviceId: "preview", email: "admin@test.com", isAdmin: true) }
+    func courses() async throws -> [CourseCard] { [Self.stressCard, Self.esteemCard] }
+    func course(id: String) async throws -> CourseDetail {
+        CourseDetail(id: "c-stress", title: Self.stressCard.title, summary: Self.stressCard.summary,
+                     description: "Розбираємо стрес, втому й піклування про себе.",
+                     program: "1) Емоції; 2) Дихання; 3) Відновлення.", format: .online,
+                     coverImageURL: nil, streams: [Self.stream5], materials: [])
+    }
+    func stream(id: String) async throws -> StreamDetail {
+        StreamDetail(id: Self.stream5.id, courseId: Self.stream5.courseId, title: Self.stream5.title,
+                     startDate: Self.stream5.startDate, status: Self.stream5.status,
+                     telegramGroupURL: Self.stream5.telegramGroupURL, priceFull: Self.stream5.priceFull,
+                     pricePerSession: Self.stream5.pricePerSession, summary: Self.stream5.summary,
+                     description: Self.stream5.description, program: Self.stream5.program,
+                     coverImageURL: nil,
+                     sessions: [CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
+                                              startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
+                                              format: .online, joinURL: "https://meet.google.com/x",
+                                              paymentStatus: .unpaid, order: 1)],
+                     materials: [Self.videoMaterial],
+                     summaryOverride: nil, descriptionOverride: nil,
+                     programOverride: nil, coverImageOverride: nil)
+    }
+    func schedule() async throws -> [ScheduleItem] {
+        [ScheduleItem(session: CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
+                                             startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
+                                             format: .online, joinURL: "https://meet.google.com/x",
+                                             paymentStatus: .unpaid, order: 1),
+                      streamId: "s-stress-5", streamTitle: "Потік 5",
+                      courseId: "c-stress", courseTitle: "Стрес, втома і піклування про себе")]
+    }
+    func subscriptions() async throws -> [ResolvedStream] { [Self.stream5] }
+    func materialTypes() async throws -> [MaterialType] {
+        [MaterialType(id: "mt-video", name: "Відеозапис", icon: "play.rectangle.fill", color: "#0E7C86", order: 1)]
+    }
+    func subscribe(streamId: String) async throws {}
+    func unsubscribe(streamId: String) async throws {}
+    func playback(materialId: String) async throws -> PlaybackResponse {
+        PlaybackResponse(access: .granted, descriptor: .youtube(videoId: "dQw4w9WgXcQ"))
+    }
+    func access(materialId: String) async throws -> AccessResponse {
+        AccessResponse(access: .granted, provider: .drive)
+    }
+
+    // Адмін-методи у прев'ю — no-op.
+    func adminMaterial(id: String) async throws -> AdminMaterial {
+        AdminMaterial(id: id, ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video",
+                      title: "Запис заняття 1", description: "Повний запис.", videoProvider: .drive,
+                      videoRef: "1AbCDriveFileStress1", durationMinutes: 118, url: nil, dueAt: nil, order: 1)
+    }
+    func createCourse(_ input: CourseInput) async throws {}
+    func updateCourse(id: String, _ input: CourseInput) async throws {}
+    func deleteCourse(id: String) async throws {}
+    func createStream(_ input: StreamInput) async throws {}
+    func updateStream(id: String, _ input: StreamInput) async throws {}
+    func deleteStream(id: String) async throws {}
+    func createSession(_ input: SessionInput) async throws {}
+    func updateSession(id: String, _ input: SessionInput) async throws {}
+    func deleteSession(id: String) async throws {}
+    func createMaterial(_ input: MaterialInput) async throws {}
+    func updateMaterial(id: String, _ input: MaterialInput) async throws {}
+    func deleteMaterial(id: String) async throws {}
+    func createMaterialType(_ input: MaterialTypeInput) async throws {}
+    func updateMaterialType(id: String, _ input: MaterialTypeInput) async throws {}
+    func deleteMaterialType(id: String) async throws {}
+}

@@ -1,0 +1,79 @@
+<svg width="390" height="844" viewBox="0 0 390 844" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system, 'SF Pro Text', Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0E7C86"/><stop offset="1" stop-color="#0A5560"/>
+    </linearGradient>
+    <linearGradient id="sea2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2D9CDB"/><stop offset="1" stop-color="#1F6FB2"/>
+    </linearGradient>
+    <linearGradient id="sea3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7B8FA1"/><stop offset="1" stop-color="#566573"/>
+    </linearGradient>
+  </defs>
+  <rect width="390" height="844" rx="44" fill="#F2F2F7"/>
+  <!-- status bar -->
+  <text x="32" y="34" font-size="15" font-weight="600" fill="#1C1C1E">9:41</text>
+  <g fill="#1C1C1E"><rect x="320" y="22" width="18" height="11" rx="2"/><rect x="344" y="20" width="22" height="13" rx="3" fill="none" stroke="#1C1C1E"/><rect x="346" y="22" width="16" height="9" rx="1.5"/></g>
+  <!-- title -->
+  <text x="20" y="86" font-size="32" font-weight="700" fill="#1C1C1E">Курси</text>
+  <!-- search -->
+  <rect x="20" y="100" width="350" height="38" rx="11" fill="#E3E3E8"/>
+  <circle cx="42" cy="119" r="6" fill="none" stroke="#8E8E93" stroke-width="2"/><line x1="46" y1="123" x2="51" y2="128" stroke="#8E8E93" stroke-width="2"/>
+  <text x="60" y="124" font-size="15" fill="#8E8E93">Пошук курсів</text>
+
+  <!-- card 1 -->
+  <g>
+    <rect x="20" y="158" width="350" height="118" rx="18" fill="#FFFFFF"/>
+    <rect x="34" y="172" width="90" height="90" rx="14" fill="url(#sea)"/>
+    <path d="M34 240 q22 -14 45 0 t45 0 v22 h-90 z" fill="#0A5560" opacity="0.5"/>
+    <text x="140" y="194" font-size="17" font-weight="700" fill="#1C1C1E">Стрес, втома і піклування</text>
+    <text x="140" y="216" font-size="13" fill="#8E8E93">Міні-курс на 3 заняття про тактики</text>
+    <text x="140" y="233" font-size="13" fill="#8E8E93">й стратегії життя замість стресу.</text>
+    <rect x="140" y="246" width="56" height="22" rx="11" fill="#E2F1F2"/><text x="151" y="261" font-size="12" font-weight="600" fill="#0E7C86">online</text>
+    <rect x="202" y="246" width="150" height="22" rx="11" fill="#FFF1E6"/><circle cx="216" cy="257" r="3" fill="#E8833A"/><text x="224" y="261" font-size="12" font-weight="600" fill="#C96A24">Новий потік · з 8 лип</text>
+  </g>
+  <!-- card 2 -->
+  <g>
+    <rect x="20" y="288" width="350" height="118" rx="18" fill="#FFFFFF"/>
+    <rect x="34" y="302" width="90" height="90" rx="14" fill="url(#sea2)"/>
+    <path d="M34 370 q22 -14 45 0 t45 0 v22 h-90 z" fill="#1F6FB2" opacity="0.5"/>
+    <text x="140" y="324" font-size="17" font-weight="700" fill="#1C1C1E">Самооцінка</text>
+    <text x="140" y="346" font-size="13" fill="#8E8E93">Міні-курс на 2 заняття про</text>
+    <text x="140" y="363" font-size="13" fill="#8E8E93">самоцінність і як її підвищити.</text>
+    <rect x="140" y="376" width="56" height="22" rx="11" fill="#E2F1F2"/><text x="151" y="391" font-size="12" font-weight="600" fill="#0E7C86">online</text>
+    <rect x="202" y="376" width="150" height="22" rx="11" fill="#FFF1E6"/><circle cx="216" cy="387" r="3" fill="#E8833A"/><text x="224" y="391" font-size="12" font-weight="600" fill="#C96A24">Новий потік · з 10 лип</text>
+  </g>
+  <!-- card 3 -->
+  <g>
+    <rect x="20" y="418" width="350" height="118" rx="18" fill="#FFFFFF"/>
+    <rect x="34" y="432" width="90" height="90" rx="14" fill="url(#sea3)"/>
+    <path d="M34 500 q22 -14 45 0 t45 0 v22 h-90 z" fill="#566573" opacity="0.5"/>
+    <text x="140" y="454" font-size="17" font-weight="700" fill="#1C1C1E">Гра «Вигорання»</text>
+    <text x="140" y="476" font-size="13" fill="#8E8E93">Гра-симуляція на 1 день про ліміти</text>
+    <text x="140" y="493" font-size="13" fill="#8E8E93">й вихід із петлі робота–дім.</text>
+    <rect x="140" y="506" width="56" height="22" rx="11" fill="#E2F1F2"/><text x="151" y="521" font-size="12" font-weight="600" fill="#0E7C86">online</text>
+    <rect x="202" y="506" width="130" height="22" rx="11" fill="#EFEFF4"/><text x="214" y="521" font-size="12" font-weight="600" fill="#8E8E93">Потік 26 лип</text>
+  </g>
+  <!-- card 4 -->
+  <g>
+    <rect x="20" y="548" width="350" height="118" rx="18" fill="#FFFFFF"/>
+    <rect x="34" y="562" width="90" height="90" rx="14" fill="url(#sea)"/>
+    <path d="M34 630 q22 -14 45 0 t45 0 v22 h-90 z" fill="#0A5560" opacity="0.5"/>
+    <text x="140" y="584" font-size="17" font-weight="700" fill="#1C1C1E">Мотивація та фундамент</text>
+    <text x="140" y="606" font-size="13" fill="#8E8E93">Натхнення, мотивація, стрес і</text>
+    <text x="140" y="623" font-size="13" fill="#8E8E93">щастя на рівні біохімії.</text>
+    <rect x="140" y="636" width="56" height="22" rx="11" fill="#E2F1F2"/><text x="151" y="651" font-size="12" font-weight="600" fill="#0E7C86">online</text>
+    <rect x="202" y="636" width="150" height="22" rx="11" fill="#FFF1E6"/><circle cx="216" cy="647" r="3" fill="#E8833A"/><text x="224" y="651" font-size="12" font-weight="600" fill="#C96A24">Новий потік · з 5 сер</text>
+  </g>
+
+  <!-- tab bar -->
+  <rect x="0" y="772" width="390" height="72" fill="#FFFFFFEE"/>
+  <line x1="0" y1="772" x2="390" y2="772" stroke="#D8D8DC"/>
+  <!-- schedule -->
+  <g transform="translate(65,792)"><rect x="-9" y="-2" width="18" height="16" rx="3" fill="none" stroke="#8E8E93" stroke-width="2"/><line x1="-9" y1="3" x2="9" y2="3" stroke="#8E8E93" stroke-width="2"/><text x="0" y="32" font-size="10" fill="#8E8E93" text-anchor="middle">Розклад</text></g>
+  <!-- catalog selected -->
+  <g transform="translate(195,792)"><path d="M-8 -3 h12 a4 4 0 0 1 4 4 v13 h-12 a4 4 0 0 0 -4 4 z" fill="none" stroke="#0E7C86" stroke-width="2"/><text x="0" y="32" font-size="10" font-weight="600" fill="#0E7C86" text-anchor="middle">Курси</text></g>
+  <!-- settings -->
+  <g transform="translate(325,792)"><circle cx="0" cy="6" r="8" fill="none" stroke="#8E8E93" stroke-width="2"/><circle cx="0" cy="6" r="3" fill="none" stroke="#8E8E93" stroke-width="2"/><text x="0" y="32" font-size="10" fill="#8E8E93" text-anchor="middle">Налаштування</text></g>
+  <rect x="125" y="828" width="140" height="5" rx="2.5" fill="#1C1C1E"/>
+</svg>
