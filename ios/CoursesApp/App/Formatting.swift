@@ -8,9 +8,17 @@ enum Fmt {
         return f
     }()
 
+    /// Той самий формат, але з частками секунд: так серіалізуються createdAt-и
+    /// (`…T20:51:35.601Z`). Без цього дата не розбиралася й на екран падав сирий ISO.
+    private static let isoFractional: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
     static func date(_ iso: String?) -> Date? {
         guard let iso else { return nil }
-        return Self.iso.date(from: iso) ?? ISO8601DateFormatter().date(from: iso)
+        return Self.iso.date(from: iso) ?? Self.isoFractional.date(from: iso)
     }
 
     /// «8 лип, 20:00»

@@ -124,6 +124,20 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+/// Питання до заняття. `authorEmail` приходить лише адміну (і лише якщо
+/// питання не анонімне) — решта бачить питання без імен.
+struct Question: Codable, Identifiable, Hashable {
+    let id: String
+    let sessionId: String
+    let text: String
+    let createdAt: String
+    let answeredAt: String?
+    let isMine: Bool
+    let authorEmail: String?
+
+    var isAnswered: Bool { answeredAt != nil }
+}
+
 /// Матеріал разом із потоком/курсом, звідки він.
 struct MaterialInContext: Codable, Identifiable, Hashable {
     var id: String { material.id }

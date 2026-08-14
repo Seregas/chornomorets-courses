@@ -49,6 +49,49 @@ app.get("/home", zValidator("query", deviceQuery), async (c) =>
 
 app.get("/material-types", async (c) => c.json(await repo.listMaterialTypes()));
 
+// ──────────────────── Питання до заняття ────────────────────
+// Читання відкрите (усі бачать питання свого заняття, без імен), створення —
+// за deviceId. Автора віддаємо лише адміну й лише якщо питання не анонімне.
+
+app.get("/sessions/:id/questions", zValidator("query", deviceQuery), async (c) => {
+  const identity = await getIdentity(c);
+  return c.json(
+    await repo.listQuestions(c.req.param("id"), {
+      deviceId: c.req.valid("query").deviceId,
+      isAdmin: isAdminEmail(identity?.email),
+    }),
+  );
+});
+
+const askInput = z.object({
+  deviceId: z.string().min(1),
+  text: z.string().min(3).max(1000),
+  isAnonymous: z.boolean().optional(),
+});
+app.post("/sessions/:id/questions", zValidator("json", askInput), async (c) => {
+  const { deviceId, text, isAnonymous } = c.req.valid("json");
+  const identity = await getIdentity(c);
+  return c.json(
+    await repo.askQuestion({
+      sessionId: c.req.param("id"),
+      deviceId,
+      text,
+      isAnonymous: isAnonymous ?? false,
+      authorEmail: identity?.email ?? null,
+    }),
+    201,
+  );
+});
+
+app.delete("/questions/:id", zValidator("query", deviceQuery), async (c) => {
+  const identity = await getIdentity(c);
+  const ok = await repo.deleteQuestion(c.req.param("id"), {
+    deviceId: c.req.valid("query").deviceId,
+    isAdmin: isAdminEmail(identity?.email),
+  });
+  return ok ? c.body(null, 204) : c.json({ error: "not found" }, 404);
+});
+
 // ───────────────────────── Підписки (deviceId) ─────────────────────────
 
 app.get("/subscriptions", zValidator("query", deviceQuery), async (c) =>
@@ -157,6 +200,12 @@ const materialInput = z.object({
   url: z.string().url().nullish(),
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
+});
+
+// Позначити питання розібраним — щоб у списку було видно, що воно вже не висить.
+admin.post("/questions/:id/answered", zValidator("json", z.object({ answered: z.boolean() })), async (c) => {
+  const r = await repo.markQuestionAnswered(c.req.param("id"), c.req.valid("json").answered);
+  return r ? c.json(r) : c.json({ error: "not found" }, 404);
 });
 
 const materialTypeInput = z.object({

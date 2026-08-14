@@ -67,6 +67,14 @@ final class PreviewRepository: CourseRepository {
     }
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
+
+    func questions(sessionId: String) async throws -> [Question] {
+        [Question(id: "q1", sessionId: sessionId, text: "Що робити, якщо втома не минає після вихідних?",
+                  createdAt: "2026-08-14T10:00:00Z", answeredAt: nil, isMine: true, authorEmail: nil)]
+    }
+    func ask(sessionId: String, text: String, isAnonymous: Bool) async throws {}
+    func deleteQuestion(id: String) async throws {}
+    func markQuestionAnswered(id: String, answered: Bool) async throws {}
     func playback(materialId: String) async throws -> PlaybackResponse {
         PlaybackResponse(access: .granted, descriptor: .youtube(videoId: "dQw4w9WgXcQ"))
     }

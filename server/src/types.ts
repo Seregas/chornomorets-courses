@@ -3,6 +3,7 @@ import type {
   Enrollment,
   Material,
   MaterialType,
+  Question,
   Session,
   Stream,
 } from "./schema.js";
@@ -95,6 +96,22 @@ export interface ScheduleItem {
   courseTitle: string;
 }
 
+/**
+ * Питання до заняття у вигляді для клієнта. Автора не показуємо нікому, крім
+ * адміна (`authorEmail` приходить лише йому й лише якщо питання не анонімне) —
+ * питати «дурне» має бути безпечно.
+ */
+export interface QuestionDTO {
+  id: string;
+  sessionId: string;
+  text: string;
+  createdAt: string;
+  answeredAt: string | null;
+  /** Чи це питання цього пристрою — щоб показати «ваше» й дозволити видалити. */
+  isMine: boolean;
+  authorEmail?: string | null;
+}
+
 /** Матеріал разом із потоком/курсом, з якого він походить. */
 export interface MaterialInContext {
   material: MaterialDTO;
@@ -118,4 +135,12 @@ export interface HomeDigest {
   recordings: MaterialInContext[];
 }
 
-export type { Course, Stream, Session, Material, MaterialType, Enrollment };
+export type {
+  Course,
+  Stream,
+  Session,
+  Material,
+  MaterialType,
+  Enrollment,
+  Question,
+};

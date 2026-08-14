@@ -5,6 +5,7 @@ import {
   enrollments,
   materials,
   materialTypes,
+  questions,
   sessions,
   streams,
 } from "./schema.js";
@@ -18,12 +19,29 @@ import type {
   MaterialDTO,
   MaterialInContext,
   MaterialType,
+  Question,
+  QuestionDTO,
   ResolvedStream,
   ScheduleItem,
   Session,
   Stream,
   StreamDetail,
 } from "./types.js";
+
+/** Хто дивиться список питань: свої впізнаються за deviceId, авторів бачить лише адмін. */
+export interface QuestionViewer {
+  deviceId: string;
+  isAdmin: boolean;
+}
+
+export interface AskQuestionInput {
+  sessionId: string;
+  deviceId: string;
+  text: string;
+  isAnonymous: boolean;
+  /** Email автора, якщо він увійшов і не приховався. */
+  authorEmail?: string | null;
+}
 
 /** Що задає адмін, клонуючи потік. */
 export interface CloneStreamInput {
@@ -73,6 +91,15 @@ export interface CourseRepository {
   listMaterialTypes(): Promise<MaterialType[]>;
   /** Сирий матеріал з videoRef — лише для відео-шару (playback). Не віддавати клієнту. */
   getMaterialRaw(materialId: string): Promise<Material | null>;
+
+  // — Питання до заняття —
+  /** `viewer` вирішує, кому показати автора: email бачить лише адмін. */
+  listQuestions(sessionId: string, viewer: QuestionViewer): Promise<QuestionDTO[]>;
+  askQuestion(input: AskQuestionInput): Promise<Question>;
+  /** Видалити може автор (за deviceId) або адмін. */
+  deleteQuestion(id: string, viewer: QuestionViewer): Promise<boolean>;
+  /** Позначити розібраним (адмін). */
+  markQuestionAnswered(id: string, answered: boolean): Promise<Question | null>;
 
   // — Підписки (deviceId) —
   subscribe(deviceId: string, streamId: string): Promise<Enrollment>;
@@ -367,6 +394,73 @@ export class DrizzleCourseRepository implements CourseRepository {
       .map(withContext);
 
     return { nextSession: nextSession ?? null, upcoming: upcoming.slice(0, 3), homework, recordings };
+  }
+
+  // — Питання до заняття —
+
+  async listQuestions(
+    sessionId: string,
+    viewer: QuestionViewer,
+  ): Promise<QuestionDTO[]> {
+    const rows = this.db
+      .select()
+      .from(questions)
+      .where(eq(questions.sessionId, sessionId))
+      .orderBy(asc(questions.createdAt))
+      .all();
+
+    return rows.map((q) => ({
+      id: q.id,
+      sessionId: q.sessionId,
+      text: q.text,
+      createdAt: q.createdAt.toISOString(),
+      answeredAt: q.answeredAt,
+      isMine: q.deviceId === viewer.deviceId,
+      // Автора віддаємо лише адміну й лише якщо питання не анонімне.
+      ...(viewer.isAdmin
+        ? { authorEmail: q.isAnonymous ? null : q.authorEmail }
+        : {}),
+    }));
+  }
+
+  async askQuestion(input: AskQuestionInput): Promise<Question> {
+    return this.db
+      .insert(questions)
+      .values({
+        sessionId: input.sessionId,
+        deviceId: input.deviceId,
+        text: input.text,
+        isAnonymous: input.isAnonymous,
+        authorEmail: input.isAnonymous ? null : (input.authorEmail ?? null),
+      })
+      .returning()
+      .get();
+  }
+
+  async deleteQuestion(id: string, viewer: QuestionViewer): Promise<boolean> {
+    const existing = this.db
+      .select()
+      .from(questions)
+      .where(eq(questions.id, id))
+      .get();
+    if (!existing) return false;
+    if (!viewer.isAdmin && existing.deviceId !== viewer.deviceId) return false;
+    this.db.delete(questions).where(eq(questions.id, id)).run();
+    return true;
+  }
+
+  async markQuestionAnswered(
+    id: string,
+    answered: boolean,
+  ): Promise<Question | null> {
+    return (
+      this.db
+        .update(questions)
+        .set({ answeredAt: answered ? new Date().toISOString() : null })
+        .where(eq(questions.id, id))
+        .returning()
+        .get() ?? null
+    );
   }
 
   async listEnrollments(deviceId: string): Promise<ResolvedStream[]> {

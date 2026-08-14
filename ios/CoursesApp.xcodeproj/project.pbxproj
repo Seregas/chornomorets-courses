@@ -24,6 +24,7 @@
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
 		A292BC9D259C0D452DE24725 /* AdminHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */; };
 		A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BBAE671589458E514D6982 /* DownloadManager.swift */; };
+		A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */; };
 		AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */; };
 		B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22908673233FCDC3FD42F9D1 /* SharedUI.swift */; };
 		BF274EEDFAF5817ABDB27EAC /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79499B4FF5A2B4D56E72E441 /* AppEnvironment.swift */; };
@@ -65,6 +66,7 @@
 		C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialRow.swift; sourceTree = "<group>"; };
 		CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 		CEC59DDBE5AAC7F17E335F9E /* AdminForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminForms.swift; sourceTree = "<group>"; };
+		E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionQuestionsView.swift; sourceTree = "<group>"; };
 		E357D321925857DB4617ED43 /* PlayerAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAudio.swift; sourceTree = "<group>"; };
 		E56BF3C549F5831CBB50AFDD /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminHomeView.swift; sourceTree = "<group>"; };
@@ -233,6 +235,7 @@
 				CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */,
 				C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */,
 				16415B1D3ED9D1F80AC53EF4 /* Routes.swift */,
+				E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */,
 				6CF4953E7EAD819BD46F4727 /* StreamDetailView.swift */,
 			);
 			path = Catalog;
@@ -337,6 +340,7 @@
 				DEC64D9BF98D988841DAD8EF /* PreviewRepository.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,
 				E1ED29CC351741F106566EE2 /* ScheduleView.swift in Sources */,
+				A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */,
 				03A046DCC2C571BA43862BD6 /* SettingsView.swift in Sources */,
 				B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */,
 				17A6905BC212631D6BD4EE5E /* StreamDetailView.swift in Sources */,

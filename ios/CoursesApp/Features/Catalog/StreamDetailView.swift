@@ -232,6 +232,7 @@ struct SessionRow: View {
     var adminEdit: (() -> Void)? = nil
     var adminDelete: (() -> Void)? = nil
     @Environment(\.openURL) private var openURL
+    @State private var showQuestions = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -244,6 +245,13 @@ struct SessionRow: View {
                 }
             }
             Spacer()
+            // Питання до заняття: зібрати їх заздалегідь корисніше, ніж ловити
+            // в чаті під час зустрічі.
+            Button { showQuestions = true } label: {
+                Image(systemName: "questionmark.bubble")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
             if let join = session.joinURL, let url = URL(string: join), isUpcoming {
                 Button("Приєднатися") { openURL(url) }
                     .buttonStyle(.borderedProminent).tint(.sea).controlSize(.small)
@@ -262,6 +270,15 @@ struct SessionRow: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        .sheet(isPresented: $showQuestions) {
+            SessionQuestionsView(session: session)
+        }
+        .task {
+            // Демо/скриншоти: одразу відкрити питання потрібного заняття.
+            if ProcessInfo.processInfo.environment["OPEN_QUESTIONS"] == session.id {
+                showQuestions = true
+            }
+        }
     }
 
     private var isUpcoming: Bool {

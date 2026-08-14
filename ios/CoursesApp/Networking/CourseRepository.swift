@@ -15,6 +15,12 @@ protocol CourseRepository {
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
 
+    // — Питання до заняття —
+    func questions(sessionId: String) async throws -> [Question]
+    func ask(sessionId: String, text: String, isAnonymous: Bool) async throws
+    func deleteQuestion(id: String) async throws
+    func markQuestionAnswered(id: String, answered: Bool) async throws
+
     func playback(materialId: String) async throws -> PlaybackResponse
     func access(materialId: String) async throws -> AccessResponse
 
@@ -73,6 +79,23 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+    }
+
+    private struct AskBody: Encodable { let deviceId: String; let text: String; let isAnonymous: Bool }
+    private struct AnsweredBody: Encodable { let answered: Bool }
+
+    func questions(sessionId: String) async throws -> [Question] {
+        try await api.get("sessions/\(sessionId)/questions?deviceId=\(deviceId)")
+    }
+    func ask(sessionId: String, text: String, isAnonymous: Bool) async throws {
+        try await api.mutate("POST", "sessions/\(sessionId)/questions",
+                             body: AskBody(deviceId: deviceId, text: text, isAnonymous: isAnonymous))
+    }
+    func deleteQuestion(id: String) async throws {
+        try await api.mutate("DELETE", "questions/\(id)?deviceId=\(deviceId)")
+    }
+    func markQuestionAnswered(id: String, answered: Bool) async throws {
+        try await api.mutate("POST", "admin/questions/\(id)/answered", body: AnsweredBody(answered: answered))
     }
 
     func playback(materialId: String) async throws -> PlaybackResponse {

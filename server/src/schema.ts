@@ -132,12 +132,36 @@ export const enrollments = sqliteTable(
   (t) => [uniqueIndex("enroll_device_stream").on(t.deviceId, t.streamId)],
 );
 
+/**
+ * Питання до майбутнього заняття: студент кидає заздалегідь, викладач розбирає
+ * на занятті. У телеграм-групі такі питання тонуть, тут — ні.
+ *
+ * `authorEmail` заповнюється лише якщо студент увійшов і не поставив «анонімно»;
+ * бачить його тільки адмін. Для решти всі питання однаково безіменні.
+ */
+export const questions = sqliteTable("questions", {
+  id: id(),
+  sessionId: text("session_id")
+    .notNull()
+    .references(() => sessions.id, { onDelete: "cascade" }),
+  deviceId: text("device_id").notNull(),
+  authorEmail: text("author_email"),
+  text: text("text").notNull(),
+  isAnonymous: integer("is_anonymous", { mode: "boolean" })
+    .notNull()
+    .default(false),
+  /** Проставляється, коли викладач розібрав питання. */
+  answeredAt: text("answered_at"),
+  createdAt: createdAt(),
+});
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 export type MaterialType = typeof materialTypes.$inferSelect;
 export type Material = typeof materials.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
+export type Question = typeof questions.$inferSelect;
 
 export const schema = {
   courses,
@@ -146,6 +170,7 @@ export const schema = {
   materialTypes,
   materials,
   enrollments,
+  questions,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

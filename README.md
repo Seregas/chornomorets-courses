@@ -69,6 +69,12 @@ npm run dev            # старт на http://localhost:3000
 - `GET /material-types` — каталог типів матеріалів
 - `GET /me?deviceId=…` — `{ deviceId, email, isAdmin }`
 
+**Питання до заняття:**
+- `GET /sessions/:id/questions?deviceId=…` — список; `isMine` для своїх, `authorEmail` лише адміну
+- `POST /sessions/:id/questions` `{deviceId, text, isAnonymous?}`
+- `DELETE /questions/:id?deviceId=…` — автор або адмін
+- `POST /admin/questions/:id/answered` `{answered}` — позначити розібраним
+
 **Підписки (deviceId):**
 - `GET /subscriptions?deviceId=…`
 - `POST /subscriptions` `{deviceId, streamId}` · `DELETE /subscriptions` `{deviceId, streamId}`
@@ -102,6 +108,7 @@ npm run dev            # старт на http://localhost:3000
 `Course` (вічний опис) → `Stream` (потік/cohort; може перевизначати опис) → `Session` (заняття).
 `Material` (вміст вирішує поведінку: текст / відео / лінк / дедлайн; `typeId` — косметичний ярлик
 з керованого каталогу `MaterialType`, може бути порожнім). `Enrollment` = підписка `deviceId`↔`streamId`.
+`Question` = питання до заняття (`deviceId` автора, опційний `authorEmail`, прапорець анонімності).
 
 ## iOS-застосунок
 
