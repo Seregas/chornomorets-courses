@@ -33,12 +33,37 @@ struct CoursesApp: App {
 
 struct RootView: View {
     @Environment(AuthStore.self) private var auth
+    @State private var offline = OfflineStatus.shared
     // Стартова вкладка (для демо/скриншотів через env START_TAB=0|1|2|3).
     // За замовчуванням «Навчання»: у нього ж вбудований порожній стан, який
     // веде новачка в каталог, тож окремої перевірки підписок на старті не треба.
     @State private var selection = Int(ProcessInfo.processInfo.environment["START_TAB"] ?? "0") ?? 0
 
     var body: some View {
+        VStack(spacing: 0) {
+            offlineBanner
+            tabs
+        }
+    }
+
+    /// Показані дані можуть бути вчорашніми — про це чесніше сказати одним
+    /// рядком угорі, ніж малювати позначку на кожному екрані.
+    @ViewBuilder private var offlineBanner: some View {
+        if let since = offline.servingFromCacheSince {
+            HStack(spacing: 6) {
+                Image(systemName: "wifi.slash")
+                Text("Немає звʼязку · дані від \(Fmt.dayTime(ISO8601DateFormatter().string(from: since)))")
+                Spacer()
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(Color(.secondarySystemBackground))
+        }
+    }
+
+    private var tabs: some View {
         TabView(selection: $selection) {
             HomeView(openCatalog: { selection = 2 })
                 .tabItem { Label("Навчання", systemImage: "graduationcap") }.tag(0)
