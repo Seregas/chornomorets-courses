@@ -14,6 +14,13 @@ final class SettingsViewModel {
         notifications.cancelReminders(streamId: stream.id)
         subscriptions.removeAll { $0.id == stream.id }
     }
+
+    /// Після зміни налаштувань нагадувань перепланувати їх під актуальний розклад.
+    /// Якщо розклад не завантажився — нічого не чіпаємо: порожній список стер би всі нагадування.
+    func syncReminders(_ repo: CourseRepository, notifications: NotificationScheduler) async {
+        guard let items = try? await repo.schedule() else { return }
+        await notifications.sync(with: items)
+    }
 }
 
 struct SettingsView: View {
@@ -138,6 +145,13 @@ struct SettingsView: View {
                 ForEach([10, 15, 30, 60], id: \.self) { Text("\($0) хв").tag($0) }
             }
         }
+        // Зміна налаштувань має негайно перепланувати вже заплановані нагадування.
+        .onChange(of: remindersEnabled) { syncReminders() }
+        .onChange(of: reminderLead) { syncReminders() }
+    }
+
+    private func syncReminders() {
+        Task { await vm.syncReminders(repo, notifications: notifications) }
     }
 
     private var downloadsSection: some View {

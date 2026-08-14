@@ -5,9 +5,16 @@ import SwiftUI
 final class ScheduleViewModel {
     var state: LoadState<[ScheduleItem]> = .loading
 
-    func load(_ repo: CourseRepository) async {
-        do { state = .loaded(try await repo.schedule()) }
-        catch { state = .failed(error.localizedDescription) }
+    func load(_ repo: CourseRepository, notifications: NotificationScheduler) async {
+        do {
+            let items = try await repo.schedule()
+            state = .loaded(items)
+            // Розклад — джерело правди для нагадувань: перенесені й скасовані заняття
+            // мають одразу відображатися на запланованих нотифікаціях.
+            await notifications.sync(with: items)
+        } catch {
+            state = .failed(error.localizedDescription)
+        }
     }
 
     /// Групує заняття за календарним днем, зберігаючи хронологію.
@@ -33,12 +40,13 @@ final class ScheduleViewModel {
 
 struct ScheduleView: View {
     @Environment(\.repository) private var repo
+    @Environment(\.notifications) private var notifications
     @Environment(\.openURL) private var openURL
     @State private var vm = ScheduleViewModel()
 
     var body: some View {
         NavigationStack {
-            LoadStateView(state: vm.state, retry: { Task { await vm.load(repo) } }) { items in
+            LoadStateView(state: vm.state, retry: { Task { await vm.load(repo, notifications: notifications) } }) { items in
                 if items.isEmpty {
                     ContentUnavailableView(
                         "Розклад порожній", systemImage: "calendar.badge.plus",
@@ -56,9 +64,9 @@ struct ScheduleView: View {
                 }
             }
             .navigationTitle("Розклад")
-            .refreshable { await vm.load(repo) }
+            .refreshable { await vm.load(repo, notifications: notifications) }
         }
-        .task { await vm.load(repo) }
+        .task { await vm.load(repo, notifications: notifications) }
     }
 }
 

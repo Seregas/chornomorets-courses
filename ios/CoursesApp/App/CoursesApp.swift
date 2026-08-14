@@ -21,6 +21,11 @@ struct CoursesApp: App {
                         await env.notifications.requestAuthorization()
                     }
                     await auth.refreshAdmin(using: env.repository)
+                    // Звірити нагадування з розкладом на старті: вкладку «Розклад»
+                    // могли й не відкривати, а заняття тим часом перенесли.
+                    if let items = try? await env.repository.schedule() {
+                        await env.notifications.sync(with: items)
+                    }
                 }
         }
     }

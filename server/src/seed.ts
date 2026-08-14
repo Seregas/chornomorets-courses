@@ -26,6 +26,26 @@ function reset() {
 
 const TG = "https://t.me/petro_chornomorets";
 
+/**
+ * Демо-дати рахуються ВІД СЬОГОДНІ, а не зашиті абсолютними: інакше через кілька
+ * місяців усі «майбутні» заняття стають минулими, розклад порожніє і прототип
+ * виглядає зламаним. Минулий потік лишається минулим, майбутній — майбутнім.
+ */
+const DAY_MS = 86_400_000;
+function at(daysFromNow: number, hourUTC: number): string {
+  const d = new Date(Date.now() + daysFromNow * DAY_MS);
+  d.setUTCHours(hourUTC, 0, 0, 0);
+  return d.toISOString().replace(".000Z", "Z");
+}
+const dayOf = (iso: string) => iso.slice(0, 10);
+
+// Стрес: завершений потік (є записи) і майбутній.
+const S4 = [at(-128, 17), at(-121, 17), at(-114, 17)] as const;
+const S5 = [at(5, 17), at(12, 17), at(19, 17)] as const;
+const E3 = [at(7, 17), at(14, 17)] as const;   // Самооцінка
+const B1 = [at(21, 9)] as const;               // Гра «Вигорання» — цілий день
+const M1 = [at(3, 17), at(10, 17)] as const;   // Мотивація
+
 function seed() {
   reset();
 
@@ -81,26 +101,26 @@ function seed() {
   db.insert(streams).values([
     // Стрес: завершений Потік 4 (із записами) + майбутній Потік 5.
     {
-      id: "s-stress-4", courseId: "c-stress", title: "Потік 4", startDate: "2026-04-08",
+      id: "s-stress-4", courseId: "c-stress", title: "Потік 4", startDate: dayOf(S4[0]),
       status: "finished", telegramGroupURL: TG, priceFull: 900, pricePerSession: 350, order: 1,
     },
     {
-      id: "s-stress-5", courseId: "c-stress", title: "Потік 5", startDate: "2026-07-08",
+      id: "s-stress-5", courseId: "c-stress", title: "Потік 5", startDate: dayOf(S5[0]),
       status: "upcoming", telegramGroupURL: TG, priceFull: 900, pricePerSession: 350, order: 2,
     },
     // Самооцінка: майбутній потік з ПЕРЕВИЗНАЧЕНИМ описом (демо override).
     {
-      id: "s-esteem-3", courseId: "c-esteem", title: "Потік 3", startDate: "2026-07-10",
+      id: "s-esteem-3", courseId: "c-esteem", title: "Потік 3", startDate: dayOf(E3[0]),
       status: "upcoming", telegramGroupURL: TG, priceFull: 700, pricePerSession: 400,
       descriptionOverride: "Оновлений потік: цього разу більше практики й розборів конкретних кейсів самооцінки в роботі та стосунках.",
       order: 1,
     },
     {
-      id: "s-burnout-1", courseId: "c-burnout", title: "Потік (26 лип)", startDate: "2026-07-26",
+      id: "s-burnout-1", courseId: "c-burnout", title: "Найближча гра", startDate: dayOf(B1[0]),
       status: "upcoming", telegramGroupURL: TG, priceFull: 1200, order: 1,
     },
     {
-      id: "s-motivation-1", courseId: "c-motivation", title: "Потік 1", startDate: "2026-08-05",
+      id: "s-motivation-1", courseId: "c-motivation", title: "Потік 1", startDate: dayOf(M1[0]),
       status: "upcoming", telegramGroupURL: TG, priceFull: 1000, pricePerSession: 550, order: 1,
     },
   ]).run();
@@ -108,21 +128,21 @@ function seed() {
   // — Заняття —
   db.insert(sessions).values([
     // Стрес, Потік 4 (минулі — є записи).
-    { id: "ses-s4-1", streamId: "s-stress-4", title: "Заняття 1", startAt: "2026-04-08T17:00:00Z", durationMinutes: 120, format: "online", paymentStatus: "paid", order: 1 },
-    { id: "ses-s4-2", streamId: "s-stress-4", title: "Заняття 2", startAt: "2026-04-15T17:00:00Z", durationMinutes: 120, format: "online", paymentStatus: "paid", order: 2 },
-    { id: "ses-s4-3", streamId: "s-stress-4", title: "Заняття 3", startAt: "2026-04-22T17:00:00Z", durationMinutes: 120, format: "online", paymentStatus: "paid", order: 3 },
+    { id: "ses-s4-1", streamId: "s-stress-4", title: "Заняття 1", startAt: S4[0], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 1 },
+    { id: "ses-s4-2", streamId: "s-stress-4", title: "Заняття 2", startAt: S4[1], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 2 },
+    { id: "ses-s4-3", streamId: "s-stress-4", title: "Заняття 3", startAt: S4[2], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 3 },
     // Стрес, Потік 5 (майбутні).
-    { id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1", startAt: "2026-07-08T17:00:00Z", durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-1", paymentStatus: "unpaid", order: 1 },
-    { id: "ses-s5-2", streamId: "s-stress-5", title: "Заняття 2", startAt: "2026-07-15T17:00:00Z", durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-2", paymentStatus: "unpaid", order: 2 },
-    { id: "ses-s5-3", streamId: "s-stress-5", title: "Заняття 3", startAt: "2026-07-22T17:00:00Z", durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-3", paymentStatus: "unpaid", order: 3 },
+    { id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1", startAt: S5[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-1", paymentStatus: "unpaid", order: 1 },
+    { id: "ses-s5-2", streamId: "s-stress-5", title: "Заняття 2", startAt: S5[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-2", paymentStatus: "unpaid", order: 2 },
+    { id: "ses-s5-3", streamId: "s-stress-5", title: "Заняття 3", startAt: S5[2], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-3", paymentStatus: "unpaid", order: 3 },
     // Самооцінка, Потік 3.
-    { id: "ses-e3-1", streamId: "s-esteem-3", title: "Заняття 1", startAt: "2026-07-10T17:00:00Z", durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-1", paymentStatus: "free", order: 1 },
-    { id: "ses-e3-2", streamId: "s-esteem-3", title: "Заняття 2", startAt: "2026-07-17T17:00:00Z", durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-2", paymentStatus: "unpaid", order: 2 },
+    { id: "ses-e3-1", streamId: "s-esteem-3", title: "Заняття 1", startAt: E3[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-1", paymentStatus: "free", order: 1 },
+    { id: "ses-e3-2", streamId: "s-esteem-3", title: "Заняття 2", startAt: E3[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-2", paymentStatus: "unpaid", order: 2 },
     // Гра Вигорання.
-    { id: "ses-b1-1", streamId: "s-burnout-1", title: "Гра (онлайн, цілий день)", startAt: "2026-07-26T09:00:00Z", durationMinutes: 480, format: "online", joinURL: "https://meet.google.com/abc-burnout", paymentStatus: "unpaid", order: 1 },
+    { id: "ses-b1-1", streamId: "s-burnout-1", title: "Гра (онлайн, цілий день)", startAt: B1[0], durationMinutes: 480, format: "online", joinURL: "https://meet.google.com/abc-burnout", paymentStatus: "unpaid", order: 1 },
     // Мотивація.
-    { id: "ses-m1-1", streamId: "s-motivation-1", title: "Заняття 1", startAt: "2026-08-05T17:00:00Z", durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 1 },
-    { id: "ses-m1-2", streamId: "s-motivation-1", title: "Заняття 2", startAt: "2026-08-12T17:00:00Z", durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 2 },
+    { id: "ses-m1-1", streamId: "s-motivation-1", title: "Заняття 1", startAt: M1[0], durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 1 },
+    { id: "ses-m1-2", streamId: "s-motivation-1", title: "Заняття 2", startAt: M1[1], durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 2 },
   ]).run();
 
   // — Матеріали —
@@ -139,7 +159,7 @@ function seed() {
     { id: "m-s4-rec2", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Запис заняття 2", videoProvider: "drive", videoRef: "1AbCDriveFileStress2", durationMinutes: 121, order: 2 },
     { id: "m-s4-yt", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Бонусна лекція (YouTube)", videoProvider: "youtube", videoRef: "dQw4w9WgXcQ", order: 3 },
     { id: "m-s4-doc", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-doc", title: "Конспект заняття 1", url: "https://docs.google.com/document/d/EXAMPLE", order: 4 },
-    { id: "m-s4-hw", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-hw", title: "Домашнє завдання до заняття 1", description: "Протягом тижня занотуйте 3 ситуації, де ви заїдали емоції, і що передувало.", dueAt: "2026-04-15T17:00:00Z", order: 5 },
+    { id: "m-s4-hw", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-hw", title: "Домашнє завдання до заняття 1", description: "Протягом тижня занотуйте 3 ситуації, де ви заїдали емоції, і що передувало.", dueAt: S4[1], order: 5 },
   ]).run();
 
   // — Демо-підписка для розкладу —
