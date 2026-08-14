@@ -45,7 +45,8 @@ struct VideoPlayerView: View {
         switch descriptor {
         case .direct(let url):
             if let u = URL(string: url) {
-                DirectVideoPlayer(url: u, materialId: materialId).ignoresSafeArea(edges: .bottom)
+                DirectVideoPlayer(url: u, materialId: materialId, title: title)
+                    .ignoresSafeArea(edges: .bottom)
             } else { invalid }
         case .youtube(let videoId):
             WebPlayer(url: URL(string: "https://www.youtube.com/embed/\(videoId)?playsinline=1")!)
@@ -79,31 +80,70 @@ struct VideoPlayerView: View {
 struct DirectVideoPlayer: View {
     let url: URL
     let materialId: String
+    let title: String
 
     @State private var player = AVPlayer()
+    @State private var audio = PlayerAudioController()
     @State private var timeObserver: Any?
     @State private var duration: Double = 0
+    @State private var speed = PlaybackSpeed.current
 
     var body: some View {
         VideoPlayer(player: player)
             .task { await start() }
             .onDisappear(perform: stop)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) { speedMenu }
+            }
+    }
+
+    private var speedMenu: some View {
+        Menu {
+            Picker("Швидкість", selection: $speed) {
+                ForEach(PlaybackSpeed.options, id: \.self) { Text(PlaybackSpeed.label($0)).tag($0) }
+            }
+        } label: {
+            // Показуємо саме поточну швидкість: інакше з іконки не зрозуміло,
+            // чи запис зараз грає прискорено. Label у тулбарі згортається до
+            // самої іконки, тому складаємо напис руками.
+            HStack(spacing: 4) {
+                Image(systemName: "speedometer")
+                Text(PlaybackSpeed.label(speed))
+            }
+            .font(.subheadline.weight(.semibold))
+        }
+        .onChange(of: speed) { _, new in
+            PlaybackSpeed.current = new
+            apply(speed: new)
+        }
+    }
+
+    /// defaultRate — щоб і кнопка play (у плеєрі та на локскріні) стартувала
+    /// з обраною швидкістю, а не поверталася на 1×.
+    private func apply(speed: Double) {
+        player.defaultRate = Float(speed)
+        if player.timeControlStatus == .playing { player.rate = Float(speed) }
     }
 
     private func start() async {
+        audio.activate()
         player.replaceCurrentItem(with: AVPlayerItem(url: url))
+        audio.bindRemoteCommands(to: player)
 
         if let saved = PlaybackProgressStore.position(for: materialId), saved.resumeSeconds > 0 {
             await player.seek(to: CMTime(seconds: saved.resumeSeconds, preferredTimescale: 600))
         }
+        apply(speed: speed)
         player.play()
 
         // Раз на 5 с — досить, щоб не загубити місце, і не смикає диск дарма.
         timeObserver = player.addPeriodicTimeObserver(
             forInterval: CMTime(seconds: 5, preferredTimescale: 600), queue: .main
         ) { time in
-            PlaybackProgressStore.save(
-                seconds: time.seconds, duration: knownDuration(), for: materialId)
+            let total = knownDuration()
+            PlaybackProgressStore.save(seconds: time.seconds, duration: total, for: materialId)
+            audio.updateNowPlaying(
+                title: title, elapsed: time.seconds, duration: total, rate: player.rate)
         }
     }
 
@@ -121,6 +161,7 @@ struct DirectVideoPlayer: View {
         PlaybackProgressStore.save(
             seconds: player.currentTime().seconds, duration: knownDuration(), for: materialId)
         player.pause()
+        audio.deactivate()
     }
 }
 

@@ -17,6 +17,7 @@
 		3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */; };
 		5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC69E20B206F4B40FB28259 /* CourseRepository.swift */; };
 		5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496CE3358F9446DCA54BD00 /* InputModels.swift */; };
+		769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = E357D321925857DB4617ED43 /* PlayerAudio.swift */; };
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
@@ -63,6 +64,7 @@
 		C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialRow.swift; sourceTree = "<group>"; };
 		CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 		CEC59DDBE5AAC7F17E335F9E /* AdminForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminForms.swift; sourceTree = "<group>"; };
+		E357D321925857DB4617ED43 /* PlayerAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAudio.swift; sourceTree = "<group>"; };
 		FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminHomeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -100,6 +102,7 @@
 				02BBAE671589458E514D6982 /* DownloadManager.swift */,
 				530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */,
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
+				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -318,6 +321,7 @@
 				82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */,
 				3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */,
 				E5E3C8021EA5D2D1BE29D56B /* PlaybackProgress.swift in Sources */,
+				769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */,
 				DEC64D9BF98D988841DAD8EF /* PreviewRepository.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,
 				E1ED29CC351741F106566EE2 /* ScheduleView.swift in Sources */,

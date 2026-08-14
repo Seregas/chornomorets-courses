@@ -47,6 +47,9 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         ITSAppUsesNonExemptEncryption: false
+        # Записи слухають як подкаст — звук має грати з заблокованим екраном.
+        UIBackgroundModes:
+          - audio
         # Google Sign-In iOS client ID.
         GIDClientID: 1088990832674-rcgirjmgsejkatnog9bikcdk0ot3e4q1.apps.googleusercontent.com
         CFBundleURLTypes:
