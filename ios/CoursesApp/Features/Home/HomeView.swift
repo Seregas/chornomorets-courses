@@ -22,6 +22,7 @@ struct HomeView: View {
     @Environment(\.openURL) private var openURL
     @State private var vm = HomeViewModel()
     @State private var path: [Route] = []
+    @State private var homeworkToOpen: MaterialDTO?
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -54,6 +55,7 @@ struct HomeView: View {
                 }
             }
             .refreshable { await vm.load(repo) }
+            .sheet(item: $homeworkToOpen) { HomeworkView(material: $0) }
         }
         .task { await vm.load(repo) }
     }
@@ -144,7 +146,9 @@ struct HomeView: View {
             SectionHeader(title: "Домашні завдання")
             ForEach(items) { item in
                 Button {
-                    path.append(.stream(item.streamId))
+                    // Відкриваємо здачу, а не сторінку потоку: з екрана «Навчання»
+                    // домашку хочуть здати, а не почитати про курс.
+                    homeworkToOpen = item.material
                 } label: {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "checkmark.circle")

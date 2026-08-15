@@ -69,6 +69,11 @@ final class PreviewRepository: CourseRepository {
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
 
+    func submission(materialId: String) async throws -> Submission? { nil }
+    func submitHomework(materialId: String, text: String) async throws {}
+    func submissions(materialId: String) async throws -> [Submission] { [] }
+    func reviewSubmission(id: String, feedback: String) async throws {}
+
     func announcements(streamId: String) async throws -> [Announcement] {
         [Announcement(id: "a1", streamId: streamId, streamTitle: "Потік 5",
                       courseTitle: "Стрес, втома і піклування про себе",

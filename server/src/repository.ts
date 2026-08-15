@@ -9,6 +9,7 @@ import {
   questions,
   sessions,
   streams,
+  submissions,
 } from "./schema.js";
 import type {
   Announcement,
@@ -29,6 +30,7 @@ import type {
   Session,
   Stream,
   StreamDetail,
+  Submission,
 } from "./types.js";
 
 /** Хто дивиться список питань: свої впізнаються за deviceId, авторів бачить лише адмін. */
@@ -43,6 +45,13 @@ export interface AskQuestionInput {
   text: string;
   isAnonymous: boolean;
   /** Email автора, якщо він увійшов і не приховався. */
+  authorEmail?: string | null;
+}
+
+export interface SubmitHomeworkInput {
+  materialId: string;
+  deviceId: string;
+  text: string;
   authorEmail?: string | null;
 }
 
@@ -99,6 +108,16 @@ export interface CourseRepository {
   listAnnouncements(streamId: string): Promise<AnnouncementDTO[]>;
   createAnnouncement(streamId: string, text: string): Promise<Announcement>;
   deleteAnnouncement(id: string): Promise<boolean>;
+
+  // — Здача домашки —
+  /** Своя здача (або null). */
+  getSubmission(materialId: string, deviceId: string): Promise<Submission | null>;
+  /** Здати або переписати свою — домашку доробляють, а не подають удруге. */
+  submitHomework(input: SubmitHomeworkInput): Promise<Submission>;
+  /** Усі здачі по матеріалу — адміну. */
+  listSubmissions(materialId: string): Promise<Submission[]>;
+  /** Відповідь викладача. */
+  reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
 
   // — Питання до заняття —
   /** `viewer` вирішує, кому показати автора: email бачить лише адмін. */
@@ -439,6 +458,75 @@ export class DrizzleCourseRepository implements CourseRepository {
       homework,
       recordings,
     };
+  }
+
+  // — Здача домашки —
+
+  async getSubmission(
+    materialId: string,
+    deviceId: string,
+  ): Promise<Submission | null> {
+    return (
+      this.db
+        .select()
+        .from(submissions)
+        .where(
+          and(
+            eq(submissions.materialId, materialId),
+            eq(submissions.deviceId, deviceId),
+          ),
+        )
+        .get() ?? null
+    );
+  }
+
+  async submitHomework(input: SubmitHomeworkInput): Promise<Submission> {
+    const existing = await this.getSubmission(input.materialId, input.deviceId);
+    const now = new Date().toISOString();
+    if (existing) {
+      // Переписуємо текст, але НЕ чіпаємо відповідь викладача: зникла б рецензія
+      // разом із виправленням, а вона й до виправлення стосується.
+      return this.db
+        .update(submissions)
+        .set({ text: input.text, submittedAt: now })
+        .where(eq(submissions.id, existing.id))
+        .returning()
+        .get();
+    }
+    return this.db
+      .insert(submissions)
+      .values({
+        materialId: input.materialId,
+        deviceId: input.deviceId,
+        authorEmail: input.authorEmail ?? null,
+        text: input.text,
+        submittedAt: now,
+      })
+      .returning()
+      .get();
+  }
+
+  async listSubmissions(materialId: string): Promise<Submission[]> {
+    return this.db
+      .select()
+      .from(submissions)
+      .where(eq(submissions.materialId, materialId))
+      .orderBy(asc(submissions.submittedAt))
+      .all();
+  }
+
+  async reviewSubmission(
+    id: string,
+    feedback: string,
+  ): Promise<Submission | null> {
+    return (
+      this.db
+        .update(submissions)
+        .set({ feedback, reviewedAt: new Date().toISOString() })
+        .where(eq(submissions.id, id))
+        .returning()
+        .get() ?? null
+    );
   }
 
   // — Оголошення на потік —

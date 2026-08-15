@@ -13,6 +13,7 @@ struct MaterialRow: View {
     @Environment(\.openURL) private var openURL
     @State private var access: AccessState?
     @State private var showPlayer = false
+    @State private var showHomework = false
     @State private var progress: PlaybackPosition?
 
     var body: some View {
@@ -46,14 +47,17 @@ struct MaterialRow: View {
             if material.hasVideo {
                 progress = PlaybackProgressStore.position(for: material.id)
                 access = (try? await repo.access(materialId: material.id))?.access ?? .unknown
-                // Демо/скриншоти: одразу відкрити плеєр потрібного матеріалу.
-                if ProcessInfo.processInfo.environment["OPEN_MATERIAL"] == material.id {
-                    showPlayer = true
-                }
+            }
+            // Демо/скриншоти: одразу відкрити потрібний матеріал (плеєр або домашку).
+            if ProcessInfo.processInfo.environment["OPEN_MATERIAL"] == material.id {
+                handleTap()
             }
         }
         .sheet(isPresented: $showPlayer) {
             VideoPlayerView(materialId: material.id, title: material.title)
+        }
+        .sheet(isPresented: $showHomework) {
+            HomeworkView(material: material)
         }
         // Плеєр закрили — підхопити нову позицію перегляду.
         .onChange(of: showPlayer) { _, shown in
@@ -109,6 +113,9 @@ struct MaterialRow: View {
     private func handleTap() {
         if material.hasVideo {
             showPlayer = true
+        } else if material.dueAt != nil {
+            // Дедлайн = домашка: відкриваємо здачу, а не просто текст.
+            showHomework = true
         } else if let s = material.url, let u = URL(string: s) {
             openURL(u)
         }

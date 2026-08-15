@@ -168,6 +168,30 @@ export const announcements = sqliteTable("announcements", {
   createdAt: createdAt(),
 });
 
+/**
+ * Здана домашка. Одна на пару «матеріал + пристрій»: повторна здача
+ * перезаписує попередню, бо домашку доробляють, а не подають удруге.
+ *
+ * Поки лише текст. Фото потребують сховища файлів — це окреме рішення.
+ */
+export const submissions = sqliteTable(
+  "submissions",
+  {
+    id: id(),
+    materialId: text("material_id")
+      .notNull()
+      .references(() => materials.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull(),
+    authorEmail: text("author_email"),
+    text: text("text").notNull(),
+    submittedAt: text("submitted_at").notNull(),
+    /** Відповідь викладача. */
+    feedback: text("feedback"),
+    reviewedAt: text("reviewed_at"),
+  },
+  (t) => [uniqueIndex("submission_material_device").on(t.materialId, t.deviceId)],
+);
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -176,6 +200,7 @@ export type Material = typeof materials.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type Question = typeof questions.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
+export type Submission = typeof submissions.$inferSelect;
 
 export const schema = {
   courses,
@@ -186,6 +211,7 @@ export const schema = {
   enrollments,
   questions,
   announcements,
+  submissions,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

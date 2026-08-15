@@ -15,6 +15,12 @@ protocol CourseRepository {
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
 
+    // — Здача домашки —
+    func submission(materialId: String) async throws -> Submission?
+    func submitHomework(materialId: String, text: String) async throws
+    func submissions(materialId: String) async throws -> [Submission]
+    func reviewSubmission(id: String, feedback: String) async throws
+
     // — Оголошення на потік —
     func announcements(streamId: String) async throws -> [Announcement]
     func createAnnouncement(streamId: String, text: String) async throws
@@ -84,6 +90,25 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+    }
+
+    private struct SubmitBody: Encodable { let deviceId: String; let text: String }
+    private struct FeedbackBody: Encodable { let feedback: String }
+
+    /// Бекенд віддає `null`, якщо здачі ще немає — тому Optional.
+    func submission(materialId: String) async throws -> Submission? {
+        try await api.get("materials/\(materialId)/submission?deviceId=\(deviceId)")
+    }
+    func submitHomework(materialId: String, text: String) async throws {
+        try await api.mutate("POST", "materials/\(materialId)/submission",
+                             body: SubmitBody(deviceId: deviceId, text: text))
+    }
+    func submissions(materialId: String) async throws -> [Submission] {
+        try await api.get("admin/materials/\(materialId)/submissions")
+    }
+    func reviewSubmission(id: String, feedback: String) async throws {
+        try await api.mutate("POST", "admin/submissions/\(id)/feedback",
+                             body: FeedbackBody(feedback: feedback))
     }
 
     private struct AnnouncementBody: Encodable { let streamId: String; let text: String }

@@ -7,6 +7,7 @@ import type {
   Question,
   Session,
   Stream,
+  Submission,
 } from "./schema.js";
 
 /**
@@ -157,4 +158,5 @@ export type {
   Enrollment,
   Question,
   Announcement,
+  Submission,
 };

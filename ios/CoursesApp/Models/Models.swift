@@ -124,6 +124,19 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+/// Здана домашка. Одна на матеріал і пристрій: повторна здача перезаписує текст,
+/// але не стирає відповідь викладача.
+struct Submission: Codable, Identifiable, Hashable {
+    let id: String
+    let materialId: String
+    let deviceId: String
+    let authorEmail: String?
+    let text: String
+    let submittedAt: String
+    let feedback: String?
+    let reviewedAt: String?
+}
+
 /// Оголошення викладача на потік.
 struct Announcement: Codable, Identifiable, Hashable {
     let id: String

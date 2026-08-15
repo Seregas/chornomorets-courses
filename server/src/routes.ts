@@ -54,6 +54,33 @@ app.get("/streams/:id/announcements", async (c) =>
   c.json(await repo.listAnnouncements(c.req.param("id"))),
 );
 
+// ──────────────────── Здача домашки ────────────────────
+// Своя здача — за deviceId; чужих студент не бачить узагалі.
+
+app.get("/materials/:id/submission", zValidator("query", deviceQuery), async (c) =>
+  c.json(
+    await repo.getSubmission(c.req.param("id"), c.req.valid("query").deviceId),
+  ),
+);
+
+const submitInput = z.object({
+  deviceId: z.string().min(1),
+  text: z.string().min(1).max(5000),
+});
+app.post("/materials/:id/submission", zValidator("json", submitInput), async (c) => {
+  const { deviceId, text } = c.req.valid("json");
+  const identity = await getIdentity(c);
+  return c.json(
+    await repo.submitHomework({
+      materialId: c.req.param("id"),
+      deviceId,
+      text,
+      authorEmail: identity?.email ?? null,
+    }),
+    201,
+  );
+});
+
 // ──────────────────── Питання до заняття ────────────────────
 // Читання відкрите (усі бачать питання свого заняття, без імен), створення —
 // за deviceId. Автора віддаємо лише адміну й лише якщо питання не анонімне.
@@ -206,6 +233,19 @@ const materialInput = z.object({
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
 });
+
+// submissions
+admin.get("/materials/:id/submissions", async (c) =>
+  c.json(await repo.listSubmissions(c.req.param("id"))),
+);
+admin.post(
+  "/submissions/:id/feedback",
+  zValidator("json", z.object({ feedback: z.string().min(1).max(2000) })),
+  async (c) => {
+    const r = await repo.reviewSubmission(c.req.param("id"), c.req.valid("json").feedback);
+    return r ? c.json(r) : c.json({ error: "not found" }, 404);
+  },
+);
 
 // announcements
 const announcementInput = z.object({

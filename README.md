@@ -69,6 +69,12 @@ npm run dev            # старт на http://localhost:3000
 - `GET /material-types` — каталог типів матеріалів
 - `GET /me?deviceId=…` — `{ deviceId, email, isAdmin }`
 
+**Домашка:**
+- `GET /materials/:id/submission?deviceId=…` — своя здача (або `null`)
+- `POST /materials/:id/submission` `{deviceId, text}` — здати або переписати свою
+- `GET /admin/materials/:id/submissions` — усі здачі (адмін)
+- `POST /admin/submissions/:id/feedback` `{feedback}` — відповідь викладача
+
 **Оголошення потоку:**
 - `GET /streams/:id/announcements` — стрічка потоку (також потрапляє в `/home`)
 - `POST /admin/announcements` `{streamId, text}` · `DELETE /admin/announcements/:id`
@@ -113,7 +119,7 @@ npm run dev            # старт на http://localhost:3000
 `Material` (вміст вирішує поведінку: текст / відео / лінк / дедлайн; `typeId` — косметичний ярлик
 з керованого каталогу `MaterialType`, може бути порожнім). `Enrollment` = підписка `deviceId`↔`streamId`.
 `Question` = питання до заняття (`deviceId` автора, опційний `authorEmail`, прапорець анонімності).
-`Announcement` = оголошення викладача на потік.
+`Announcement` = оголошення викладача на потік. `Submission` = здана домашка (одна на матеріал+пристрій).
 
 ## iOS-застосунок
 
