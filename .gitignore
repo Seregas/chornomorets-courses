@@ -11,3 +11,6 @@ build/
 xcuserdata/
 *.xcscmblueprint
 project.generated.yml
+
+# Персональні дозволи Claude Code — у кожного свої, у git не їдуть.
+.claude/settings.local.json

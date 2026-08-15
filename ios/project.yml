@@ -14,7 +14,7 @@ packages:
 settings:
   base:
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
+    CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1"
     # Автоматичний підпис. Team можна задати через env: DEVELOPMENT_TEAM=XXXX xcodegen generate
@@ -41,6 +41,10 @@ targets:
         GENERATE_INFOPLIST_FILE: "NO"
         PRODUCT_BUNDLE_IDENTIFIER: com.chornomorets.courses
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        # Лише iPhone. Задавати треба саме тут: значення з project-рівня
+        # XcodeGen перекриває власним "1,2", і тоді Apple вимагає всі чотири
+        # орієнтації для iPad-мультитаскінгу (помилка 90474 при вивантаженні).
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: CoursesApp/CoursesApp.entitlements
       configs:
         # Локальний сервер під час розробки; для збірки на TestFlight адресу
@@ -91,6 +95,7 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: "NO"
         PRODUCT_BUNDLE_IDENTIFIER: com.chornomorets.courses.widgets
+        TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_ENTITLEMENTS: CoursesWidgets/CoursesWidgets.entitlements
         SKIP_INSTALL: "YES"
     info:
