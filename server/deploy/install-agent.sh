@@ -23,7 +23,9 @@ fi
 
 NODE_BIN="$(command -v node)"
 [[ -n "$NODE_BIN" ]] || { echo "node не знайдено в PATH"; exit 1; }
-NPX_BIN="$(dirname "$NODE_BIN")/npx"
+NODE_DIR="$(dirname "$NODE_BIN")"
+TSX_BIN="$SERVER_DIR/node_modules/.bin/tsx"
+[[ -x "$TSX_BIN" ]] || { echo "не знайдено $TSX_BIN — виконайте npm install"; exit 1; }
 
 mkdir -p "$HOME/Library/LaunchAgents" "$SERVER_DIR/logs"
 
@@ -37,10 +39,16 @@ cat > "$PLIST" <<PLIST
 	<key>ProgramArguments</key>
 	<array>
 		<string>$NODE_BIN</string>
-		<string>$NPX_BIN</string>
-		<string>tsx</string>
+		<string>$TSX_BIN</string>
 		<string>src/index.ts</string>
 	</array>
+	<!-- launchd не успадковує PATH користувача, а tsx запускає дочірні
+	     процеси node. Без цього агент падає з «env: node: No such file». -->
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>$NODE_DIR:/usr/bin:/bin:/usr/sbin:/sbin</string>
+	</dict>
 	<key>WorkingDirectory</key>
 	<string>$SERVER_DIR</string>
 	<key>RunAtLoad</key>

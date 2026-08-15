@@ -53,6 +53,11 @@ targets:
       path: CoursesApp/Info.plist
       properties:
         CFBundleDisplayName: Курси
+        # Без цього Xcode підставляє власні 1.0 (1), і друга збірка з тим самим
+        # номером у TestFlight відхиляється. CURRENT_PROJECT_VERSION треба
+        # інкрементувати на кожне вивантаження.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen: {}
         UIApplicationSupportsIndirectInputEvents: true
         UISupportedInterfaceOrientations:
