@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0341F38616147FAF3EF09081 /* NextSessionWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22633914C08470EF46CFFB4A /* NextSessionWidget.swift */; };
 		03A046DCC2C571BA43862BD6 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8654363C85DBACD175C3662E /* SettingsView.swift */; };
 		0C556C2E13C2F0DD798B336B /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 1D221B9D9D76846D83A2E146 /* GoogleSignInSwift */; };
 		17A6905BC212631D6BD4EE5E /* StreamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CF4953E7EAD819BD46F4727 /* StreamDetailView.swift */; };
@@ -25,11 +26,14 @@
 		769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = E357D321925857DB4617ED43 /* PlayerAudio.swift */; };
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
+		982F6FC9ADC351A21E53F345 /* SharedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */; };
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
+		A186AC8A733646F290D7B83F /* WidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6490DE90C63D0315542FC7FF /* WidgetSync.swift */; };
 		A292BC9D259C0D452DE24725 /* AdminHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */; };
 		A2C50E491C58E562B231D0AC /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8338942F6F7BB082FB6777 /* JournalView.swift */; };
 		A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BBAE671589458E514D6982 /* DownloadManager.swift */; };
 		A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */; };
+		A6EB7DA81C75477192861B68 /* CoursesWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7EF02AD2FA6891A041577E5E /* CoursesWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */; };
 		B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22908673233FCDC3FD42F9D1 /* SharedUI.swift */; };
 		BCDCD44595891C3CA77BCABB /* ApplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */; };
@@ -43,14 +47,41 @@
 		E5E3C8021EA5D2D1BE29D56B /* PlaybackProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */; };
 		E694361F4F841C1A01A589FD /* Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B401C57783FD8F76C2E4014 /* Formatting.swift */; };
 		EB9B1508EB96853643780C9D /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = B2F9C188006E76D9FEBFD5B0 /* GoogleSignIn */; };
+		F3352C14F165651B3CE1CCB0 /* SharedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */; };
 		FE83FCB4114732E086904D87 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F44C3476908F03659EA0C7 /* APIClient.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		2BF00C31827C72CD69734FBD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 8C868E0AED7CE29212704E7E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C6B78960E5438C32F0A5D65F;
+			remoteInfo = CoursesWidgets;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		BCC03D5FB3EF243FB783782C /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				A6EB7DA81C75477192861B68 /* CoursesWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		02BBAE671589458E514D6982 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
 		05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeJournal.swift; sourceTree = "<group>"; };
 		11CAC67650EED80D8AC61EAA /* SessionPulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPulseView.swift; sourceTree = "<group>"; };
 		16415B1D3ED9D1F80AC53EF4 /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
+		18BAD8F3B110294599AF904B /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		22633914C08470EF46CFFB4A /* NextSessionWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NextSessionWidget.swift; sourceTree = "<group>"; };
 		22908673233FCDC3FD42F9D1 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
 		2936673C5B004580066EC142 /* CoursesApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoursesApp.swift; sourceTree = "<group>"; };
 		2A7FAA6B195E11E1801F5CFD /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
@@ -58,23 +89,28 @@
 		31B3E91DD48A53066D13E0B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3496CE3358F9446DCA54BD00 /* InputModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputModels.swift; sourceTree = "<group>"; };
 		3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeenAnnouncements.swift; sourceTree = "<group>"; };
+		407F0AEDE6C248D820A2F82E /* CoursesWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoursesWidgets.entitlements; sourceTree = "<group>"; };
 		4AC69E20B206F4B40FB28259 /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
 		4F138B2577FF5EDFDA6B8F00 /* CoursesApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CoursesApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		56F44C3476908F03659EA0C7 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
+		6490DE90C63D0315542FC7FF /* WidgetSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSync.swift; sourceTree = "<group>"; };
 		6CF4953E7EAD819BD46F4727 /* StreamDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamDetailView.swift; sourceTree = "<group>"; };
 		6E60CA068B28D05C7FDF8016 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		7612B66619C3EB87F125DFDC /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		768FFFEBB5F14D977A08084C /* PreviewRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewRepository.swift; sourceTree = "<group>"; };
 		79499B4FF5A2B4D56E72E441 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
 		7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackProgress.swift; sourceTree = "<group>"; };
+		7EF02AD2FA6891A041577E5E /* CoursesWidgets.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = CoursesWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FDAE2ABE1195BAEF4B149F9 /* GoogleAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleAuth.swift; sourceTree = "<group>"; };
+		858CEF83626F466F5C9A7091 /* CoursesApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoursesApp.entitlements; sourceTree = "<group>"; };
 		8654363C85DBACD175C3662E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8B401C57783FD8F76C2E4014 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		91DE23CCE4CF33ADCA210C21 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9FCC229F2E9F45F26B497C88 /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyView.swift; sourceTree = "<group>"; };
 		B2C74DE8F2270766C2835F7C /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
+		B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedSchedule.swift; sourceTree = "<group>"; };
 		B6EBE10093E1D103FD317A5B /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
 		C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialRow.swift; sourceTree = "<group>"; };
 		CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
@@ -109,6 +145,7 @@
 				C831ECB7B1EDFB712D3EA858 /* Networking */,
 				A09EBC505C60F8B93289CFD5 /* Resources */,
 				0AC8BF0A12A5BAE82276355C /* Services */,
+				858CEF83626F466F5C9A7091 /* CoursesApp.entitlements */,
 				91DE23CCE4CF33ADCA210C21 /* Info.plist */,
 			);
 			path = CoursesApp;
@@ -123,6 +160,7 @@
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
 				05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */,
 				3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */,
+				6490DE90C63D0315542FC7FF /* WidgetSync.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -174,8 +212,18 @@
 			isa = PBXGroup;
 			children = (
 				01C06312B32A3F5E96BC5DDF /* CoursesApp */,
+				BDF36F285DBC8F303A597FFC /* CoursesWidgets */,
+				848F248DDE3F646E44423F35 /* Shared */,
 				CE70587E28595724313D867F /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		848F248DDE3F646E44423F35 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */,
+			);
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		9BE07B6131110BD240D054DF /* Auth */ = {
@@ -218,6 +266,16 @@
 			path = Admin;
 			sourceTree = "<group>";
 		};
+		BDF36F285DBC8F303A597FFC /* CoursesWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				407F0AEDE6C248D820A2F82E /* CoursesWidgets.entitlements */,
+				18BAD8F3B110294599AF904B /* Info.plist */,
+				22633914C08470EF46CFFB4A /* NextSessionWidget.swift */,
+			);
+			path = CoursesWidgets;
+			sourceTree = "<group>";
+		};
 		C831ECB7B1EDFB712D3EA858 /* Networking */ = {
 			isa = PBXGroup;
 			children = (
@@ -234,6 +292,7 @@
 			isa = PBXGroup;
 			children = (
 				4F138B2577FF5EDFDA6B8F00 /* CoursesApp.app */,
+				7EF02AD2FA6891A041577E5E /* CoursesWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -280,10 +339,12 @@
 				41B33C889B045378BBF11A99 /* Sources */,
 				59084A64104D6C3E1AA9D026 /* Resources */,
 				B0F56ED580BE9D3201465D1E /* Frameworks */,
+				BCC03D5FB3EF243FB783782C /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				AFE47D0BACA27D295D7AA1D4 /* PBXTargetDependency */,
 			);
 			name = CoursesApp;
 			packageProductDependencies = (
@@ -293,6 +354,23 @@
 			productName = CoursesApp;
 			productReference = 4F138B2577FF5EDFDA6B8F00 /* CoursesApp.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C6B78960E5438C32F0A5D65F /* CoursesWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B85457E17DA87B23B8D39247 /* Build configuration list for PBXNativeTarget "CoursesWidgets" */;
+			buildPhases = (
+				24CF30817B03F355806C1B2E /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = CoursesWidgets;
+			packageProductDependencies = (
+			);
+			productName = CoursesWidgets;
+			productReference = 7EF02AD2FA6891A041577E5E /* CoursesWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -304,6 +382,10 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					76546642C5C45FEFB5B43956 = {
+						DevelopmentTeam = "${DEVELOPMENT_TEAM}";
+						ProvisioningStyle = Automatic;
+					};
+					C6B78960E5438C32F0A5D65F = {
 						DevelopmentTeam = "${DEVELOPMENT_TEAM}";
 						ProvisioningStyle = Automatic;
 					};
@@ -327,6 +409,7 @@
 			projectRoot = "";
 			targets = (
 				76546642C5C45FEFB5B43956 /* CoursesApp */,
+				C6B78960E5438C32F0A5D65F /* CoursesWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -343,6 +426,15 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		24CF30817B03F355806C1B2E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0341F38616147FAF3EF09081 /* NextSessionWidget.swift in Sources */,
+				F3352C14F165651B3CE1CCB0 /* SharedSchedule.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		41B33C889B045378BBF11A99 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -378,13 +470,23 @@
 				6B6F16FA07E0817D33093CD8 /* SessionPulseView.swift in Sources */,
 				A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */,
 				03A046DCC2C571BA43862BD6 /* SettingsView.swift in Sources */,
+				982F6FC9ADC351A21E53F345 /* SharedSchedule.swift in Sources */,
 				B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */,
 				17A6905BC212631D6BD4EE5E /* StreamDetailView.swift in Sources */,
 				17C64DDFC3ECB6981257A0B6 /* VideoPlayerView.swift in Sources */,
+				A186AC8A733646F290D7B83F /* WidgetSync.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AFE47D0BACA27D295D7AA1D4 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C6B78960E5438C32F0A5D65F /* CoursesWidgets */;
+			targetProxy = 2BF00C31827C72CD69734FBD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		02C61A84E1DFA35FC242E7DB /* Debug */ = {
@@ -459,6 +561,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CoursesApp/CoursesApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CoursesApp/Info.plist;
@@ -472,10 +575,29 @@
 			};
 			name = Debug;
 		};
+		A4AE07269B843B9289A1E772 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CoursesWidgets/CoursesWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CoursesWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chornomorets.courses.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		B767BB537D17C85910884C83 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = CoursesApp/CoursesApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = CoursesApp/Info.plist;
@@ -485,6 +607,24 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.chornomorets.courses;
 				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DA2EF3431284B2447C800EC4 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = CoursesWidgets/CoursesWidgets.entitlements;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = CoursesWidgets/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.chornomorets.courses.widgets;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -558,6 +698,15 @@
 			buildConfigurations = (
 				4F325F6609915DACAE5E42DE /* Debug */,
 				B767BB537D17C85910884C83 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B85457E17DA87B23B8D39247 /* Build configuration list for PBXNativeTarget "CoursesWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A4AE07269B843B9289A1E772 /* Debug */,
+				DA2EF3431284B2447C800EC4 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

@@ -12,6 +12,7 @@ final class ScheduleViewModel {
             // Розклад — джерело правди для нагадувань: перенесені й скасовані заняття
             // мають одразу відображатися на запланованих нотифікаціях.
             await notifications.sync(with: items)
+            WidgetSync.update(nextSession: items.first)
         } catch {
             state = .failed(error.localizedDescription)
         }

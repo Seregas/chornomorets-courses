@@ -28,16 +28,20 @@ targets:
     platform: iOS
     sources:
       - path: CoursesApp
+      # Спільний зріз розкладу для віджета — компілюється в обидва таргети.
+      - path: Shared
     dependencies:
       - package: GoogleSignIn
         product: GoogleSignIn
       - package: GoogleSignIn
         product: GoogleSignInSwift
+      - target: CoursesWidgets
     settings:
       base:
         GENERATE_INFOPLIST_FILE: "NO"
         PRODUCT_BUNDLE_IDENTIFIER: com.chornomorets.courses
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_ENTITLEMENTS: CoursesApp/CoursesApp.entitlements
     info:
       path: CoursesApp/Info.plist
       properties:
@@ -60,3 +64,23 @@ targets:
         # Для релізу прибрати й ходити лише по https.
         NSAppTransportSecurity:
           NSAllowsArbitraryLoads: true
+
+  # Віджет «найближче заняття». Дані бере з App Group, у мережу не ходить.
+  CoursesWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: CoursesWidgets
+      - path: Shared
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "NO"
+        PRODUCT_BUNDLE_IDENTIFIER: com.chornomorets.courses.widgets
+        CODE_SIGN_ENTITLEMENTS: CoursesWidgets/CoursesWidgets.entitlements
+        SKIP_INSTALL: "YES"
+    info:
+      path: CoursesWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: Курси
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
