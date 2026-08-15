@@ -15,6 +15,11 @@ protocol CourseRepository {
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
 
+    // — Оголошення на потік —
+    func announcements(streamId: String) async throws -> [Announcement]
+    func createAnnouncement(streamId: String, text: String) async throws
+    func deleteAnnouncement(id: String) async throws
+
     // — Питання до заняття —
     func questions(sessionId: String) async throws -> [Question]
     func ask(sessionId: String, text: String, isAnonymous: Bool) async throws
@@ -79,6 +84,19 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+    }
+
+    private struct AnnouncementBody: Encodable { let streamId: String; let text: String }
+
+    func announcements(streamId: String) async throws -> [Announcement] {
+        try await api.get("streams/\(streamId)/announcements")
+    }
+    func createAnnouncement(streamId: String, text: String) async throws {
+        try await api.mutate("POST", "admin/announcements",
+                             body: AnnouncementBody(streamId: streamId, text: text))
+    }
+    func deleteAnnouncement(id: String) async throws {
+        try await api.mutate("DELETE", "admin/announcements/\(id)")
     }
 
     private struct AskBody: Encodable { let deviceId: String; let text: String; let isAnonymous: Bool }

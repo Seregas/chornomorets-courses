@@ -31,6 +31,11 @@ struct HomeView: View {
                 } else {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 22) {
+                            // Оголошення — вище за все: якщо заняття перенесли,
+                            // це головне, що людина має побачити, відкривши застосунок.
+                            if !digest.announcements.isEmpty {
+                                announcementsSection(digest.announcements)
+                            }
                             if let next = digest.nextSession { nextSessionCard(next) }
                             if !digest.homework.isEmpty { homeworkSection(digest.homework) }
                             if !digest.recordings.isEmpty { recordingsSection(digest.recordings) }
@@ -61,6 +66,38 @@ struct HomeView: View {
         } actions: {
             Button("Переглянути курси", action: openCatalog).buttonStyle(.borderedProminent).tint(.sea)
         }
+    }
+
+    // MARK: - Оголошення
+
+    private func announcementsSection(_ items: [Announcement]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Оголошення")
+            ForEach(items) { a in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "megaphone.fill").foregroundStyle(.orange)
+                        Text(a.courseTitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        if SeenAnnouncements.isNew(a.id) {
+                            Text("нове").font(.caption2.weight(.semibold))
+                                .padding(.horizontal, 6).padding(.vertical, 2)
+                                .background(Color.orange.opacity(0.15), in: Capsule())
+                                .foregroundStyle(.orange)
+                        }
+                        Spacer()
+                        Text(Fmt.dayTime(a.createdAt)).font(.caption2).foregroundStyle(.tertiary)
+                    }
+                    Text(a.text).font(.subheadline)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                .contentShape(Rectangle())
+                .onTapGesture { path.append(.stream(a.streamId)) }
+            }
+        }
+        // Позначаємо прочитаними лише коли стрічка вже на екрані.
+        .onAppear { SeenAnnouncements.markSeen(items.map(\.id)) }
     }
 
     // MARK: - Найближче заняття

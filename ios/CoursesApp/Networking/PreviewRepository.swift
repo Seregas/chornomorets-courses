@@ -59,7 +59,8 @@ final class PreviewRepository: CourseRepository {
     }
     func home() async throws -> HomeDigest {
         let items = try await schedule()
-        return HomeDigest(nextSession: items.first, upcoming: [], homework: [], recordings: [])
+        return HomeDigest(nextSession: items.first, announcements: [],
+                          upcoming: [], homework: [], recordings: [])
     }
     func subscriptions() async throws -> [ResolvedStream] { [Self.stream5] }
     func materialTypes() async throws -> [MaterialType] {
@@ -67,6 +68,15 @@ final class PreviewRepository: CourseRepository {
     }
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
+
+    func announcements(streamId: String) async throws -> [Announcement] {
+        [Announcement(id: "a1", streamId: streamId, streamTitle: "Потік 5",
+                      courseTitle: "Стрес, втома і піклування про себе",
+                      text: "Заняття 2 переносимо на четвер, 20:00.",
+                      createdAt: "2026-08-14T10:00:00Z")]
+    }
+    func createAnnouncement(streamId: String, text: String) async throws {}
+    func deleteAnnouncement(id: String) async throws {}
 
     func questions(sessionId: String) async throws -> [Question] {
         [Question(id: "q1", sessionId: sessionId, text: "Що робити, якщо втома не минає після вихідних?",

@@ -1,4 +1,5 @@
 import type {
+  Announcement,
   Course,
   Enrollment,
   Material,
@@ -96,6 +97,16 @@ export interface ScheduleItem {
   courseTitle: string;
 }
 
+/** Оголошення на потік разом із контекстом курсу (для стрічки «Навчання»). */
+export interface AnnouncementDTO {
+  id: string;
+  streamId: string;
+  streamTitle: string;
+  courseTitle: string;
+  text: string;
+  createdAt: string;
+}
+
 /**
  * Питання до заняття у вигляді для клієнта. Автора не показуємо нікому, крім
  * адміна (`authorEmail` приходить лише йому й лише якщо питання не анонімне) —
@@ -127,6 +138,8 @@ export interface MaterialInContext {
  */
 export interface HomeDigest {
   nextSession: ScheduleItem | null;
+  /** Свіжі оголошення підписаних потоків — найголовніше, що міг сказати викладач. */
+  announcements: AnnouncementDTO[];
   /** Наступні заняття після найближчого. */
   upcoming: ScheduleItem[];
   /** Домашка з дедлайном: спершу найближчі; щойно прострочені теж показуємо. */
@@ -143,4 +156,5 @@ export type {
   MaterialType,
   Enrollment,
   Question,
+  Announcement,
 };

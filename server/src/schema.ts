@@ -155,6 +155,19 @@ export const questions = sqliteTable("questions", {
   createdAt: createdAt(),
 });
 
+/**
+ * Оголошення викладача на потік: перенесли заняття, виклали матеріал, важлива
+ * дрібниця перед зустріччю. Окремо від телеграм-групи, де таке тоне між мемами.
+ */
+export const announcements = sqliteTable("announcements", {
+  id: id(),
+  streamId: text("stream_id")
+    .notNull()
+    .references(() => streams.id, { onDelete: "cascade" }),
+  text: text("text").notNull(),
+  createdAt: createdAt(),
+});
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -162,6 +175,7 @@ export type MaterialType = typeof materialTypes.$inferSelect;
 export type Material = typeof materials.$inferSelect;
 export type Enrollment = typeof enrollments.$inferSelect;
 export type Question = typeof questions.$inferSelect;
+export type Announcement = typeof announcements.$inferSelect;
 
 export const schema = {
   courses,
@@ -171,6 +185,7 @@ export const schema = {
   materials,
   enrollments,
   questions,
+  announcements,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

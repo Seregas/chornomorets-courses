@@ -7,6 +7,7 @@ final class StreamDetailViewModel {
     var isSubscribed = false
     var working = false
     var types: [MaterialType] = []
+    var announcements: [Announcement] = []
 
     var current: StreamDetail? { if case .loaded(let s) = state { return s } else { return nil } }
 
@@ -15,9 +16,11 @@ final class StreamDetailViewModel {
             async let detail = repo.stream(id: id)
             async let subs = repo.subscriptions()
             async let t = repo.materialTypes()
+            async let ann = repo.announcements(streamId: id)
             let (d, s) = try await (detail, subs)
             isSubscribed = s.contains { $0.id == id }
             types = (try? await t) ?? []
+            announcements = (try? await ann) ?? []
             state = .loaded(d)
         } catch {
             state = .failed(error.localizedDescription)
@@ -43,11 +46,13 @@ final class StreamDetailViewModel {
 }
 
 private enum StreamSheet: Identifiable {
-    case editStream, cloneStream, newSession, sessionsBatch, editSession(String), newMaterial, editMaterial(String)
+    case editStream, cloneStream, newAnnouncement, newSession, sessionsBatch,
+         editSession(String), newMaterial, editMaterial(String)
     var id: String {
         switch self {
         case .editStream: return "es"
         case .cloneStream: return "cs"
+        case .newAnnouncement: return "na"
         case .sessionsBatch: return "sb"
         case .newSession: return "nss"
         case .editSession(let id): return "ess-\(id)"
@@ -81,6 +86,15 @@ struct StreamDetailView: View {
                         Text(stream.description)
                         if let program = stream.program {
                             Text(program).font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if !vm.announcements.isEmpty || auth.isAdmin {
+                        VStack(alignment: .leading, spacing: 10) {
+                            adminSectionHeader("Оголошення") { sheet = .newAnnouncement }
+                            ForEach(vm.announcements) { a in
+                                announcementRow(a)
+                            }
                         }
                     }
 
@@ -166,6 +180,8 @@ struct StreamDetailView: View {
                 if let s = vm.current {
                     CloneStreamFormView(source: s) { await reload() }
                 }
+            case .newAnnouncement:
+                AnnouncementFormView(streamId: streamId) { await reload() }
             case .newSession:
                 SessionFormView(streamId: streamId, existing: nil) { await reload() }
             case .sessionsBatch:
@@ -182,6 +198,28 @@ struct StreamDetailView: View {
             }
         }
         .task { await vm.load(repo, id: streamId) }
+    }
+
+    private func announcementRow(_ a: Announcement) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "megaphone.fill").foregroundStyle(.orange).font(.caption)
+                Text(Fmt.dayTime(a.createdAt)).font(.caption2).foregroundStyle(.secondary)
+                Spacer()
+                if auth.isAdmin {
+                    Button(role: .destructive) {
+                        Task { try? await repo.deleteAnnouncement(id: a.id); await reload() }
+                    } label: {
+                        Image(systemName: "trash").font(.caption)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            Text(a.text).font(.subheadline)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
     }
 
     @ViewBuilder

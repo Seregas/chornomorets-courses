@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { db as defaultDb, type DB } from "./db.js";
 import {
+  announcements,
   courses,
   enrollments,
   materials,
@@ -10,6 +11,8 @@ import {
   streams,
 } from "./schema.js";
 import type {
+  Announcement,
+  AnnouncementDTO,
   Course,
   CourseCard,
   CourseDetail,
@@ -92,6 +95,11 @@ export interface CourseRepository {
   /** Сирий матеріал з videoRef — лише для відео-шару (playback). Не віддавати клієнту. */
   getMaterialRaw(materialId: string): Promise<Material | null>;
 
+  // — Оголошення на потік —
+  listAnnouncements(streamId: string): Promise<AnnouncementDTO[]>;
+  createAnnouncement(streamId: string, text: string): Promise<Announcement>;
+  deleteAnnouncement(id: string): Promise<boolean>;
+
   // — Питання до заняття —
   /** `viewer` вирішує, кому показати автора: email бачить лише адмін. */
   listQuestions(sessionId: string, viewer: QuestionViewer): Promise<QuestionDTO[]>;
@@ -164,6 +172,21 @@ function resolveStream(course: Course, stream: Stream): ResolvedStream {
     description: stream.descriptionOverride ?? course.description,
     program: stream.programOverride ?? course.program,
     coverImageURL: stream.coverImageOverride ?? course.coverImageURL,
+  };
+}
+
+function toAnnouncementDTO(row: {
+  a: Announcement;
+  streamTitle: string;
+  courseTitle: string;
+}): AnnouncementDTO {
+  return {
+    id: row.a.id,
+    streamId: row.a.streamId,
+    streamTitle: row.streamTitle,
+    courseTitle: row.courseTitle,
+    text: row.a.text,
+    createdAt: row.a.createdAt.toISOString(),
   };
 }
 
@@ -358,7 +381,13 @@ export class DrizzleCourseRepository implements CourseRepository {
       .where(eq(enrollments.deviceId, deviceId))
       .all();
     if (streamRows.length === 0) {
-      return { nextSession: null, upcoming: [], homework: [], recordings: [] };
+      return {
+        nextSession: null,
+        announcements: [],
+        upcoming: [],
+        homework: [],
+        recordings: [],
+      };
     }
 
     const context = new Map(streamRows.map((r) => [r.streamId, r]));
@@ -393,7 +422,52 @@ export class DrizzleCourseRepository implements CourseRepository {
       .slice(0, 5)
       .map(withContext);
 
-    return { nextSession: nextSession ?? null, upcoming: upcoming.slice(0, 3), homework, recordings };
+    const announcementRows = this.db
+      .select({ a: announcements, streamTitle: streams.title, courseTitle: courses.title })
+      .from(announcements)
+      .innerJoin(streams, eq(announcements.streamId, streams.id))
+      .innerJoin(courses, eq(streams.courseId, courses.id))
+      .where(inArray(announcements.streamId, [...context.keys()]))
+      .orderBy(desc(announcements.createdAt))
+      .limit(5)
+      .all();
+
+    return {
+      nextSession: nextSession ?? null,
+      announcements: announcementRows.map(toAnnouncementDTO),
+      upcoming: upcoming.slice(0, 3),
+      homework,
+      recordings,
+    };
+  }
+
+  // — Оголошення на потік —
+
+  async listAnnouncements(streamId: string): Promise<AnnouncementDTO[]> {
+    const rows = this.db
+      .select({ a: announcements, streamTitle: streams.title, courseTitle: courses.title })
+      .from(announcements)
+      .innerJoin(streams, eq(announcements.streamId, streams.id))
+      .innerJoin(courses, eq(streams.courseId, courses.id))
+      .where(eq(announcements.streamId, streamId))
+      .orderBy(desc(announcements.createdAt))
+      .all();
+    return rows.map(toAnnouncementDTO);
+  }
+
+  async createAnnouncement(streamId: string, text: string): Promise<Announcement> {
+    return this.db
+      .insert(announcements)
+      .values({ streamId, text })
+      .returning()
+      .get();
+  }
+
+  async deleteAnnouncement(id: string): Promise<boolean> {
+    return (
+      this.db.delete(announcements).where(eq(announcements.id, id)).returning().all()
+        .length > 0
+    );
   }
 
   // — Питання до заняття —

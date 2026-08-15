@@ -231,6 +231,41 @@ struct SessionFormView: View {
     }
 }
 
+// MARK: - Оголошення
+
+/// Коротке повідомлення потоку: перенесли заняття, виклали матеріал.
+struct AnnouncementFormView: View {
+    let streamId: String
+    let onDone: () async -> Void
+    @Environment(\.repository) private var repo
+
+    @State private var text = ""
+    @State private var error: String?
+
+    var body: some View {
+        FormScaffold(titleText: "Оголошення",
+                     canSave: !text.trimmingCharacters(in: .whitespaces).isEmpty,
+                     onSave: save) {
+            Section {
+                TextField("Що сказати потоку?", text: $text, axis: .vertical)
+                    .lineLimit(3...8)
+            } footer: {
+                Text("Побачать усі, хто підписаний на потік — на екрані «Навчання» і на сторінці потоку.")
+            }
+            if let error { Text(error).foregroundStyle(.red).font(.footnote) }
+        }
+    }
+
+    private func save() async {
+        do {
+            try await repo.createAnnouncement(
+                streamId: streamId,
+                text: text.trimmingCharacters(in: .whitespacesAndNewlines))
+            await onDone()
+        } catch { self.error = error.localizedDescription }
+    }
+}
+
 // MARK: - Клон потоку
 
 /// Потоки повторюються щосезону з тим самим розкладом. Замість «створити потік +

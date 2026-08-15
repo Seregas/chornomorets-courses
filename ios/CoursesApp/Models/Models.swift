@@ -124,6 +124,16 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+/// Оголошення викладача на потік.
+struct Announcement: Codable, Identifiable, Hashable {
+    let id: String
+    let streamId: String
+    let streamTitle: String
+    let courseTitle: String
+    let text: String
+    let createdAt: String
+}
+
 /// Питання до заняття. `authorEmail` приходить лише адміну (і лише якщо
 /// питання не анонімне) — решта бачить питання без імен.
 struct Question: Codable, Identifiable, Hashable {
@@ -151,12 +161,14 @@ struct MaterialInContext: Codable, Identifiable, Hashable {
 /// Зведення для екрана «Моє навчання».
 struct HomeDigest: Codable, Hashable {
     let nextSession: ScheduleItem?
+    let announcements: [Announcement]
     let upcoming: [ScheduleItem]
     let homework: [MaterialInContext]
     let recordings: [MaterialInContext]
 
     var isEmpty: Bool {
-        nextSession == nil && upcoming.isEmpty && homework.isEmpty && recordings.isEmpty
+        nextSession == nil && announcements.isEmpty && upcoming.isEmpty
+            && homework.isEmpty && recordings.isEmpty
     }
 }
 

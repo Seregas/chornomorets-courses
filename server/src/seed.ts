@@ -1,9 +1,11 @@
 import { db } from "./db.js";
 import {
+  announcements,
   courses,
   enrollments,
   materials,
   materialTypes,
+  questions,
   sessions,
   streams,
 } from "./schema.js";
@@ -15,7 +17,10 @@ import {
  */
 
 function reset() {
-  // Порядок з огляду на зовнішні ключі.
+  // Порядок з огляду на зовнішні ключі. Питання й оголошення чистимо явно:
+  // каскад у SQLite вмикається прагмою, покладатися на нього тут не варто.
+  db.delete(questions).run();
+  db.delete(announcements).run();
   db.delete(materials).run();
   db.delete(sessions).run();
   db.delete(enrollments).run();
@@ -172,6 +177,12 @@ function seed() {
     { id: "en-demo-0", deviceId: "demo-device", streamId: "s-stress-4", subscribedAt: new Date().toISOString() },
     { id: "en-demo-1", deviceId: "demo-device", streamId: "s-stress-5", subscribedAt: new Date().toISOString() },
     { id: "en-demo-2", deviceId: "demo-device", streamId: "s-esteem-3", subscribedAt: new Date().toISOString() },
+  ]).run();
+
+  // — Оголошення потоку —
+  db.insert(announcements).values([
+    { streamId: "s-stress-5", text: "Заняття 2 переносимо на четвер, 20:00 — у вівторок я на конференції." },
+    { streamId: "s-esteem-3", text: "Виклав конспект першого заняття — у матеріалах потоку." },
   ]).run();
 
   console.log("Seed готово: 4 курси, 5 потоків, 11 занять, 9 матеріалів, 4 типи, демо-підписки (deviceId=demo-device).");

@@ -13,6 +13,7 @@
 		17C64DDFC3ECB6981257A0B6 /* VideoPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E60CA068B28D05C7FDF8016 /* VideoPlayerView.swift */; };
 		187B24F448DED5E616E0AE21 /* AdminForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC59DDBE5AAC7F17E335F9E /* AdminForms.swift */; };
 		1C5D9D60F06AD6168C558135 /* CourseDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */; };
+		2968B349EB4CFBB16DB86AEE /* SeenAnnouncements.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */; };
 		2D68AEB1A815017B6C58D6F5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 31B3E91DD48A53066D13E0B6 /* Assets.xcassets */; };
 		3540A191BA50183D0B135094 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56BF3C549F5831CBB50AFDD /* HomeView.swift */; };
 		3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */; };
@@ -49,6 +50,7 @@
 		311E25A4F06EB7E9DC544FC1 /* Identity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Identity.swift; sourceTree = "<group>"; };
 		31B3E91DD48A53066D13E0B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3496CE3358F9446DCA54BD00 /* InputModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputModels.swift; sourceTree = "<group>"; };
+		3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeenAnnouncements.swift; sourceTree = "<group>"; };
 		4AC69E20B206F4B40FB28259 /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
 		4F138B2577FF5EDFDA6B8F00 /* CoursesApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CoursesApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */,
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
+				3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -344,6 +347,7 @@
 				C136A6313DCCABBDE6EA57FF /* ResponseCache.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,
 				E1ED29CC351741F106566EE2 /* ScheduleView.swift in Sources */,
+				2968B349EB4CFBB16DB86AEE /* SeenAnnouncements.swift in Sources */,
 				A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */,
 				03A046DCC2C571BA43862BD6 /* SettingsView.swift in Sources */,
 				B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */,

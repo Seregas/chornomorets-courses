@@ -49,6 +49,11 @@ app.get("/home", zValidator("query", deviceQuery), async (c) =>
 
 app.get("/material-types", async (c) => c.json(await repo.listMaterialTypes()));
 
+/** Оголошення потоку — читання відкрите, створення лише адміну (нижче). */
+app.get("/streams/:id/announcements", async (c) =>
+  c.json(await repo.listAnnouncements(c.req.param("id"))),
+);
+
 // ──────────────────── Питання до заняття ────────────────────
 // Читання відкрите (усі бачать питання свого заняття, без імен), створення —
 // за deviceId. Автора віддаємо лише адміну й лише якщо питання не анонімне.
@@ -201,6 +206,21 @@ const materialInput = z.object({
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
 });
+
+// announcements
+const announcementInput = z.object({
+  streamId: z.string().min(1),
+  text: z.string().min(1).max(2000),
+});
+admin.post("/announcements", zValidator("json", announcementInput), async (c) => {
+  const { streamId, text } = c.req.valid("json");
+  return c.json(await repo.createAnnouncement(streamId, text), 201);
+});
+admin.delete("/announcements/:id", async (c) =>
+  (await repo.deleteAnnouncement(c.req.param("id")))
+    ? c.body(null, 204)
+    : c.json({ error: "not found" }, 404),
+);
 
 // Позначити питання розібраним — щоб у списку було видно, що воно вже не висить.
 admin.post("/questions/:id/answered", zValidator("json", z.object({ answered: z.boolean() })), async (c) => {
