@@ -87,7 +87,7 @@ final class RemoteCourseRepository: CourseRepository {
 
     private struct SubBody: Encodable { let deviceId: String; let streamId: String }
 
-    func me() async throws -> Me { try await api.get("me?deviceId=\(deviceId)") }
+    func me() async throws -> Me { try await api.get("me?deviceId=\(deviceId)", cached: false) }
     func courses() async throws -> [CourseCard] { try await api.get("courses") }
     func course(id: String) async throws -> CourseDetail { try await api.get("courses/\(id)") }
     func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)") }

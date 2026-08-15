@@ -29,19 +29,24 @@ final class APIClient {
     /// GET + декодування. Успішну відповідь кладемо в кеш; якщо мережі немає —
     /// віддаємо збережену копію, а не помилку. Помилки сервера (4xx/5xx) із
     /// кешу не рятуємо: 403 на відео має лишитися 403, а не показати старе.
-    func get<T: Decodable>(_ path: String) async throws -> T {
+    ///
+    /// `cached: false` — для відповідей, що залежать від того, ХТО питає.
+    /// Ключ кешу — це шлях, без урахування токена, тож збережена відповідь
+    /// «ви не адмін» пережила б вхід і ховала б адмін-кнопки до наступного
+    /// вдалого запиту.
+    func get<T: Decodable>(_ path: String, cached: Bool = true) async throws -> T {
         do {
             let data = try await performRaw(method: "GET", path: path, body: Optional<Empty>.none)
-            cache.store(data, for: path)
+            if cached { cache.store(data, for: path) }
             await OfflineStatus.shared.markOnline()
             return try JSONDecoder().decode(T.self, from: data)
         } catch let error as APIError {
             throw error
         } catch {
-            guard let cached = cache.data(for: path),
-                  let value = try? JSONDecoder().decode(T.self, from: cached.data)
+            guard cached, let cachedData = cache.data(for: path),
+                  let value = try? JSONDecoder().decode(T.self, from: cachedData.data)
             else { throw error }
-            await OfflineStatus.shared.markServedFromCache(savedAt: cached.savedAt)
+            await OfflineStatus.shared.markServedFromCache(savedAt: cachedData.savedAt)
             return value
         }
     }
