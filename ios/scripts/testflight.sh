@@ -93,14 +93,21 @@ if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
   xcrun altool --upload-app -f "$IPA" -t ios \
     --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 elif [[ -n "${ASC_USERNAME:-}" ]]; then
-  # Запасний шлях, коли API-ключ створити не можна (він потребує ролі Admin):
-  # звичайний Apple ID + пароль застосунку з appleid.apple.com → Sign-In and
-  # Security → App-Specific Passwords. Пароль читаємо з keychain, щоб не
-  # світити його в історії команд:
-  #   xcrun notarytool store-credentials  (або security add-generic-password)
-  echo "→ Вивантажую за Apple ID $ASC_USERNAME (пароль застосунку з keychain)"
+  # Запасний шлях, коли App Store Connect API-ключ створити не можна (він
+  # потребує ролі Admin): звичайний Apple ID + пароль застосунку.
+  #
+  # Пароль застосунку привʼязаний до Apple ID, а не до застосунку, тож той,
+  # що вже лежить у ~/.zshenv, підходить і сюди:
+  #
+  #   source ~/.zshenv
+  #   TEAM_ID=GW39JC2R67 API_BASE_URL=https://courses-api.sirohas.space \
+  #   ASC_USERNAME="$APPLE_ID" ASC_PASSWORD="$APPCONNECT_GENOMICS_DEPLOY_PW" \
+  #   ./scripts/testflight.sh
+  #
+  # Без ASC_PASSWORD береться з keychain (security add-generic-password -s AC_PASSWORD).
+  echo "→ Вивантажую за Apple ID $ASC_USERNAME"
   xcrun altool --upload-app -f "$IPA" -t ios \
-    --username "$ASC_USERNAME" --password "@keychain:AC_PASSWORD"
+    --username "$ASC_USERNAME" --password "${ASC_PASSWORD:-@keychain:AC_PASSWORD}"
 else
   echo
   echo "Ні API-ключа, ні ASC_USERNAME — вивантаження пропускаю."
