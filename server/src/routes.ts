@@ -54,6 +54,26 @@ app.get("/streams/:id/announcements", async (c) =>
   c.json(await repo.listAnnouncements(c.req.param("id"))),
 );
 
+// ──────────────────── Пульс після заняття ────────────────────
+// Оцінка 1–5 і необовʼязковий коментар; зведення бачить лише викладач.
+
+app.get("/sessions/:id/pulse", zValidator("query", deviceQuery), async (c) =>
+  c.json(await repo.getPulse(c.req.param("id"), c.req.valid("query").deviceId)),
+);
+
+const pulseInput = z.object({
+  deviceId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(1000).nullish(),
+});
+app.post("/sessions/:id/pulse", zValidator("json", pulseInput), async (c) => {
+  const { deviceId, rating, comment } = c.req.valid("json");
+  return c.json(
+    await repo.ratePulse({ sessionId: c.req.param("id"), deviceId, rating, comment }),
+    201,
+  );
+});
+
 // ──────────────────── Здача домашки ────────────────────
 // Своя здача — за deviceId; чужих студент не бачить узагалі.
 
@@ -233,6 +253,11 @@ const materialInput = z.object({
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
 });
+
+// pulses — зведення відгуків по заняттю
+admin.get("/sessions/:id/pulses", async (c) =>
+  c.json(await repo.getPulseSummary(c.req.param("id"))),
+);
 
 // submissions
 admin.get("/materials/:id/submissions", async (c) =>

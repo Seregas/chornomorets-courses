@@ -69,6 +69,12 @@ final class PreviewRepository: CourseRepository {
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
 
+    func pulse(sessionId: String) async throws -> Pulse? { nil }
+    func ratePulse(sessionId: String, rating: Int, comment: String?) async throws {}
+    func pulseSummary(sessionId: String) async throws -> PulseSummary {
+        PulseSummary(sessionId: sessionId, count: 0, average: 0, histogram: [0,0,0,0,0], comments: [])
+    }
+
     func submission(materialId: String) async throws -> Submission? { nil }
     func submitHomework(materialId: String, text: String) async throws {}
     func submissions(materialId: String) async throws -> [Submission] { [] }

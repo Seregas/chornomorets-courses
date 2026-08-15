@@ -192,6 +192,26 @@ export const submissions = sqliteTable(
   (t) => [uniqueIndex("submission_material_device").on(t.materialId, t.deviceId)],
 );
 
+/**
+ * «Як зайшло заняття» — оцінка 1–5 і необовʼязковий коментар. Викладачу це
+ * зворотний звʼязок, студенту — привід на хвилину зупинитися й відрефлексувати.
+ * Одна на пару «заняття + пристрій»: думку міняють, а не подають двічі.
+ */
+export const pulses = sqliteTable(
+  "pulses",
+  {
+    id: id(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull(),
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("pulse_session_device").on(t.sessionId, t.deviceId)],
+);
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -201,6 +221,7 @@ export type Enrollment = typeof enrollments.$inferSelect;
 export type Question = typeof questions.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
+export type Pulse = typeof pulses.$inferSelect;
 
 export const schema = {
   courses,
@@ -212,6 +233,7 @@ export const schema = {
   questions,
   announcements,
   submissions,
+  pulses,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

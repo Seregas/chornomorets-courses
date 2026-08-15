@@ -271,6 +271,7 @@ struct SessionRow: View {
     var adminDelete: (() -> Void)? = nil
     @Environment(\.openURL) private var openURL
     @State private var showQuestions = false
+    @State private var showPulse = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -283,13 +284,18 @@ struct SessionRow: View {
                 }
             }
             Spacer()
-            // Питання до заняття: зібрати їх заздалегідь корисніше, ніж ловити
-            // в чаті під час зустрічі.
-            Button { showQuestions = true } label: {
-                Image(systemName: "questionmark.bubble")
-                    .foregroundStyle(.secondary)
+            // Питання — до заняття, пульс — після. Показуємо те, що доречне зараз.
+            if isUpcoming {
+                Button { showQuestions = true } label: {
+                    Image(systemName: "questionmark.bubble").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button { showPulse = true } label: {
+                    Image(systemName: "star.bubble").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
             if let join = session.joinURL, let url = URL(string: join), isUpcoming {
                 Button("Приєднатися") { openURL(url) }
                     .buttonStyle(.borderedProminent).tint(.sea).controlSize(.small)
@@ -311,10 +317,16 @@ struct SessionRow: View {
         .sheet(isPresented: $showQuestions) {
             SessionQuestionsView(session: session)
         }
+        .sheet(isPresented: $showPulse) {
+            SessionPulseView(session: session)
+        }
         .task {
             // Демо/скриншоти: одразу відкрити питання потрібного заняття.
             if ProcessInfo.processInfo.environment["OPEN_QUESTIONS"] == session.id {
                 showQuestions = true
+            }
+            if ProcessInfo.processInfo.environment["OPEN_PULSE"] == session.id {
+                showPulse = true
             }
         }
     }

@@ -6,6 +6,7 @@ import {
   enrollments,
   materials,
   materialTypes,
+  pulses,
   questions,
   sessions,
   streams,
@@ -23,6 +24,8 @@ import type {
   MaterialDTO,
   MaterialInContext,
   MaterialType,
+  Pulse,
+  PulseSummary,
   Question,
   QuestionDTO,
   ResolvedStream,
@@ -46,6 +49,14 @@ export interface AskQuestionInput {
   isAnonymous: boolean;
   /** Email автора, якщо він увійшов і не приховався. */
   authorEmail?: string | null;
+}
+
+export interface RatePulseInput {
+  sessionId: string;
+  deviceId: string;
+  /** 1–5. */
+  rating: number;
+  comment?: string | null;
 }
 
 export interface SubmitHomeworkInput {
@@ -118,6 +129,12 @@ export interface CourseRepository {
   listSubmissions(materialId: string): Promise<Submission[]>;
   /** Відповідь викладача. */
   reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
+
+  // — Пульс після заняття —
+  getPulse(sessionId: string, deviceId: string): Promise<Pulse | null>;
+  ratePulse(input: RatePulseInput): Promise<Pulse>;
+  /** Зведення для викладача. */
+  getPulseSummary(sessionId: string): Promise<PulseSummary>;
 
   // — Питання до заняття —
   /** `viewer` вирішує, кому показати автора: email бачить лише адмін. */
@@ -457,6 +474,63 @@ export class DrizzleCourseRepository implements CourseRepository {
       upcoming: upcoming.slice(0, 3),
       homework,
       recordings,
+    };
+  }
+
+  // — Пульс після заняття —
+
+  async getPulse(sessionId: string, deviceId: string): Promise<Pulse | null> {
+    return (
+      this.db
+        .select()
+        .from(pulses)
+        .where(and(eq(pulses.sessionId, sessionId), eq(pulses.deviceId, deviceId)))
+        .get() ?? null
+    );
+  }
+
+  async ratePulse(input: RatePulseInput): Promise<Pulse> {
+    const existing = await this.getPulse(input.sessionId, input.deviceId);
+    if (existing) {
+      return this.db
+        .update(pulses)
+        .set({ rating: input.rating, comment: input.comment ?? null })
+        .where(eq(pulses.id, existing.id))
+        .returning()
+        .get();
+    }
+    return this.db
+      .insert(pulses)
+      .values({
+        sessionId: input.sessionId,
+        deviceId: input.deviceId,
+        rating: input.rating,
+        comment: input.comment ?? null,
+      })
+      .returning()
+      .get();
+  }
+
+  async getPulseSummary(sessionId: string): Promise<PulseSummary> {
+    const rows = this.db
+      .select()
+      .from(pulses)
+      .where(eq(pulses.sessionId, sessionId))
+      .orderBy(desc(pulses.createdAt))
+      .all();
+
+    const histogram = [0, 0, 0, 0, 0];
+    for (const r of rows) {
+      const bucket = Math.min(5, Math.max(1, r.rating)) - 1;
+      histogram[bucket]! += 1;
+    }
+    const sum = rows.reduce((acc, r) => acc + r.rating, 0);
+    return {
+      sessionId,
+      count: rows.length,
+      average: rows.length ? Math.round((sum / rows.length) * 10) / 10 : 0,
+      histogram,
+      comments: rows.map((r) => r.comment).filter((c): c is string => !!c),
     };
   }
 

@@ -15,6 +15,11 @@ protocol CourseRepository {
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
 
+    // — Пульс після заняття —
+    func pulse(sessionId: String) async throws -> Pulse?
+    func ratePulse(sessionId: String, rating: Int, comment: String?) async throws
+    func pulseSummary(sessionId: String) async throws -> PulseSummary
+
     // — Здача домашки —
     func submission(materialId: String) async throws -> Submission?
     func submitHomework(materialId: String, text: String) async throws
@@ -90,6 +95,19 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+    }
+
+    private struct PulseBody: Encodable { let deviceId: String; let rating: Int; let comment: String? }
+
+    func pulse(sessionId: String) async throws -> Pulse? {
+        try await api.get("sessions/\(sessionId)/pulse?deviceId=\(deviceId)")
+    }
+    func ratePulse(sessionId: String, rating: Int, comment: String?) async throws {
+        try await api.mutate("POST", "sessions/\(sessionId)/pulse",
+                             body: PulseBody(deviceId: deviceId, rating: rating, comment: comment))
+    }
+    func pulseSummary(sessionId: String) async throws -> PulseSummary {
+        try await api.get("admin/sessions/\(sessionId)/pulses")
     }
 
     private struct SubmitBody: Encodable { let deviceId: String; let text: String }

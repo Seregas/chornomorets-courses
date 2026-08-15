@@ -124,6 +124,24 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+/// «Як зайшло заняття»: оцінка 1–5 і необовʼязковий коментар.
+struct Pulse: Codable, Identifiable, Hashable {
+    let id: String
+    let sessionId: String
+    let rating: Int
+    let comment: String?
+}
+
+/// Зведення відгуків по заняттю — для викладача.
+struct PulseSummary: Codable, Hashable {
+    let sessionId: String
+    let count: Int
+    let average: Double
+    /// Розподіл оцінок: індекс 0 = «1 зірка».
+    let histogram: [Int]
+    let comments: [String]
+}
+
 /// Здана домашка. Одна на матеріал і пристрій: повторна здача перезаписує текст,
 /// але не стирає відповідь викладача.
 struct Submission: Codable, Identifiable, Hashable {

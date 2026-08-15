@@ -6,6 +6,7 @@ import type {
   MaterialType,
   Question,
   Session,
+  Pulse,
   Stream,
   Submission,
 } from "./schema.js";
@@ -149,6 +150,16 @@ export interface HomeDigest {
   recordings: MaterialInContext[];
 }
 
+/** Зведення відгуків по заняттю — для викладача. */
+export interface PulseSummary {
+  sessionId: string;
+  count: number;
+  average: number;
+  /** Розподіл оцінок: індекс 0 = «1 зірка». */
+  histogram: number[];
+  comments: string[];
+}
+
 export type {
   Course,
   Stream,
@@ -159,4 +170,5 @@ export type {
   Question,
   Announcement,
   Submission,
+  Pulse,
 };
