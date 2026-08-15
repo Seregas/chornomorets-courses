@@ -53,11 +53,13 @@ npm run dev            # старт на http://localhost:3000
 | `PORT` | порт API | `3000` |
 | `DATABASE_URL` | шлях до SQLite-файлу | `./data.db` |
 | `ADMIN_EMAILS` | список admin-акаунтів через кому | порожньо (адмін недоступний) |
-| `GOOGLE_CLIENT_ID` | якщо задано — `Authorization` перевіряється як Google ID-token | не задано → **dev-режим** |
+| `GOOGLE_CLIENT_ID` | якщо задано — `Authorization` перевіряється як Google ID-token | не задано → потрібен `ALLOW_DEV_AUTH=1` |
+| `ALLOW_DEV_AUTH` | `1` дозволяє dev-вхід за email. Лише для локальної розробки | не задано |
 
-**Dev-режим автентифікації:** поки `GOOGLE_CLIENT_ID` не заданий, заголовок
-`Authorization: Bearer <email>` трактується як ідентичність — зручно для `curl` і прототипу.
-У проді задаєте `GOOGLE_CLIENT_ID`, і той самий код починає перевіряти справжній токен.
+**Dev-режим автентифікації:** якщо задано `ALLOW_DEV_AUTH=1` і не задано `GOOGLE_CLIENT_ID`,
+заголовок `Authorization: Bearer <email>` трактується як ідентичність — зручно для `curl`
+і прототипу. Без жодного з них сервер **не стартує**: мовчазне падіння в dev-режим на
+публічному сервері відкрило б адмінку кожному, хто знає адресу з `ADMIN_EMAILS`.
 
 ## Ендпоінти
 
