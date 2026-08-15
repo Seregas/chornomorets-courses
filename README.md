@@ -173,11 +173,18 @@ open CoursesApp.xcodeproj
 
 ### TestFlight
 
-`ios/scripts/testflight.sh` збирає архів і вивантажує його. Перед першим запуском
-потрібно **у вашому акаунті Apple**: зареєструвати App ID `com.chornomorets.courses`
-і `com.chornomorets.courses.widgets`, увімкнути для обох App Group
-`group.com.chornomorets.courses`, створити запис застосунку в App Store Connect
-і App Store Connect API-ключ (`.p8` кладеться в `~/.appstoreconnect/private_keys/`).
+`ios/scripts/testflight.sh` збирає архів і вивантажує його.
+
+Перед першим запуском треба **увійти в Xcode → Settings → Accounts** акаунтом із
+доступом до команди. Це не формальність: без облікового запису Xcode не випустить
+distribution-профіль (`exportArchive: No profiles for '…' were found`), а кешований
+wildcard-профіль не несе App Group і підпис падає на entitlement. З акаунтом Xcode
+реєструє App ID для застосунку й віджета та саму App Group автоматично.
+
+Ще потрібен запис застосунку в App Store Connect із bundle ID `com.chornomorets.courses`.
+Для автоматичного вивантаження — App Store Connect API-ключ (`.p8` у
+`~/.appstoreconnect/private_keys/`); він вимагає ролі Admin, тож за його відсутності
+скрипт піде на Apple ID із паролем застосунку або лишить `.ipa` для Transporter.
 
 ```bash
 cd ios
