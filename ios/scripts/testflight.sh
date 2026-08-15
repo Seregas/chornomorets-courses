@@ -30,8 +30,21 @@ BUILD_DIR="${BUILD_DIR:-build}"
 ARCHIVE="$BUILD_DIR/CoursesApp.xcarchive"
 EXPORT_DIR="$BUILD_DIR/export"
 
+# Віджет вимагає App Group, а її треба один раз зареєструвати в Developer-порталі
+# (Identifiers → App Groups + галочка App Groups на обох App ID). Поки цього не
+# зроблено, підпис падає на entitlement. WITHOUT_WIDGET=1 збирає застосунок без
+# віджета — решта функціональності на місці, віджет додасться наступною збіркою.
+SPEC=project.yml
+if [[ "${WITHOUT_WIDGET:-0}" == "1" ]]; then
+  echo "→ Збірка БЕЗ віджета (App Group ще не зареєстрована)"
+  SPEC=project.generated.yml
+  grep -v -e '- target: CoursesWidgets' \
+          -e 'CODE_SIGN_ENTITLEMENTS: CoursesApp/CoursesApp.entitlements' \
+          project.yml > "$SPEC"
+fi
+
 echo "→ Генерую проєкт (team $TEAM_ID)"
-DEVELOPMENT_TEAM="$TEAM_ID" API_BASE_URL="$API_BASE_URL" xcodegen generate
+DEVELOPMENT_TEAM="$TEAM_ID" API_BASE_URL="$API_BASE_URL" xcodegen generate --spec "$SPEC"
 
 echo "→ Архівую (API: $API_BASE_URL)"
 xcodebuild archive \
@@ -74,15 +87,27 @@ xcodebuild -exportArchive \
 IPA=$(find "$EXPORT_DIR" -name '*.ipa' | head -1)
 echo "→ Готово: $IPA"
 
-if [[ -z "${ASC_KEY_ID:-}" || -z "${ASC_ISSUER_ID:-}" ]]; then
+# Вивантажити можна трьома способами — беремо перший доступний.
+if [[ -n "${ASC_KEY_ID:-}" && -n "${ASC_ISSUER_ID:-}" ]]; then
+  echo "→ Вивантажую за App Store Connect API-ключем"
+  xcrun altool --upload-app -f "$IPA" -t ios \
+    --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+elif [[ -n "${ASC_USERNAME:-}" ]]; then
+  # Запасний шлях, коли API-ключ створити не можна (він потребує ролі Admin):
+  # звичайний Apple ID + пароль застосунку з appleid.apple.com → Sign-In and
+  # Security → App-Specific Passwords. Пароль читаємо з keychain, щоб не
+  # світити його в історії команд:
+  #   xcrun notarytool store-credentials  (або security add-generic-password)
+  echo "→ Вивантажую за Apple ID $ASC_USERNAME (пароль застосунку з keychain)"
+  xcrun altool --upload-app -f "$IPA" -t ios \
+    --username "$ASC_USERNAME" --password "@keychain:AC_PASSWORD"
+else
   echo
-  echo "ASC_KEY_ID/ASC_ISSUER_ID не задані — вивантаження пропускаю."
-  echo "Завантажте $IPA вручну через Transporter."
+  echo "Ні API-ключа, ні ASC_USERNAME — вивантаження пропускаю."
+  echo "Завантажте вручну: відкрийте застосунок Transporter і перетягніть"
+  echo "  $IPA"
+  echo "або в Xcode: Window → Organizer → Distribute App."
   exit 0
 fi
-
-echo "→ Вивантажую в App Store Connect"
-xcrun altool --upload-app -f "$IPA" -t ios \
-  --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
 
 echo "→ Вивантажено. Обробка збірки в App Store Connect триває кілька хвилин."

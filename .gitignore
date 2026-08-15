@@ -10,3 +10,4 @@ build/
 *.xcuserstate
 xcuserdata/
 *.xcscmblueprint
+project.generated.yml
