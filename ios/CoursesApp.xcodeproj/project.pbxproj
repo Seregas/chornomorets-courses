@@ -17,6 +17,7 @@
 		2D68AEB1A815017B6C58D6F5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 31B3E91DD48A53066D13E0B6 /* Assets.xcassets */; };
 		3540A191BA50183D0B135094 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E56BF3C549F5831CBB50AFDD /* HomeView.swift */; };
 		36F314FB050E6FA71DADA696 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C74DE8F2270766C2835F7C /* HomeworkView.swift */; };
+		3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */; };
 		3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */; };
 		5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC69E20B206F4B40FB28259 /* CourseRepository.swift */; };
 		5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496CE3358F9446DCA54BD00 /* InputModels.swift */; };
@@ -26,6 +27,7 @@
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
 		A292BC9D259C0D452DE24725 /* AdminHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */; };
+		A2C50E491C58E562B231D0AC /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8338942F6F7BB082FB6777 /* JournalView.swift */; };
 		A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BBAE671589458E514D6982 /* DownloadManager.swift */; };
 		A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */; };
 		AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */; };
@@ -45,6 +47,7 @@
 
 /* Begin PBXFileReference section */
 		02BBAE671589458E514D6982 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
+		05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeJournal.swift; sourceTree = "<group>"; };
 		11CAC67650EED80D8AC61EAA /* SessionPulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPulseView.swift; sourceTree = "<group>"; };
 		16415B1D3ED9D1F80AC53EF4 /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
 		22908673233FCDC3FD42F9D1 /* SharedUI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedUI.swift; sourceTree = "<group>"; };
@@ -78,6 +81,7 @@
 		E357D321925857DB4617ED43 /* PlayerAudio.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerAudio.swift; sourceTree = "<group>"; };
 		E56BF3C549F5831CBB50AFDD /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminHomeView.swift; sourceTree = "<group>"; };
+		FC8338942F6F7BB082FB6777 /* JournalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JournalView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -115,6 +119,7 @@
 				530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */,
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
+				05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */,
 				3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */,
 			);
 			path = Services;
@@ -137,6 +142,14 @@
 				22908673233FCDC3FD42F9D1 /* SharedUI.swift */,
 			);
 			path = App;
+			sourceTree = "<group>";
+		};
+		3E5CCD4A84BA36DB66D6A18B /* Journal */ = {
+			isa = PBXGroup;
+			children = (
+				FC8338942F6F7BB082FB6777 /* JournalView.swift */,
+			);
+			path = Journal;
 			sourceTree = "<group>";
 		};
 		526D0A5DF48ACBA5626300B8 /* Settings */ = {
@@ -186,6 +199,7 @@
 				AA8F2647CCB2302C9AEA4128 /* Admin */,
 				EC7121C48453150EE0F4C68D /* Catalog */,
 				637D9266CD92F8BE999C41CA /* Home */,
+				3E5CCD4A84BA36DB66D6A18B /* Journal */,
 				DD5730BF4AE21368FB371AEE /* Player */,
 				0CB5644CDF84C31326F0FB93 /* Schedule */,
 				526D0A5DF48ACBA5626300B8 /* Settings */,
@@ -345,11 +359,13 @@
 				36F314FB050E6FA71DADA696 /* HomeworkView.swift in Sources */,
 				9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */,
 				5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */,
+				A2C50E491C58E562B231D0AC /* JournalView.swift in Sources */,
 				AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */,
 				82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */,
 				3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */,
 				E5E3C8021EA5D2D1BE29D56B /* PlaybackProgress.swift in Sources */,
 				769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */,
+				3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */,
 				DEC64D9BF98D988841DAD8EF /* PreviewRepository.swift in Sources */,
 				C136A6313DCCABBDE6EA57FF /* ResponseCache.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,

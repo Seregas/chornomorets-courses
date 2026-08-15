@@ -23,6 +23,7 @@ struct HomeView: View {
     @State private var vm = HomeViewModel()
     @State private var path: [Route] = []
     @State private var homeworkToOpen: MaterialDTO?
+    @State private var journal = PracticeJournal.shared
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -38,6 +39,7 @@ struct HomeView: View {
                                 announcementsSection(digest.announcements)
                             }
                             if let next = digest.nextSession { nextSessionCard(next) }
+                            checkInCard
                             if !digest.homework.isEmpty { homeworkSection(digest.homework) }
                             if !digest.recordings.isEmpty { recordingsSection(digest.recordings) }
                             if !digest.upcoming.isEmpty { upcomingSection(digest.upcoming) }
@@ -52,12 +54,19 @@ struct HomeView: View {
                 switch route {
                 case .course(let id): CourseDetailView(courseId: id)
                 case .stream(let id): StreamDetailView(streamId: id)
+                case .journal: JournalView()
                 }
             }
             .refreshable { await vm.load(repo) }
             .sheet(item: $homeworkToOpen) { HomeworkView(material: $0) }
         }
-        .task { await vm.load(repo) }
+        .task {
+            await vm.load(repo)
+            // Демо/скриншоти: одразу відкрити щоденник.
+            if ProcessInfo.processInfo.environment["OPEN_JOURNAL"] != nil, path.isEmpty {
+                path = [.journal]
+            }
+        }
     }
 
     private var emptyState: some View {
@@ -67,6 +76,39 @@ struct HomeView: View {
             Text("Підпишіться на потік — і побачите найближче заняття, домашні завдання й записи.")
         } actions: {
             Button("Переглянути курси", action: openCatalog).buttonStyle(.borderedProminent).tint(.sea)
+        }
+    }
+
+    // MARK: - Чек-ін стану
+
+    /// Курси про стрес і вигорання просять стежити за станом — тому чек-ін
+    /// живе тут, поруч із заняттями, а не десь у налаштуваннях.
+    private var checkInCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Стан")
+            Button {
+                path.append(.journal)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "heart.text.square")
+                        .font(.title3).foregroundStyle(Color.sea).frame(width: 26)
+                    VStack(alignment: .leading, spacing: 2) {
+                        if let today = journal.todayCheckIn?.energy {
+                            Text("Сьогодні: \(today)/5").font(.subheadline.weight(.medium))
+                            Text("Щоденник практик").font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            Text("Як ви сьогодні?").font(.subheadline.weight(.medium))
+                            Text("Чек-ін за 5 секунд").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
         }
     }
 
