@@ -42,6 +42,13 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.chornomorets.courses
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGN_ENTITLEMENTS: CoursesApp/CoursesApp.entitlements
+      configs:
+        # Локальний сервер під час розробки; для збірки на TestFlight адресу
+        # передаємо в оточенні: API_BASE_URL=https://… xcodebuild archive …
+        Debug:
+          API_BASE_URL: http://localhost:3000
+        Release:
+          API_BASE_URL: ${API_BASE_URL}
     info:
       path: CoursesApp/Info.plist
       properties:
@@ -60,10 +67,13 @@ targets:
           - CFBundleURLSchemes:
               # reversed client ID (та сама пара, у зворотному порядку)
               - com.googleusercontent.apps.1088990832674-rcgirjmgsejkatnog9bikcdk0ot3e4q1
-        # Dev: дозволяємо http до локального сервера (localhost і LAN-IP вашого Mac).
-        # Для релізу прибрати й ходити лише по https.
+        # Адреса API вшивається зі змінної збірки (див. configs вище).
+        APIBaseURL: $(API_BASE_URL)
+        # Дозволяємо http лише до локальної мережі (localhost, .local, приватні IP) —
+        # цього досить для розробки проти Mac, і це проходить рев'ю, на відміну від
+        # NSAllowsArbitraryLoads, яке відкривало http кудись завгодно.
         NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
+          NSAllowsLocalNetworking: true
 
   # Віджет «найближче заняття». Дані бере з App Group, у мережу не ходить.
   CoursesWidgets:

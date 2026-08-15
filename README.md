@@ -171,11 +171,31 @@ open CoursesApp.xcodeproj
 Для симулятора підпис не потрібен; для пристрою — `DEVELOPMENT_TEAM=XXXX xcodegen generate`
 або вибір команди в Xcode.
 
+### TestFlight
+
+`ios/scripts/testflight.sh` збирає архів і вивантажує його. Перед першим запуском
+потрібно **у вашому акаунті Apple**: зареєструвати App ID `com.chornomorets.courses`
+і `com.chornomorets.courses.widgets`, увімкнути для обох App Group
+`group.com.chornomorets.courses`, створити запис застосунку в App Store Connect
+і App Store Connect API-ключ (`.p8` кладеться в `~/.appstoreconnect/private_keys/`).
+
+```bash
+cd ios
+TEAM_ID=XXXXXXXXXX API_BASE_URL=https://ваш-домен \
+ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-… \
+./scripts/testflight.sh
+```
+
+Адреса API вшивається в збірку зі змінної `API_BASE_URL` (Debug — `http://localhost:3000`).
+**Без публічного бекенда тестова збірка марна**: на чужому телефоні застосунок покаже
+порожні екрани й банер «немає звʼязку».
+
 ### Налаштування застосунку
 
-- **Адреса API** — `UserDefaults`-ключ `api_base_url`; дефолт `http://localhost:3000`.
-  На фізичному пристрої треба вписати LAN-IP Mac (http дозволено через `NSAppTransportSecurity`
-  — перед релізом прибрати).
+- **Адреса API** — у порядку пріоритету: `UserDefaults`-ключ `api_base_url` (поле в
+  Налаштуваннях) → `APIBaseURL` з Info.plist (вшивається зі змінної збірки `API_BASE_URL`)
+  → `http://localhost:3000`. На фізичному пристрої в тій самій мережі досить вписати
+  LAN-IP Mac: http до локальної мережі дозволено через `NSAllowsLocalNetworking`.
 - **Google-вхід** — `GIDClientID` в `project.yml` (+ reversed client ID у `CFBundleURLTypes`).
   Той самий client ID має стояти в `GOOGLE_CLIENT_ID` на бекенді. Якщо client ID не підставлений,
   застосунок автоматично показує **dev-вхід через email** — зручно для прототипу без Google Cloud.

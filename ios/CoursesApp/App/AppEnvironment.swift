@@ -1,10 +1,18 @@
 import SwiftUI
 
-/// Конфіг. baseURL можна змінити через UserDefaults-ключ "api_base_url"
-/// (зручно для демо на пристрої). Дефолт — локальний сервер.
+/// Конфіг адреси API, у порядку пріоритету:
+///  1) UserDefaults-ключ `api_base_url` — ручне перевизначення в Налаштуваннях;
+///  2) `APIBaseURL` з Info.plist — вшивається зі змінної збірки `API_BASE_URL`
+///     (Debug = localhost, Release = адреса, передана під час архівування);
+///  3) локальний сервер — щоб прев'ю й свіжий клон працювали без налаштувань.
 enum Config {
     static var baseURL: URL {
-        if let s = UserDefaults.standard.string(forKey: "api_base_url"), let u = URL(string: s) {
+        if let s = UserDefaults.standard.string(forKey: "api_base_url"),
+           !s.isEmpty, let u = URL(string: s) {
+            return u
+        }
+        if let s = Bundle.main.object(forInfoDictionaryKey: "APIBaseURL") as? String,
+           !s.isEmpty, let u = URL(string: s) {
             return u
         }
         return URL(string: "http://localhost:3000")!

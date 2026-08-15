@@ -560,6 +560,7 @@
 		4F325F6609915DACAE5E42DE /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				API_BASE_URL = "http://localhost:3000";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CoursesApp/CoursesApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -596,6 +597,7 @@
 		B767BB537D17C85910884C83 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				API_BASE_URL = "${API_BASE_URL}";
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = CoursesApp/CoursesApp.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
