@@ -212,6 +212,34 @@ export const pulses = sqliteTable(
   (t) => [uniqueIndex("pulse_session_device").on(t.sessionId, t.deviceId)],
 );
 
+/**
+ * Заявка на потік — заміна Google Forms. Студент лишає контакт, викладач
+ * веде статус. Оплату НЕ обробляємо: у застосунку це поки просто стан заявки.
+ *
+ * Одна на пару «потік + пристрій»: передумати можна, подавати двічі — ні.
+ */
+export const applications = sqliteTable(
+  "applications",
+  {
+    id: id(),
+    streamId: text("stream_id")
+      .notNull()
+      .references(() => streams.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull(),
+    name: text("name").notNull(),
+    /** Як звʼязатися: email або телеграм — як зручніше людині. */
+    contact: text("contact").notNull(),
+    comment: text("comment"),
+    status: text("status", {
+      enum: ["new", "waitingPayment", "enrolled", "declined"],
+    })
+      .notNull()
+      .default("new"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("application_stream_device").on(t.streamId, t.deviceId)],
+);
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -222,6 +250,7 @@ export type Question = typeof questions.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Pulse = typeof pulses.$inferSelect;
+export type Application = typeof applications.$inferSelect;
 
 export const schema = {
   courses,
@@ -234,6 +263,7 @@ export const schema = {
   announcements,
   submissions,
   pulses,
+  applications,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

@@ -69,6 +69,11 @@ npm run dev            # старт на http://localhost:3000
 - `GET /material-types` — каталог типів матеріалів
 - `GET /me?deviceId=…` — `{ deviceId, email, isAdmin }`
 
+**Заявки на потік** (заміна Google Forms):
+- `GET /streams/:id/application?deviceId=…` · `POST /streams/:id/application` `{deviceId, name, contact, comment?}`
+- `GET /admin/streams/:id/applications` · `POST /admin/applications/:id/status` `{status}`
+- статус `enrolled` одразу підписує пристрій на потік
+
 **Пульс після заняття:**
 - `GET /sessions/:id/pulse?deviceId=…` · `POST /sessions/:id/pulse` `{deviceId, rating 1–5, comment?}`
 - `GET /admin/sessions/:id/pulses` — зведення (середня, гістограма, коментарі)
@@ -123,7 +128,7 @@ npm run dev            # старт на http://localhost:3000
 `Material` (вміст вирішує поведінку: текст / відео / лінк / дедлайн; `typeId` — косметичний ярлик
 з керованого каталогу `MaterialType`, може бути порожнім). `Enrollment` = підписка `deviceId`↔`streamId`.
 `Question` = питання до заняття (`deviceId` автора, опційний `authorEmail`, прапорець анонімності).
-`Announcement` = оголошення викладача на потік. `Submission` = здана домашка (одна на матеріал+пристрій). `Pulse` = оцінка заняття 1–5.
+`Announcement` = оголошення викладача на потік. `Submission` = здана домашка (одна на матеріал+пристрій). `Pulse` = оцінка заняття 1–5. `Application` = заявка на потік (одна на потік+пристрій).
 
 ## iOS-застосунок
 

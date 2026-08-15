@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { db as defaultDb, type DB } from "./db.js";
 import {
   announcements,
+  applications,
   courses,
   enrollments,
   materials,
@@ -15,6 +16,7 @@ import {
 import type {
   Announcement,
   AnnouncementDTO,
+  Application,
   Course,
   CourseCard,
   CourseDetail,
@@ -49,6 +51,16 @@ export interface AskQuestionInput {
   isAnonymous: boolean;
   /** Email автора, якщо він увійшов і не приховався. */
   authorEmail?: string | null;
+}
+
+export type ApplicationStatus = "new" | "waitingPayment" | "enrolled" | "declined";
+
+export interface ApplyInput {
+  streamId: string;
+  deviceId: string;
+  name: string;
+  contact: string;
+  comment?: string | null;
 }
 
 export interface RatePulseInput {
@@ -129,6 +141,13 @@ export interface CourseRepository {
   listSubmissions(materialId: string): Promise<Submission[]>;
   /** Відповідь викладача. */
   reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
+
+  // — Заявки на потік —
+  getApplication(streamId: string, deviceId: string): Promise<Application | null>;
+  applyToStream(input: ApplyInput): Promise<Application>;
+  listApplications(streamId: string): Promise<Application[]>;
+  /** Статус «enrolled» одразу підписує пристрій на потік — інакше довелося б робити це двічі. */
+  setApplicationStatus(id: string, status: ApplicationStatus): Promise<Application | null>;
 
   // — Пульс після заняття —
   getPulse(sessionId: string, deviceId: string): Promise<Pulse | null>;
@@ -475,6 +494,83 @@ export class DrizzleCourseRepository implements CourseRepository {
       homework,
       recordings,
     };
+  }
+
+  // — Заявки на потік —
+
+  async getApplication(
+    streamId: string,
+    deviceId: string,
+  ): Promise<Application | null> {
+    return (
+      this.db
+        .select()
+        .from(applications)
+        .where(
+          and(
+            eq(applications.streamId, streamId),
+            eq(applications.deviceId, deviceId),
+          ),
+        )
+        .get() ?? null
+    );
+  }
+
+  async applyToStream(input: ApplyInput): Promise<Application> {
+    const existing = await this.getApplication(input.streamId, input.deviceId);
+    if (existing) {
+      // Передумав щодо контакту чи коментаря — оновлюємо, але статус лишаємо
+      // за викладачем: не студенту вирішувати, що він уже зарахований.
+      return this.db
+        .update(applications)
+        .set({
+          name: input.name,
+          contact: input.contact,
+          comment: input.comment ?? null,
+        })
+        .where(eq(applications.id, existing.id))
+        .returning()
+        .get();
+    }
+    return this.db
+      .insert(applications)
+      .values({
+        streamId: input.streamId,
+        deviceId: input.deviceId,
+        name: input.name,
+        contact: input.contact,
+        comment: input.comment ?? null,
+      })
+      .returning()
+      .get();
+  }
+
+  async listApplications(streamId: string): Promise<Application[]> {
+    return this.db
+      .select()
+      .from(applications)
+      .where(eq(applications.streamId, streamId))
+      .orderBy(asc(applications.createdAt))
+      .all();
+  }
+
+  async setApplicationStatus(
+    id: string,
+    status: ApplicationStatus,
+  ): Promise<Application | null> {
+    const updated =
+      this.db
+        .update(applications)
+        .set({ status })
+        .where(eq(applications.id, id))
+        .returning()
+        .get() ?? null;
+    if (updated && status === "enrolled") {
+      // Зарахували — значить, потік має зʼявитися в людини на екрані
+      // «Навчання» сам, без окремої дії «підписатися».
+      await this.subscribe(updated.deviceId, updated.streamId);
+    }
+    return updated;
   }
 
   // — Пульс після заняття —

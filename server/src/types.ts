@@ -1,5 +1,6 @@
 import type {
   Announcement,
+  Application,
   Course,
   Enrollment,
   Material,
@@ -171,4 +172,5 @@ export type {
   Announcement,
   Submission,
   Pulse,
+  Application,
 };

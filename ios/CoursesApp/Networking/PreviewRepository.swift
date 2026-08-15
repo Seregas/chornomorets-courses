@@ -69,6 +69,11 @@ final class PreviewRepository: CourseRepository {
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
 
+    func application(streamId: String) async throws -> Application? { nil }
+    func apply(streamId: String, name: String, contact: String, comment: String?) async throws {}
+    func applications(streamId: String) async throws -> [Application] { [] }
+    func setApplicationStatus(id: String, status: ApplicationStatus) async throws {}
+
     func pulse(sessionId: String) async throws -> Pulse? { nil }
     func ratePulse(sessionId: String, rating: Int, comment: String?) async throws {}
     func pulseSummary(sessionId: String) async throws -> PulseSummary {

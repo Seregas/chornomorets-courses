@@ -124,6 +124,31 @@ struct ScheduleItem: Codable, Identifiable, Hashable {
     let courseTitle: String
 }
 
+enum ApplicationStatus: String, Codable {
+    case new, waitingPayment, enrolled, declined
+
+    var label: String {
+        switch self {
+        case .new: return "заявку прийнято"
+        case .waitingPayment: return "очікує оплати"
+        case .enrolled: return "зараховано"
+        case .declined: return "відхилено"
+        }
+    }
+}
+
+/// Заявка на потік — заміна Google Forms.
+struct Application: Codable, Identifiable, Hashable {
+    let id: String
+    let streamId: String
+    let deviceId: String
+    let name: String
+    let contact: String
+    let comment: String?
+    let status: ApplicationStatus
+    let createdAt: String
+}
+
 /// «Як зайшло заняття»: оцінка 1–5 і необовʼязковий коментар.
 struct Pulse: Codable, Identifiable, Hashable {
     let id: String

@@ -8,6 +8,7 @@ final class StreamDetailViewModel {
     var working = false
     var types: [MaterialType] = []
     var announcements: [Announcement] = []
+    var application: Application?
 
     var current: StreamDetail? { if case .loaded(let s) = state { return s } else { return nil } }
 
@@ -17,10 +18,12 @@ final class StreamDetailViewModel {
             async let subs = repo.subscriptions()
             async let t = repo.materialTypes()
             async let ann = repo.announcements(streamId: id)
+            async let app = repo.application(streamId: id)
             let (d, s) = try await (detail, subs)
             isSubscribed = s.contains { $0.id == id }
             types = (try? await t) ?? []
             announcements = (try? await ann) ?? []
+            application = try? await app
             state = .loaded(d)
         } catch {
             state = .failed(error.localizedDescription)
@@ -47,12 +50,14 @@ final class StreamDetailViewModel {
 
 private enum StreamSheet: Identifiable {
     case editStream, cloneStream, newAnnouncement, newSession, sessionsBatch,
-         editSession(String), newMaterial, editMaterial(String)
+         editSession(String), newMaterial, editMaterial(String), apply, applications
     var id: String {
         switch self {
         case .editStream: return "es"
         case .cloneStream: return "cs"
         case .newAnnouncement: return "na"
+        case .apply: return "ap"
+        case .applications: return "aps"
         case .sessionsBatch: return "sb"
         case .newSession: return "nss"
         case .editSession(let id): return "ess-\(id)"
@@ -79,6 +84,7 @@ struct StreamDetailView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     header(stream)
+                    applyBlock(stream)
                     subscribeButton(stream)
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -163,6 +169,9 @@ struct StreamDetailView: View {
                         Button { sheet = .cloneStream } label: {
                             Label("Клонувати потік", systemImage: "doc.on.doc")
                         }
+                        Button { sheet = .applications } label: {
+                            Label("Заявки", systemImage: "person.badge.clock")
+                        }
                         Button(role: .destructive) {
                             Task { try? await repo.deleteStream(id: streamId); dismiss() }
                         } label: { Label("Видалити потік", systemImage: "trash") }
@@ -180,6 +189,12 @@ struct StreamDetailView: View {
                 if let s = vm.current {
                     CloneStreamFormView(source: s) { await reload() }
                 }
+            case .apply:
+                if let s = vm.current {
+                    ApplyView(stream: s, existing: vm.application) { await reload() }
+                }
+            case .applications:
+                ApplicationsView(streamId: streamId)
             case .newAnnouncement:
                 AnnouncementFormView(streamId: streamId) { await reload() }
             case .newSession:
@@ -248,20 +263,68 @@ struct StreamDetailView: View {
         }
     }
 
-    @ViewBuilder
-    private func subscribeButton(_ stream: StreamDetail) -> some View {
-        Button {
-            Task { await vm.toggle(repo, notifications: notifications, detail: stream) }
-        } label: {
-            HStack {
-                if vm.working { ProgressView().tint(.white) }
-                Text(vm.isSubscribed ? "Відписатися" : "Підписатися")
+    /// Для майбутнього потоку головна дія — записатися (заявка), а не «підписатися».
+    /// Підписка лишається способом стежити за потоком, на який ти вже ходиш.
+    @ViewBuilder private func applyBlock(_ stream: StreamDetail) -> some View {
+        if stream.status != .finished {
+            if let app = vm.application {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.seal.fill").foregroundStyle(Color.sea)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Заявку надіслано").font(.subheadline.weight(.medium))
+                        Text(app.status.label).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Змінити") { sheet = .apply }.font(.caption)
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            } else {
+                Button { sheet = .apply } label: {
+                    Label("Записатися на потік", systemImage: "person.badge.plus")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent).tint(.sea)
             }
-            .frame(maxWidth: .infinity)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(vm.isSubscribed ? .red : .sea)
-        .disabled(vm.working)
+    }
+
+    /// Підписка — це «стежити»: розклад і нагадування. Коли поруч є заявка,
+    /// вона головна дія, а підписка стає другорядною кнопкою — інакше дві
+    /// однакові зелені кнопки поруч змушують гадати, яку тиснути.
+    @ViewBuilder private func subscribeButton(_ stream: StreamDetail) -> some View {
+        let secondary = stream.status != .finished
+        let title = vm.isSubscribed
+            ? "Не стежити"
+            : (secondary ? "Стежити за розкладом" : "Підписатися")
+
+        if secondary {
+            Button { toggleSubscription(stream) } label: {
+                label(title).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .tint(vm.isSubscribed ? .red : .sea)
+            .disabled(vm.working)
+        } else {
+            Button { toggleSubscription(stream) } label: {
+                label(title).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(vm.isSubscribed ? .red : .sea)
+            .disabled(vm.working)
+        }
+    }
+
+    private func toggleSubscription(_ stream: StreamDetail) {
+        Task { await vm.toggle(repo, notifications: notifications, detail: stream) }
+    }
+
+    private func label(_ title: String) -> some View {
+        HStack {
+            if vm.working { ProgressView() }
+            Text(title)
+        }
     }
 }
 

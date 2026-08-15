@@ -54,6 +54,29 @@ app.get("/streams/:id/announcements", async (c) =>
   c.json(await repo.listAnnouncements(c.req.param("id"))),
 );
 
+// ──────────────────── Заявки на потік ────────────────────
+// Заміна Google Forms: студент лишає контакт, викладач веде статус.
+
+app.get("/streams/:id/application", zValidator("query", deviceQuery), async (c) =>
+  c.json(
+    await repo.getApplication(c.req.param("id"), c.req.valid("query").deviceId),
+  ),
+);
+
+const applyInput = z.object({
+  deviceId: z.string().min(1),
+  name: z.string().min(1).max(200),
+  contact: z.string().min(3).max(200),
+  comment: z.string().max(1000).nullish(),
+});
+app.post("/streams/:id/application", zValidator("json", applyInput), async (c) => {
+  const body = c.req.valid("json");
+  return c.json(
+    await repo.applyToStream({ streamId: c.req.param("id"), ...body }),
+    201,
+  );
+});
+
 // ──────────────────── Пульс після заняття ────────────────────
 // Оцінка 1–5 і необовʼязковий коментар; зведення бачить лише викладач.
 
@@ -253,6 +276,21 @@ const materialInput = z.object({
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
 });
+
+// applications — заявки на потік
+admin.get("/streams/:id/applications", async (c) =>
+  c.json(await repo.listApplications(c.req.param("id"))),
+);
+admin.post(
+  "/applications/:id/status",
+  zValidator("json", z.object({
+    status: z.enum(["new", "waitingPayment", "enrolled", "declined"]),
+  })),
+  async (c) => {
+    const r = await repo.setApplicationStatus(c.req.param("id"), c.req.valid("json").status);
+    return r ? c.json(r) : c.json({ error: "not found" }, 404);
+  },
+);
 
 // pulses — зведення відгуків по заняттю
 admin.get("/sessions/:id/pulses", async (c) =>

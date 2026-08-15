@@ -15,6 +15,12 @@ protocol CourseRepository {
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
 
+    // — Заявки на потік —
+    func application(streamId: String) async throws -> Application?
+    func apply(streamId: String, name: String, contact: String, comment: String?) async throws
+    func applications(streamId: String) async throws -> [Application]
+    func setApplicationStatus(id: String, status: ApplicationStatus) async throws
+
     // — Пульс після заняття —
     func pulse(sessionId: String) async throws -> Pulse?
     func ratePulse(sessionId: String, rating: Int, comment: String?) async throws
@@ -95,6 +101,26 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+    }
+
+    private struct ApplyBody: Encodable {
+        let deviceId: String; let name: String; let contact: String; let comment: String?
+    }
+    private struct StatusBody: Encodable { let status: String }
+
+    func application(streamId: String) async throws -> Application? {
+        try await api.get("streams/\(streamId)/application?deviceId=\(deviceId)")
+    }
+    func apply(streamId: String, name: String, contact: String, comment: String?) async throws {
+        try await api.mutate("POST", "streams/\(streamId)/application",
+                             body: ApplyBody(deviceId: deviceId, name: name, contact: contact, comment: comment))
+    }
+    func applications(streamId: String) async throws -> [Application] {
+        try await api.get("admin/streams/\(streamId)/applications")
+    }
+    func setApplicationStatus(id: String, status: ApplicationStatus) async throws {
+        try await api.mutate("POST", "admin/applications/\(id)/status",
+                             body: StatusBody(status: status.rawValue))
     }
 
     private struct PulseBody: Encodable { let deviceId: String; let rating: Int; let comment: String? }
