@@ -286,7 +286,7 @@ const sessionInput = z.object({
 });
 
 const materialInput = z.object({
-  ownerType: z.enum(["course", "stream"]),
+  ownerType: z.enum(["course", "stream", "session"]),
   ownerId: z.string().min(1),
   typeId: z.string().nullish(),
   title: z.string().min(1),

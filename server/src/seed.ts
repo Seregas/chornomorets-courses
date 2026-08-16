@@ -160,14 +160,14 @@ function seed() {
 
     // Рівень ПОТОКУ (Стрес, Потік 4): записи занять.
     // Композитний матеріал: текст + відео (Drive).
-    { id: "m-s4-rec1", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Запис заняття 1", description: "Як не заїдати емоції — повний запис.", videoProvider: "drive", videoRef: "1AbCDriveFileStress1", durationMinutes: 118, order: 1 },
-    { id: "m-s4-rec2", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Запис заняття 2", videoProvider: "drive", videoRef: "1AbCDriveFileStress2", durationMinutes: 121, order: 2 },
+    { id: "m-s4-rec1", ownerType: "session", ownerId: "ses-s4-1", typeId: "mt-video", title: "Запис заняття 1", description: "Як не заїдати емоції — повний запис.", videoProvider: "drive", videoRef: "1AbCDriveFileStress1", durationMinutes: 118, order: 1 },
+    { id: "m-s4-rec2", ownerType: "session", ownerId: "ses-s4-2", typeId: "mt-video", title: "Запис заняття 2", videoProvider: "drive", videoRef: "1AbCDriveFileStress2", durationMinutes: 121, order: 2 },
     { id: "m-s4-yt", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-video", title: "Бонусна лекція (YouTube)", videoProvider: "youtube", videoRef: "dQw4w9WgXcQ", order: 3 },
-    { id: "m-s4-doc", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-doc", title: "Конспект заняття 1", url: "https://docs.google.com/document/d/EXAMPLE", order: 4 },
-    { id: "m-s4-hw", ownerType: "stream", ownerId: "s-stress-4", typeId: "mt-hw", title: "Домашнє завдання до заняття 1", description: "Протягом тижня занотуйте 3 ситуації, де ви заїдали емоції, і що передувало.", dueAt: S4[1], order: 5 },
+    { id: "m-s4-doc", ownerType: "session", ownerId: "ses-s4-1", typeId: "mt-doc", title: "Конспект заняття 1", url: "https://docs.google.com/document/d/EXAMPLE", order: 4 },
+    { id: "m-s4-hw", ownerType: "session", ownerId: "ses-s4-1", typeId: "mt-hw", title: "Домашнє завдання до заняття 1", description: "Протягом тижня занотуйте 3 ситуації, де ви заїдали емоції, і що передувало.", dueAt: S4[1], order: 5 },
 
     // Підготовка до майбутнього потоку — жива домашка з дедлайном попереду.
-    { id: "m-s5-hw", ownerType: "stream", ownerId: "s-stress-5", typeId: "mt-hw", title: "Підготовка до заняття 1", description: "До першого заняття занотуйте, у які моменти тижня втома накриває найсильніше.", dueAt: S5[0], order: 1 },
+    { id: "m-s5-hw", ownerType: "session", ownerId: "ses-s5-1", typeId: "mt-hw", title: "Підготовка до заняття 1", description: "До першого заняття занотуйте, у які моменти тижня втома накриває найсильніше.", dueAt: S5[0], order: 1 },
   ]).run();
 
   // — Демо-підписка для розкладу —

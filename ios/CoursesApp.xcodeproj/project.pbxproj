@@ -20,6 +20,7 @@
 		36F314FB050E6FA71DADA696 /* HomeworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2C74DE8F2270766C2835F7C /* HomeworkView.swift */; };
 		3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */; };
 		3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */; };
+		44A80D04288E4F7E84CAC6C1 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0552402326D4C6B62130979E /* SessionDetailView.swift */; };
 		4EA3BCAE8B9862196C18CE8E /* DriveAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DA74E6F659D77F3A57B987 /* DriveAccess.swift */; };
 		5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC69E20B206F4B40FB28259 /* CourseRepository.swift */; };
 		5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496CE3358F9446DCA54BD00 /* InputModels.swift */; };
@@ -79,6 +80,7 @@
 
 /* Begin PBXFileReference section */
 		02BBAE671589458E514D6982 /* DownloadManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadManager.swift; sourceTree = "<group>"; };
+		0552402326D4C6B62130979E /* SessionDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionDetailView.swift; sourceTree = "<group>"; };
 		05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PracticeJournal.swift; sourceTree = "<group>"; };
 		11CAC67650EED80D8AC61EAA /* SessionPulseView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPulseView.swift; sourceTree = "<group>"; };
 		16415B1D3ED9D1F80AC53EF4 /* Routes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Routes.swift; sourceTree = "<group>"; };
@@ -328,6 +330,7 @@
 				B2C74DE8F2270766C2835F7C /* HomeworkView.swift */,
 				C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */,
 				16415B1D3ED9D1F80AC53EF4 /* Routes.swift */,
+				0552402326D4C6B62130979E /* SessionDetailView.swift */,
 				11CAC67650EED80D8AC61EAA /* SessionPulseView.swift */,
 				E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */,
 				6CF4953E7EAD819BD46F4727 /* StreamDetailView.swift */,
@@ -475,6 +478,7 @@
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,
 				E1ED29CC351741F106566EE2 /* ScheduleView.swift in Sources */,
 				2968B349EB4CFBB16DB86AEE /* SeenAnnouncements.swift in Sources */,
+				44A80D04288E4F7E84CAC6C1 /* SessionDetailView.swift in Sources */,
 				6B6F16FA07E0817D33093CD8 /* SessionPulseView.swift in Sources */,
 				A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */,
 				03A046DCC2C571BA43862BD6 /* SettingsView.swift in Sources */,

@@ -81,10 +81,16 @@ export interface CourseDetail {
   materials: MaterialDTO[];
 }
 
+/** Заняття разом зі своїми матеріалами (запис, конспект, домашка цієї зустрічі). */
+export interface SessionWithMaterials {
+  session: Session;
+  materials: MaterialDTO[];
+}
+
 /** Деталь потоку: злитий опис + заняття + матеріали потоку.
  *  Поля *Override — сирі значення (для адмін-редагування; null = успадковано). */
 export interface StreamDetail extends ResolvedStream {
-  sessions: Session[];
+  sessions: SessionWithMaterials[];
   materials: MaterialDTO[];
   summaryOverride: string | null;
   descriptionOverride: string | null;

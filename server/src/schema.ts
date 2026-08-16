@@ -96,11 +96,13 @@ export const materialTypes = sqliteTable("material_types", {
  *   description → текст; videoRef → відео (з access-станом); url → лінк; dueAt → дедлайн.
  * typeId необов'язковий (null = порожній тип, і fallback після видалення типу —
  * onDelete: "set null").
- * Власник поліморфний (course|stream), тому FK немає — цілісність на рівні репозиторію.
+ * Власник поліморфний (course|stream|session), тому FK немає — цілісність на рівні
+ * репозиторію. Матеріал на занятті — це запис, конспект і домашка саме цієї
+ * зустрічі; на потоці лишається те, що стосується курсу загалом.
  */
 export const materials = sqliteTable("materials", {
   id: id(),
-  ownerType: text("owner_type", { enum: ["course", "stream"] }).notNull(),
+  ownerType: text("owner_type", { enum: ["course", "stream", "session"] }).notNull(),
   ownerId: text("owner_id").notNull(),
   typeId: text("type_id").references(() => materialTypes.id, {
     onDelete: "set null",

@@ -41,10 +41,12 @@ final class PreviewRepository: CourseRepository {
                      pricePerSession: Self.stream5.pricePerSession, summary: Self.stream5.summary,
                      description: Self.stream5.description, program: Self.stream5.program,
                      coverImageURL: nil,
-                     sessions: [CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
-                                              startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
-                                              format: .online, joinURL: "https://meet.google.com/x",
-                                              paymentStatus: .unpaid, order: 1)],
+                     sessions: [SessionWithMaterials(
+                        session: CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
+                                               startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
+                                               format: .online, joinURL: "https://meet.google.com/x",
+                                               paymentStatus: .unpaid, order: 1),
+                        materials: [Self.videoMaterial])],
                      materials: [Self.videoMaterial],
                      summaryOverride: nil, descriptionOverride: nil,
                      programOverride: nil, coverImageOverride: nil)

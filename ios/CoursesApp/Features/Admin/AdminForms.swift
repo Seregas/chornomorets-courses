@@ -284,7 +284,7 @@ struct CloneStreamFormView: View {
         self.onDone = onDone
         _title = State(initialValue: Self.nextTitle(after: source.title))
         // За замовчуванням — через тиждень після останнього заняття джерела.
-        let lastSession = source.sessions.compactMap { Fmt.date($0.startAt) }.max()
+        let lastSession = source.sessions.compactMap { Fmt.date($0.session.startAt) }.max()
         _startDate = State(initialValue: (lastSession ?? Date()).addingTimeInterval(7 * 86_400))
     }
 

@@ -77,6 +77,20 @@ struct CourseSession: Codable, Identifiable, Hashable {
     let order: Int
 }
 
+/// Заняття разом зі своїми матеріалами: записом, конспектом, домашкою.
+struct SessionWithMaterials: Codable, Identifiable, Hashable {
+    var id: String { session.id }
+    let session: CourseSession
+    let materials: [MaterialDTO]
+
+    /// Що є всередині — для іконок у рядку заняття.
+    var hasVideo: Bool { materials.contains { $0.hasVideo } }
+    var hasHomework: Bool { materials.contains { $0.dueAt != nil } }
+    var hasDocuments: Bool {
+        materials.contains { $0.url != nil && !$0.hasVideo && $0.dueAt == nil }
+    }
+}
+
 struct StreamDetail: Codable, Identifiable, Hashable {
     let id: String
     let courseId: String
@@ -90,7 +104,7 @@ struct StreamDetail: Codable, Identifiable, Hashable {
     let description: String
     let program: String?
     let coverImageURL: String?
-    let sessions: [CourseSession]
+    let sessions: [SessionWithMaterials]
     let materials: [MaterialDTO]
     // Сирі override-значення (для адмін-редагування; null = успадковано з курсу).
     let summaryOverride: String?

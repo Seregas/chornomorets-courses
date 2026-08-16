@@ -386,9 +386,31 @@ export class DrizzleCourseRepository implements CourseRepository {
       .orderBy(asc(materials.order))
       .all();
 
+    // Матеріали занять тягнемо одним запитом на весь потік, а не по одному на
+    // заняття: інакше сторінка з десятком зустрічей робить десяток запитів.
+    const sessionIds = streamSessions.map((s) => s.id);
+    const sessionMaterials = sessionIds.length
+      ? this.db
+          .select()
+          .from(materials)
+          .where(
+            and(
+              eq(materials.ownerType, "session"),
+              inArray(materials.ownerId, sessionIds),
+            ),
+          )
+          .orderBy(asc(materials.order))
+          .all()
+      : [];
+
     return {
       ...resolveStream(course, stream),
-      sessions: streamSessions,
+      sessions: streamSessions.map((session) => ({
+        session,
+        materials: sessionMaterials
+          .filter((m) => m.ownerId === session.id)
+          .map(toMaterialDTO),
+      })),
       materials: streamMaterials.map(toMaterialDTO),
       summaryOverride: stream.summaryOverride,
       descriptionOverride: stream.descriptionOverride,

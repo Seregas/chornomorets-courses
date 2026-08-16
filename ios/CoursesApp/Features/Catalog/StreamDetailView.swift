@@ -41,7 +41,8 @@ final class StreamDetailViewModel {
             } else {
                 try await repo.subscribe(streamId: detail.id)
                 notifications.scheduleReminders(
-                    streamId: detail.id, courseTitle: detail.title, sessions: detail.sessions)
+                    streamId: detail.id, courseTitle: detail.title,
+                    sessions: detail.sessions.map(\.session))
                 isSubscribed = true
             }
         } catch { /* лишаємо попередній стан */ }
@@ -76,6 +77,9 @@ struct StreamDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var vm = StreamDetailViewModel()
     @State private var sheet: StreamSheet?
+    @State private var showExtras = false
+    @State private var showFullDescription = false
+    @State private var openSession: SessionWithMaterials?
 
     private func reload() async { await vm.load(repo, id: streamId) }
 
@@ -89,10 +93,19 @@ struct StreamDetailView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         SectionHeader(title: "Про потік")
+                        // Опис буває на пів екрана — з біографіями ведучих і
+                        // розкладом. Показуємо початок, решту за запитом:
+                        // інакше заняття, заради яких сюди й заходять,
+                        // опиняються за межами екрана.
                         Text(stream.description)
-                        if let program = stream.program {
+                            .lineLimit(showFullDescription ? nil : 4)
+                        if let program = stream.program, showFullDescription {
                             Text(program).font(.subheadline).foregroundStyle(.secondary)
                         }
+                        Button(showFullDescription ? "Згорнути" : "Докладніше") {
+                            withAnimation { showFullDescription.toggle() }
+                        }
+                        .font(.subheadline)
                     }
 
                     if !vm.announcements.isEmpty || auth.isAdmin {
@@ -102,6 +115,39 @@ struct StreamDetailView: View {
                                 announcementRow(a)
                             }
                         }
+                    }
+
+                    if !stream.materials.isEmpty || auth.isAdmin {
+                        // Це матеріали курсу загалом — дошка, реквізити, спільний
+                        // документ. Вони потрібні не щодня, тому за замовчуванням
+                        // згорнуті: інакше десять записів занять опиняються під
+                        // ними й до занять треба гортати.
+                        DisclosureGroup(isExpanded: $showExtras) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                ForEach(stream.materials) { m in
+                                    MaterialRow(
+                                        material: m,
+                                        adminEdit: auth.isAdmin ? { sheet = .editMaterial(m.id) } : nil,
+                                        adminDelete: auth.isAdmin ? {
+                                            Task { try? await repo.deleteMaterial(id: m.id); await reload() }
+                                        } : nil)
+                                }
+                                if auth.isAdmin {
+                                    Button { sheet = .newMaterial } label: {
+                                        Label("Додати матеріал", systemImage: "plus.circle")
+                                            .font(.subheadline)
+                                    }
+                                }
+                            }
+                            .padding(.top, 8)
+                        } label: {
+                            HStack {
+                                SectionHeader(title: "Додаткові матеріали")
+                                Text("\(stream.materials.count)")
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
+                        }
+                        .tint(.secondary)
                     }
 
                     if !stream.sessions.isEmpty || auth.isAdmin {
@@ -121,27 +167,16 @@ struct StreamDetailView: View {
                                     } label: { Image(systemName: "plus.circle.fill") }
                                 }
                             }
-                            ForEach(stream.sessions) { session in
-                                SessionRow(
-                                    session: session,
-                                    adminEdit: auth.isAdmin ? { sheet = .editSession(session.id) } : nil,
-                                    adminDelete: auth.isAdmin ? {
-                                        Task { try? await repo.deleteSession(id: session.id); await reload() }
-                                    } : nil)
-                            }
-                        }
-                    }
-
-                    if !stream.materials.isEmpty || auth.isAdmin {
-                        VStack(alignment: .leading, spacing: 10) {
-                            adminSectionHeader("Матеріали") { sheet = .newMaterial }
-                            ForEach(stream.materials) { m in
-                                MaterialRow(
-                                    material: m,
-                                    adminEdit: auth.isAdmin ? { sheet = .editMaterial(m.id) } : nil,
-                                    adminDelete: auth.isAdmin ? {
-                                        Task { try? await repo.deleteMaterial(id: m.id); await reload() }
-                                    } : nil)
+                            ForEach(stream.sessions) { item in
+                                NavigationLink(value: item) {
+                                    SessionRow(
+                                        item: item,
+                                        adminEdit: auth.isAdmin ? { sheet = .editSession(item.session.id) } : nil,
+                                        adminDelete: auth.isAdmin ? {
+                                            Task { try? await repo.deleteSession(id: item.session.id); await reload() }
+                                        } : nil)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                     }
@@ -202,8 +237,9 @@ struct StreamDetailView: View {
             case .sessionsBatch:
                 SessionsBatchFormView(streamId: streamId) { await reload() }
             case .editSession(let id):
-                SessionFormView(streamId: streamId,
-                                existing: vm.current?.sessions.first { $0.id == id }) { await reload() }
+                SessionFormView(
+                    streamId: streamId,
+                    existing: vm.current?.sessions.first { $0.session.id == id }?.session) { await reload() }
             case .newMaterial:
                 MaterialFormView(ownerType: "stream", ownerId: streamId, editingId: nil,
                                  types: vm.types) { await reload() }
@@ -212,7 +248,19 @@ struct StreamDetailView: View {
                                  types: vm.types) { await reload() }
             }
         }
-        .task { await vm.load(repo, id: streamId) }
+        .navigationDestination(for: SessionWithMaterials.self) { item in
+            SessionDetailView(item: item, types: vm.types) { await reload() }
+        }
+        .navigationDestination(item: $openSession) { item in
+            SessionDetailView(item: item, types: vm.types) { await reload() }
+        }
+        .task {
+            await vm.load(repo, id: streamId)
+            // Демо/скриншоти: одразу відкрити потрібне заняття.
+            if let wanted = ProcessInfo.processInfo.environment["OPEN_SESSION"] {
+                openSession = vm.current?.sessions.first { $0.session.id == wanted }
+            }
+        }
     }
 
     private func announcementRow(_ a: Announcement) -> some View {
@@ -329,7 +377,8 @@ struct StreamDetailView: View {
 }
 
 struct SessionRow: View {
-    let session: CourseSession
+    let item: SessionWithMaterials
+    var session: CourseSession { item.session }
     var adminEdit: (() -> Void)? = nil
     var adminDelete: (() -> Void)? = nil
     @Environment(\.openURL) private var openURL
@@ -344,21 +393,12 @@ struct SessionRow: View {
                 HStack(spacing: 6) {
                     FormatBadge(format: session.format)
                     PaymentBadge(status: session.paymentStatus)
+                    // Що є в занятті — видно, не відкриваючи його.
+                    SessionContentIcons(item: item)
                 }
             }
             Spacer()
-            // Питання — до заняття, пульс — після. Показуємо те, що доречне зараз.
-            if isUpcoming {
-                Button { showQuestions = true } label: {
-                    Image(systemName: "questionmark.bubble").foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button { showPulse = true } label: {
-                    Image(systemName: "star.bubble").foregroundStyle(.secondary)
-                }
-                .buttonStyle(.plain)
-            }
+            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
             if let join = session.joinURL, let url = URL(string: join), isUpcoming {
                 Button("Приєднатися") { openURL(url) }
                     .buttonStyle(.borderedProminent).tint(.sea).controlSize(.small)
