@@ -60,6 +60,25 @@ enum DriveAccess {
         URL(string: "https://www.googleapis.com/drive/v3/files/\(fileId)?alt=media&acknowledgeAbuse=true")
     }
 
+    /// Що насправді віддає джерело: код, тип вмісту, чи був редирект.
+    /// AVFoundation мовчазна, коли не розуміє формат, — це єдиний спосіб побачити.
+    static func probe(url: URL, headers: [String: String]) async -> String {
+        var request = URLRequest(url: url)
+        for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
+        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        request.timeoutInterval = 15
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return "не HTTP-відповідь" }
+            let type = http.value(forHTTPHeaderField: "Content-Type") ?? "—"
+            let range = http.value(forHTTPHeaderField: "Content-Range") ?? "—"
+            let redirected = http.url?.host != url.host
+            return "код=\(http.statusCode) тип=\(type) range=\(range) редирект=\(redirected ? (http.url?.host ?? "так") : "ні")"
+        } catch {
+            return "запит не пройшов: \(error.localizedDescription)"
+        }
+    }
+
     /// Чому саме не грає: питаємо в Drive один байт і показуємо його відповідь.
     /// Без цього AVKit малює перекреслений плей і не каже нічого.
     static func diagnose(url: URL, headers: [String: String]) async -> String {

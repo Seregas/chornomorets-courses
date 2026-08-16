@@ -231,9 +231,15 @@ struct DirectVideoPlayer: View {
         // Відоме вузьке місце: якщо Drive колись почне відповідати редиректом,
         // заголовок може не пережити переходу — тоді знадобиться
         // AVAssetResourceLoaderDelegate, який підписує кожен запит окремо.
+        // OutOfBandMIMEType — бо в посиланні Drive немає розширення файлу, а без
+        // підказки AVFoundation іноді просто не береться за вміст: не падає й не
+        // готується, через що плеєр показує перекреслений плей і мовчить.
         let asset = headers.isEmpty
             ? AVURLAsset(url: url)
-            : AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+            : AVURLAsset(url: url, options: [
+                "AVURLAssetHTTPHeaderFieldsKey": headers,
+                "AVURLAssetOutOfBandMIMETypeKey": "video/mp4",
+              ])
         let item = AVPlayerItem(asset: asset)
         watchForFailure(item)
         player.replaceCurrentItem(with: item)
@@ -247,6 +253,13 @@ struct DirectVideoPlayer: View {
         RemoteLog.send(
             "playback.start",
             "material=\(materialId) host=\(url.host ?? "?") auth=\(headers.isEmpty ? "ні" : "так")")
+
+        // Джерело питаємо одразу, не чекаючи провалу: коли плеєр «зависає» без
+        // помилки, це єдине, що показує, чим саме він удавився.
+        if !headers.isEmpty {
+            let facts = await DriveAccess.probe(url: url, headers: headers)
+            RemoteLog.send("playback.probe", "material=\(materialId) \(facts)")
+        }
 
         // Раз на 5 с — досить, щоб не загубити місце, і не смикає диск дарма.
         timeObserver = player.addPeriodicTimeObserver(
