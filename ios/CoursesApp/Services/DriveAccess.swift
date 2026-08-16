@@ -41,6 +41,9 @@ enum DriveAccess {
         // Сторінка потоку питає доступ для кожного запису окремо, а їх буває
         // десяток — без кешу це стільки ж звернень до Google на кожен показ.
         cache[fileId] = (state, Date().addingTimeInterval(5 * 60))
+        if state != .granted {
+            RemoteLog.send("drive.access", "file=\(fileId) state=\(state.rawValue)")
+        }
         return state
     }
 

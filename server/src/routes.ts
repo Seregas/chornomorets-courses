@@ -54,6 +54,21 @@ app.get("/streams/:id/announcements", async (c) =>
   c.json(await repo.listAnnouncements(c.req.param("id"))),
 );
 
+/**
+ * Логи з телефонів. Відкрито на запис навмисно: воно має працювати ще до
+ * входу, коли ламається саме вхід. Читання — лише адміну.
+ */
+const logInput = z.object({
+  deviceId: z.string().min(1).max(200),
+  appVersion: z.string().max(50).nullish(),
+  event: z.string().min(1).max(200),
+  detail: z.string().max(8000).nullish(),
+});
+app.post("/logs", zValidator("json", logInput), async (c) => {
+  await repo.writeClientLog(c.req.valid("json"));
+  return c.body(null, 204);
+});
+
 // ──────────────────── Заявки на потік ────────────────────
 // Заміна Google Forms: студент лишає контакт, викладач веде статус.
 
@@ -282,6 +297,11 @@ const materialInput = z.object({
   url: z.string().url().nullish(),
   dueAt: z.string().nullish(),
   order: z.number().int().optional(),
+});
+
+admin.get("/logs", async (c) => {
+  const limit = Number(c.req.query("limit") ?? 100);
+  return c.json(await repo.listClientLogs(Math.min(Math.max(limit, 1), 500)));
 });
 
 // applications — заявки на потік

@@ -79,8 +79,10 @@ struct VideoPlayerView: View {
         do {
             state = .loaded(try await repo.playback(materialId: materialId).descriptor)
         } catch let e as APIError where e.status == 403 {
+            RemoteLog.send("playback.descriptor.denied", "material=\(materialId)")
             state = .failed("Це відео доступне лише акаунтам Google, яким надано доступ. Підключіть потрібний акаунт у Налаштуваннях.")
         } catch {
+            RemoteLog.send("playback.descriptor.error", "material=\(materialId) \(error.localizedDescription)")
             state = .failed(error.localizedDescription)
         }
     }
@@ -142,17 +144,55 @@ struct DirectVideoPlayer: View {
         }
     }
 
-    /// Стежить за станом айтема: .failed — привід сходити по причину.
+    /// Провал буває трьох видів, і .failed ловить лише один із них:
+    ///  - айтем не завантажився взагалі → status == .failed;
+    ///  - почав грати й обірвався → failedToPlayToEndTime;
+    ///  - AVFoundation пише в errorLog HTTP-код, нічого не змінюючи в status —
+    ///    саме там видно 401/403 від джерела.
     private func watchForFailure(_ item: AVPlayerItem) {
         Task { @MainActor in
             for await status in item.publisher(for: \.status).values where status == .failed {
-                let reason = item.error?.localizedDescription ?? "невідома помилка"
-                failure = headers.isEmpty
-                    ? reason
-                    : await DriveAccess.diagnose(url: url, headers: headers) + "\n\n(\(reason))"
+                await report(item, reason: item.error?.localizedDescription ?? "status == failed")
                 return
             }
         }
+        Task { @MainActor in
+            for await note in NotificationCenter.default.publisher(
+                for: AVPlayerItem.failedToPlayToEndTimeNotification, object: item).values {
+                let error = note.userInfo?[AVPlayerItemFailedToPlayToEndTimeErrorKey] as? Error
+                await report(item, reason: error?.localizedDescription ?? "failedToPlayToEnd")
+                return
+            }
+        }
+        Task { @MainActor in
+            for await _ in NotificationCenter.default.publisher(
+                for: AVPlayerItem.newErrorLogEntryNotification, object: item).values {
+                await report(item, reason: "newErrorLogEntry")
+                return
+            }
+        }
+    }
+
+    /// Збирає все, що знає AVFoundation, питає джерело напряму — і показує
+    /// це на екрані та відправляє на сервер.
+    @MainActor private func report(_ item: AVPlayerItem, reason: String) async {
+        guard failure == nil else { return }
+
+        var parts = ["Причина: \(reason)"]
+        if let log = item.errorLog() {
+            for entry in log.events.suffix(3) {
+                parts.append(
+                    "HTTP \(entry.errorStatusCode) · \(entry.errorComment ?? "без коментаря")")
+            }
+        }
+        if !headers.isEmpty {
+            parts.append(await DriveAccess.diagnose(url: url, headers: headers))
+        }
+
+        let text = parts.joined(separator: "\n\n")
+        failure = text
+        player.pause()
+        RemoteLog.send("playback.failed", "material=\(materialId)\n\(text)")
     }
 
     private var speedMenu: some View {
@@ -204,6 +244,9 @@ struct DirectVideoPlayer: View {
         }
         apply(speed: speed)
         player.play()
+        RemoteLog.send(
+            "playback.start",
+            "material=\(materialId) host=\(url.host ?? "?") auth=\(headers.isEmpty ? "ні" : "так")")
 
         // Раз на 5 с — досить, щоб не загубити місце, і не смикає диск дарма.
         timeObserver = player.addPeriodicTimeObserver(

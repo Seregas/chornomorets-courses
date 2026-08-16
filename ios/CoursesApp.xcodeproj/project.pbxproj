@@ -23,6 +23,7 @@
 		4EA3BCAE8B9862196C18CE8E /* DriveAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DA74E6F659D77F3A57B987 /* DriveAccess.swift */; };
 		5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC69E20B206F4B40FB28259 /* CourseRepository.swift */; };
 		5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496CE3358F9446DCA54BD00 /* InputModels.swift */; };
+		689F966B3AE44774691502D6 /* RemoteLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C199B6B439D225C6D78F1C16 /* RemoteLog.swift */; };
 		6B6F16FA07E0817D33093CD8 /* SessionPulseView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CAC67650EED80D8AC61EAA /* SessionPulseView.swift */; };
 		769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */ = {isa = PBXBuildFile; fileRef = E357D321925857DB4617ED43 /* PlayerAudio.swift */; };
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
@@ -114,6 +115,7 @@
 		B2C74DE8F2270766C2835F7C /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
 		B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedSchedule.swift; sourceTree = "<group>"; };
 		B6EBE10093E1D103FD317A5B /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
+		C199B6B439D225C6D78F1C16 /* RemoteLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteLog.swift; sourceTree = "<group>"; };
 		C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialRow.swift; sourceTree = "<group>"; };
 		CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
 		CEC59DDBE5AAC7F17E335F9E /* AdminForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminForms.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
 				05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */,
+				C199B6B439D225C6D78F1C16 /* RemoteLog.swift */,
 				3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */,
 				6490DE90C63D0315542FC7FF /* WidgetSync.swift */,
 			);
@@ -467,6 +470,7 @@
 				769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */,
 				3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */,
 				DEC64D9BF98D988841DAD8EF /* PreviewRepository.swift in Sources */,
+				689F966B3AE44774691502D6 /* RemoteLog.swift in Sources */,
 				C136A6313DCCABBDE6EA57FF /* ResponseCache.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,
 				E1ED29CC351741F106566EE2 /* ScheduleView.swift in Sources */,
@@ -528,7 +532,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -670,7 +674,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 6;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_NS_ASSERTIONS = NO;

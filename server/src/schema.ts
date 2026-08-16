@@ -240,6 +240,20 @@ export const applications = sqliteTable(
   (t) => [uniqueIndex("application_stream_device").on(t.streamId, t.deviceId)],
 );
 
+/**
+ * Логи з телефонів. Прототип живе в TestFlight, і кожна перевірка гіпотези
+ * коштує збірки й чужого часу — без зворотного каналу діагностика сліпа.
+ * Токенів сюди не пишемо, лише що сталося.
+ */
+export const clientLogs = sqliteTable("client_logs", {
+  id: id(),
+  deviceId: text("device_id").notNull(),
+  appVersion: text("app_version"),
+  event: text("event").notNull(),
+  detail: text("detail"),
+  createdAt: createdAt(),
+});
+
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -250,6 +264,7 @@ export type Question = typeof questions.$inferSelect;
 export type Announcement = typeof announcements.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Pulse = typeof pulses.$inferSelect;
+export type ClientLog = typeof clientLogs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 
 export const schema = {
@@ -264,6 +279,7 @@ export const schema = {
   submissions,
   pulses,
   applications,
+  clientLogs,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

@@ -3,6 +3,7 @@ import { db as defaultDb, type DB } from "./db.js";
 import {
   announcements,
   applications,
+  clientLogs,
   courses,
   enrollments,
   materials,
@@ -17,6 +18,7 @@ import type {
   Announcement,
   AnnouncementDTO,
   Application,
+  ClientLog,
   Course,
   CourseCard,
   CourseDetail,
@@ -51,6 +53,13 @@ export interface AskQuestionInput {
   isAnonymous: boolean;
   /** Email автора, якщо він увійшов і не приховався. */
   authorEmail?: string | null;
+}
+
+export interface ClientLogInput {
+  deviceId: string;
+  appVersion?: string | null;
+  event: string;
+  detail?: string | null;
 }
 
 export type ApplicationStatus = "new" | "waitingPayment" | "enrolled" | "declined";
@@ -141,6 +150,10 @@ export interface CourseRepository {
   listSubmissions(materialId: string): Promise<Submission[]>;
   /** Відповідь викладача. */
   reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
+
+  // — Логи з клієнтів —
+  writeClientLog(input: ClientLogInput): Promise<void>;
+  listClientLogs(limit: number): Promise<ClientLog[]>;
 
   // — Заявки на потік —
   getApplication(streamId: string, deviceId: string): Promise<Application | null>;
@@ -494,6 +507,27 @@ export class DrizzleCourseRepository implements CourseRepository {
       homework,
       recordings,
     };
+  }
+
+  // — Логи з клієнтів —
+
+  async writeClientLog(input: ClientLogInput): Promise<void> {
+    this.db.insert(clientLogs).values({
+      deviceId: input.deviceId,
+      appVersion: input.appVersion ?? null,
+      event: input.event,
+      // Обрізаємо: з телефона може прилетіти дуже багатослівна помилка.
+      detail: input.detail?.slice(0, 4000) ?? null,
+    }).run();
+  }
+
+  async listClientLogs(limit: number): Promise<ClientLog[]> {
+    return this.db
+      .select()
+      .from(clientLogs)
+      .orderBy(desc(clientLogs.createdAt))
+      .limit(limit)
+      .all();
   }
 
   // — Заявки на потік —

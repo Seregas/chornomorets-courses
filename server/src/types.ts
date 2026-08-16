@@ -1,6 +1,7 @@
 import type {
   Announcement,
   Application,
+  ClientLog,
   Course,
   Enrollment,
   Material,
@@ -173,4 +174,5 @@ export type {
   Submission,
   Pulse,
   Application,
+  ClientLog,
 };
