@@ -8,6 +8,7 @@ import {
   enrollments,
   materials,
   materialTypes,
+  payments,
   pulses,
   questions,
   sessions,
@@ -28,6 +29,8 @@ import type {
   MaterialDTO,
   MaterialInContext,
   MaterialType,
+  Payment,
+  PaymentDTO,
   Pulse,
   PulseSummary,
   Question,
@@ -52,6 +55,15 @@ export interface AskQuestionInput {
   text: string;
   isAnonymous: boolean;
   /** Email автора, якщо він увійшов і не приховався. */
+  authorEmail?: string | null;
+}
+
+export interface DeclarePaymentInput {
+  sessionId: string;
+  deviceId: string;
+  amount?: number | null;
+  receiptURL?: string | null;
+  note?: string | null;
   authorEmail?: string | null;
 }
 
@@ -127,7 +139,7 @@ export interface CourseRepository {
   // — Читання (відкрите для застосунку) —
   listCourses(): Promise<CourseCard[]>;
   getCourseDetail(courseId: string): Promise<CourseDetail | null>;
-  getStreamDetail(streamId: string): Promise<StreamDetail | null>;
+  getStreamDetail(streamId: string, deviceId?: string): Promise<StreamDetail | null>;
   getSchedule(deviceId: string): Promise<ScheduleItem[]>;
   /** Зведення для екрана «Моє навчання». */
   getHomeDigest(deviceId: string): Promise<HomeDigest>;
@@ -150,6 +162,20 @@ export interface CourseRepository {
   listSubmissions(materialId: string): Promise<Submission[]>;
   /** Відповідь викладача. */
   reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
+
+  // — Оплати (пара «заняття + людина») —
+  /** Своя оплата за заняття. */
+  getPayment(sessionId: string, deviceId: string): Promise<Payment | null>;
+  /** Заявити оплату (або переписати свою заявку, поки її не розглянули). */
+  declarePayment(input: DeclarePaymentInput): Promise<Payment>;
+  /** Усі заявки по заняттю — адміну. */
+  listPayments(sessionId: string): Promise<Payment[]>;
+  /** Підтвердити, відхилити або звільнити від оплати. */
+  setPaymentStatus(
+    id: string,
+    status: Payment["status"],
+    note?: string | null,
+  ): Promise<Payment | null>;
 
   // — Логи з клієнтів —
   writeClientLog(input: ClientLogInput): Promise<void>;
@@ -258,6 +284,27 @@ function toAnnouncementDTO(row: {
   };
 }
 
+/** Оплата для клієнта. deviceId і email — лише коли дивиться адмін. */
+export function toPaymentDTO(
+  payment: Payment | undefined | null,
+  forAdmin = false,
+): PaymentDTO | null {
+  if (!payment) return null;
+  return {
+    id: payment.id,
+    sessionId: payment.sessionId,
+    status: payment.status,
+    amount: payment.amount,
+    receiptURL: payment.receiptURL,
+    note: payment.note,
+    declaredAt: payment.declaredAt,
+    reviewedAt: payment.reviewedAt,
+    ...(forAdmin
+      ? { deviceId: payment.deviceId, authorEmail: payment.authorEmail }
+      : {}),
+  };
+}
+
 /** Прибирає videoRef/ownerId з матеріалу для клієнта. */
 function toMaterialDTO(m: Material): MaterialDTO {
   return {
@@ -356,7 +403,10 @@ export class DrizzleCourseRepository implements CourseRepository {
     };
   }
 
-  async getStreamDetail(streamId: string): Promise<StreamDetail | null> {
+  async getStreamDetail(
+    streamId: string,
+    deviceId?: string,
+  ): Promise<StreamDetail | null> {
     const stream = this.db
       .select()
       .from(streams)
@@ -386,6 +436,24 @@ export class DrizzleCourseRepository implements CourseRepository {
       .orderBy(asc(materials.order))
       .all();
 
+    // Оплати того, хто питає: стан «оплачено» тепер персональний, і без
+    // deviceId ми не можемо сказати нічого — тоді просто нічого й не кажемо.
+    const myPayments = new Map<string, Payment>();
+    if (deviceId && streamSessions.length) {
+      for (const p of this.db
+        .select()
+        .from(payments)
+        .where(
+          and(
+            eq(payments.deviceId, deviceId),
+            inArray(payments.sessionId, streamSessions.map((s) => s.id)),
+          ),
+        )
+        .all()) {
+        myPayments.set(p.sessionId, p);
+      }
+    }
+
     // Матеріали занять тягнемо одним запитом на весь потік, а не по одному на
     // заняття: інакше сторінка з десятком зустрічей робить десяток запитів.
     const sessionIds = streamSessions.map((s) => s.id);
@@ -410,6 +478,7 @@ export class DrizzleCourseRepository implements CourseRepository {
         materials: sessionMaterials
           .filter((m) => m.ownerId === session.id)
           .map(toMaterialDTO),
+        payment: toPaymentDTO(myPayments.get(session.id)),
       })),
       materials: streamMaterials.map(toMaterialDTO),
       summaryOverride: stream.summaryOverride,
@@ -446,8 +515,18 @@ export class DrizzleCourseRepository implements CourseRepository {
       .orderBy(asc(sessions.startAt))
       .all();
 
+    const myPayments = new Map<string, Payment>();
+    for (const p of this.db
+      .select()
+      .from(payments)
+      .where(eq(payments.deviceId, deviceId))
+      .all()) {
+      myPayments.set(p.sessionId, p);
+    }
+
     return rows.map((r) => ({
       session: r.session,
+      payment: toPaymentDTO(myPayments.get(r.session.id)),
       streamId: r.streamId,
       streamTitle: r.streamTitle,
       courseId: r.courseId,
@@ -481,6 +560,16 @@ export class DrizzleCourseRepository implements CourseRepository {
     }
 
     const context = new Map(streamRows.map((r) => [r.streamId, r]));
+    // Матеріали потоку — і матеріали його занять: після того, як записи
+    // переїхали на заняття, пошук лише по потоку перестав їх знаходити,
+    // і секція «Записи занять» на головному екрані спорожніла.
+    const streamSessionIds = this.db
+      .select({ id: sessions.id, streamId: sessions.streamId })
+      .from(sessions)
+      .where(inArray(sessions.streamId, [...context.keys()]))
+      .all();
+    const sessionToStream = new Map(streamSessionIds.map((s) => [s.id, s.streamId]));
+
     const streamMaterials = this.db
       .select()
       .from(materials)
@@ -493,22 +582,40 @@ export class DrizzleCourseRepository implements CourseRepository {
       .orderBy(asc(materials.order))
       .all();
 
+    const ofSessions = streamSessionIds.length
+      ? this.db
+          .select()
+          .from(materials)
+          .where(
+            and(
+              eq(materials.ownerType, "session"),
+              inArray(materials.ownerId, [...sessionToStream.keys()]),
+            ),
+          )
+          .orderBy(asc(materials.order))
+          .all()
+      : [];
+
     const withContext = (m: Material): MaterialInContext => {
-      const c = context.get(m.ownerId)!;
-      return { material: toMaterialDTO(m), ...c };
+      const streamId = m.ownerType === "session"
+        ? sessionToStream.get(m.ownerId)!
+        : m.ownerId;
+      return { material: toMaterialDTO(m), ...context.get(streamId)! };
     };
 
     // Щойно прострочену домашку теж показуємо: зникнути рівно о дедлайні —
     // найгірший момент, саме тоді про неї згадують.
     const graceFrom = new Date(Date.now() - 7 * 86_400_000).toISOString();
-    const homework = streamMaterials
+    const homework = [...streamMaterials, ...ofSessions]
       .filter((m) => m.dueAt && m.dueAt >= graceFrom)
       .sort((a, b) => (a.dueAt! < b.dueAt! ? -1 : 1))
       .slice(0, 5)
       .map(withContext);
 
-    const recordings = streamMaterials
+    // Спершу найсвіжіші: до купи записів за півроку цікавить останній.
+    const recordings = [...ofSessions, ...streamMaterials]
       .filter((m) => m.videoRef)
+      .reverse()
       .slice(0, 5)
       .map(withContext);
 
@@ -529,6 +636,78 @@ export class DrizzleCourseRepository implements CourseRepository {
       homework,
       recordings,
     };
+  }
+
+  // — Оплати —
+
+  async getPayment(sessionId: string, deviceId: string): Promise<Payment | null> {
+    return (
+      this.db
+        .select()
+        .from(payments)
+        .where(and(eq(payments.sessionId, sessionId), eq(payments.deviceId, deviceId)))
+        .get() ?? null
+    );
+  }
+
+  async declarePayment(input: DeclarePaymentInput): Promise<Payment> {
+    const existing = await this.getPayment(input.sessionId, input.deviceId);
+    const now = new Date().toISOString();
+    if (existing) {
+      // Поки заявку не розглянули, її можна виправити — наприклад, прикріпити
+      // квитанцію, про яку забули. Підтверджену не чіпаємо.
+      if (existing.status === "confirmed" || existing.status === "free") return existing;
+      return this.db
+        .update(payments)
+        .set({
+          amount: input.amount ?? existing.amount,
+          receiptURL: input.receiptURL ?? existing.receiptURL,
+          note: input.note ?? existing.note,
+          status: "declared",
+          declaredAt: now,
+        })
+        .where(eq(payments.id, existing.id))
+        .returning()
+        .get();
+    }
+    return this.db
+      .insert(payments)
+      .values({
+        sessionId: input.sessionId,
+        deviceId: input.deviceId,
+        authorEmail: input.authorEmail ?? null,
+        amount: input.amount ?? null,
+        receiptURL: input.receiptURL ?? null,
+        note: input.note ?? null,
+        status: "declared",
+        declaredAt: now,
+      })
+      .returning()
+      .get();
+  }
+
+  async listPayments(sessionId: string): Promise<Payment[]> {
+    return this.db
+      .select()
+      .from(payments)
+      .where(eq(payments.sessionId, sessionId))
+      .orderBy(asc(payments.declaredAt))
+      .all();
+  }
+
+  async setPaymentStatus(
+    id: string,
+    status: Payment["status"],
+    note?: string | null,
+  ): Promise<Payment | null> {
+    return (
+      this.db
+        .update(payments)
+        .set({ status, note: note ?? null, reviewedAt: new Date().toISOString() })
+        .where(eq(payments.id, id))
+        .returning()
+        .get() ?? null
+    );
   }
 
   // — Логи з клієнтів —

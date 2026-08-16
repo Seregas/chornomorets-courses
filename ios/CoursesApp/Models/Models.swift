@@ -4,7 +4,33 @@ import Foundation
 // Жодних сирих videoRef: відео представлене ознакою hasVideo + provider.
 
 enum CourseFormat: String, Codable { case online, offline, hybrid }
-enum PaymentStatus: String, Codable { case unpaid, paid, free }
+/// Стан оплати конкретної людини за конкретне заняття.
+enum PaymentStatus: String, Codable {
+    case declared, confirmed, free, rejected
+
+    var label: String {
+        switch self {
+        case .declared: return "очікує підтвердження"
+        case .confirmed: return "оплачено"
+        case .free: return "безкоштовно"
+        case .rejected: return "не підтверджено"
+        }
+    }
+}
+
+/// Заявлена оплата. `deviceId`/`authorEmail` приходять лише адміну.
+struct Payment: Codable, Identifiable, Hashable {
+    let id: String
+    let sessionId: String
+    let status: PaymentStatus
+    let amount: Int?
+    let receiptURL: String?
+    let note: String?
+    let declaredAt: String
+    let reviewedAt: String?
+    let deviceId: String?
+    let authorEmail: String?
+}
 enum StreamStatus: String, Codable { case upcoming, ongoing, finished }
 enum VideoProvider: String, Codable { case drive, youtube, other }
 enum AccessState: String, Codable { case granted, denied, unknown }
@@ -73,7 +99,6 @@ struct CourseSession: Codable, Identifiable, Hashable {
     let durationMinutes: Int
     let format: CourseFormat
     let joinURL: String?
-    let paymentStatus: PaymentStatus
     let order: Int
 }
 
@@ -82,6 +107,8 @@ struct SessionWithMaterials: Codable, Identifiable, Hashable {
     var id: String { session.id }
     let session: CourseSession
     let materials: [MaterialDTO]
+    /// Оплата того, хто дивиться. nil — ще не заявляв.
+    let payment: Payment?
 
     /// Що є всередині — для іконок у рядку заняття.
     var hasVideo: Bool { materials.contains { $0.hasVideo } }
@@ -132,6 +159,7 @@ struct AdminMaterial: Decodable {
 struct ScheduleItem: Codable, Identifiable, Hashable {
     var id: String { session.id }
     let session: CourseSession
+    let payment: Payment?
     let streamId: String
     let streamTitle: String
     let courseId: String

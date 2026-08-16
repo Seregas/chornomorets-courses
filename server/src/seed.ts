@@ -133,21 +133,21 @@ function seed() {
   // — Заняття —
   db.insert(sessions).values([
     // Стрес, Потік 4 (минулі — є записи).
-    { id: "ses-s4-1", streamId: "s-stress-4", title: "Заняття 1", startAt: S4[0], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 1 },
-    { id: "ses-s4-2", streamId: "s-stress-4", title: "Заняття 2", startAt: S4[1], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 2 },
-    { id: "ses-s4-3", streamId: "s-stress-4", title: "Заняття 3", startAt: S4[2], durationMinutes: 120, format: "online", paymentStatus: "paid", order: 3 },
+    { id: "ses-s4-1", streamId: "s-stress-4", title: "Заняття 1", startAt: S4[0], durationMinutes: 120, format: "online", order: 1 },
+    { id: "ses-s4-2", streamId: "s-stress-4", title: "Заняття 2", startAt: S4[1], durationMinutes: 120, format: "online", order: 2 },
+    { id: "ses-s4-3", streamId: "s-stress-4", title: "Заняття 3", startAt: S4[2], durationMinutes: 120, format: "online", order: 3 },
     // Стрес, Потік 5 (майбутні).
-    { id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1", startAt: S5[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-1", paymentStatus: "unpaid", order: 1 },
-    { id: "ses-s5-2", streamId: "s-stress-5", title: "Заняття 2", startAt: S5[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-2", paymentStatus: "unpaid", order: 2 },
-    { id: "ses-s5-3", streamId: "s-stress-5", title: "Заняття 3", startAt: S5[2], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-3", paymentStatus: "unpaid", order: 3 },
+    { id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1", startAt: S5[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-1", order: 1 },
+    { id: "ses-s5-2", streamId: "s-stress-5", title: "Заняття 2", startAt: S5[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-2", order: 2 },
+    { id: "ses-s5-3", streamId: "s-stress-5", title: "Заняття 3", startAt: S5[2], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-stress-3", order: 3 },
     // Самооцінка, Потік 3.
-    { id: "ses-e3-1", streamId: "s-esteem-3", title: "Заняття 1", startAt: E3[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-1", paymentStatus: "free", order: 1 },
-    { id: "ses-e3-2", streamId: "s-esteem-3", title: "Заняття 2", startAt: E3[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-2", paymentStatus: "unpaid", order: 2 },
+    { id: "ses-e3-1", streamId: "s-esteem-3", title: "Заняття 1", startAt: E3[0], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-1", order: 1 },
+    { id: "ses-e3-2", streamId: "s-esteem-3", title: "Заняття 2", startAt: E3[1], durationMinutes: 120, format: "online", joinURL: "https://meet.google.com/abc-esteem-2", order: 2 },
     // Гра Вигорання.
-    { id: "ses-b1-1", streamId: "s-burnout-1", title: "Гра (онлайн, цілий день)", startAt: B1[0], durationMinutes: 480, format: "online", joinURL: "https://meet.google.com/abc-burnout", paymentStatus: "unpaid", order: 1 },
+    { id: "ses-b1-1", streamId: "s-burnout-1", title: "Гра (онлайн, цілий день)", startAt: B1[0], durationMinutes: 480, format: "online", joinURL: "https://meet.google.com/abc-burnout", order: 1 },
     // Мотивація.
-    { id: "ses-m1-1", streamId: "s-motivation-1", title: "Заняття 1", startAt: M1[0], durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 1 },
-    { id: "ses-m1-2", streamId: "s-motivation-1", title: "Заняття 2", startAt: M1[1], durationMinutes: 120, format: "online", paymentStatus: "unpaid", order: 2 },
+    { id: "ses-m1-1", streamId: "s-motivation-1", title: "Заняття 1", startAt: M1[0], durationMinutes: 120, format: "online", order: 1 },
+    { id: "ses-m1-2", streamId: "s-motivation-1", title: "Заняття 2", startAt: M1[1], durationMinutes: 120, format: "online", order: 2 },
   ]).run();
 
   // — Матеріали —

@@ -89,7 +89,7 @@ struct ScheduleRow: View {
                     .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                 HStack(spacing: 6) {
                     FormatBadge(format: item.session.format)
-                    PaymentBadge(status: item.session.paymentStatus)
+                    PaymentBadge(payment: item.payment)
                 }
             }
             Spacer()

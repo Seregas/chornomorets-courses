@@ -177,7 +177,6 @@ struct SessionFormView: View {
     @State private var duration: String
     @State private var format: CourseFormat
     @State private var joinURL: String
-    @State private var payment: PaymentStatus
     @State private var error: String?
 
     init(streamId: String, existing: CourseSession?, onDone: @escaping () async -> Void) {
@@ -189,7 +188,6 @@ struct SessionFormView: View {
         _duration = State(initialValue: existing.map { String($0.durationMinutes) } ?? "120")
         _format = State(initialValue: existing?.format ?? .online)
         _joinURL = State(initialValue: existing?.joinURL ?? "")
-        _payment = State(initialValue: existing?.paymentStatus ?? .unpaid)
     }
 
     var body: some View {
@@ -206,11 +204,6 @@ struct SessionFormView: View {
                     Text("offline").tag(CourseFormat.offline)
                     Text("hybrid").tag(CourseFormat.hybrid)
                 }
-                Picker("Оплата", selection: $payment) {
-                    Text("не оплачено").tag(PaymentStatus.unpaid)
-                    Text("оплачено").tag(PaymentStatus.paid)
-                    Text("безкоштовно").tag(PaymentStatus.free)
-                }
                 TextField("Посилання на зустріч (URL)", text: $joinURL).keyboardType(.URL).autocapitalization(.none)
             }
             if let error { Text(error).foregroundStyle(.red).font(.footnote) }
@@ -222,7 +215,7 @@ struct SessionFormView: View {
         let input = SessionInput(
             streamId: existing == nil ? streamId : nil,
             title: title, startAt: iso, durationMinutes: Int(duration),
-            format: format.rawValue, joinURL: nilIfEmpty(joinURL), paymentStatus: payment.rawValue)
+            format: format.rawValue, joinURL: nilIfEmpty(joinURL))
         do {
             if let existing { try await repo.updateSession(id: existing.id, input) }
             else { try await repo.createSession(input) }

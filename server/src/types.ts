@@ -2,6 +2,7 @@ import type {
   Announcement,
   Application,
   ClientLog,
+  Payment,
   Course,
   Enrollment,
   Material,
@@ -81,10 +82,27 @@ export interface CourseDetail {
   materials: MaterialDTO[];
 }
 
+/** Стан оплати конкретної людини за конкретне заняття. */
+export interface PaymentDTO {
+  id: string;
+  sessionId: string;
+  status: Payment["status"];
+  amount: number | null;
+  receiptURL: string | null;
+  note: string | null;
+  declaredAt: string;
+  reviewedAt: string | null;
+  /** Лише адміну: хто саме заявив. */
+  deviceId?: string;
+  authorEmail?: string | null;
+}
+
 /** Заняття разом зі своїми матеріалами (запис, конспект, домашка цієї зустрічі). */
 export interface SessionWithMaterials {
   session: Session;
   materials: MaterialDTO[];
+  /** Оплата того, хто питає. null — не заявляв. */
+  payment: PaymentDTO | null;
 }
 
 /** Деталь потоку: злитий опис + заняття + матеріали потоку.
@@ -101,6 +119,7 @@ export interface StreamDetail extends ResolvedStream {
 /** Елемент розкладу: заняття з контекстом курсу/потоку. */
 export interface ScheduleItem {
   session: Session;
+  payment: PaymentDTO | null;
   streamId: string;
   streamTitle: string;
   courseId: string;
@@ -181,4 +200,5 @@ export type {
   Pulse,
   Application,
   ClientLog,
+  Payment,
 };

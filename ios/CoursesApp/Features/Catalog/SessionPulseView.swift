@@ -135,7 +135,7 @@ struct SessionPulseView: View {
     SessionPulseView(session: CourseSession(
         id: "ses-s4-1", streamId: "s-stress-4", title: "Заняття 1",
         startAt: "2026-04-08T17:00:00Z", durationMinutes: 120, format: .online,
-        joinURL: nil, paymentStatus: .paid, order: 1))
+        joinURL: nil, order: 1))
     .injecting(.init(repository: PreviewRepository(), notifications: NotificationScheduler()),
                auth: AuthStore())
 }

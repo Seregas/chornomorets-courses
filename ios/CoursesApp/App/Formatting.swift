@@ -77,11 +77,4 @@ enum Fmt {
             : String(format: "%d:%02d", m, s)
     }
 
-    static func paymentLabel(_ p: PaymentStatus) -> String {
-        switch p {
-        case .unpaid: return "не оплачено"
-        case .paid: return "оплачено"
-        case .free: return "безкоштовно"
-        }
-    }
 }

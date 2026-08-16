@@ -35,7 +35,6 @@ struct SessionInput: Encodable {
     var durationMinutes: Int?
     var format: String?
     var joinURL: String?
-    var paymentStatus: String?
     var order: Int?
 }
 

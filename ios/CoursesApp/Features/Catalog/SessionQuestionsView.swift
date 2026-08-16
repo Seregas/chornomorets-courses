@@ -143,7 +143,7 @@ struct SessionQuestionsView: View {
     SessionQuestionsView(session: CourseSession(
         id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
         startAt: "2026-12-01T17:00:00Z", durationMinutes: 120, format: .online,
-        joinURL: nil, paymentStatus: .unpaid, order: 1))
+        joinURL: nil, order: 1))
     .injecting(.init(repository: PreviewRepository(), notifications: NotificationScheduler()),
                auth: AuthStore())
 }

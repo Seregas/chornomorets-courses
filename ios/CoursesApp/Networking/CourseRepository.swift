@@ -21,6 +21,12 @@ protocol CourseRepository {
     func applications(streamId: String) async throws -> [Application]
     func setApplicationStatus(id: String, status: ApplicationStatus) async throws
 
+    // — Оплата заняття —
+    func payment(sessionId: String) async throws -> Payment?
+    func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws
+    func payments(sessionId: String) async throws -> [Payment]
+    func setPaymentStatus(id: String, status: PaymentStatus) async throws
+
     // — Пульс після заняття —
     func pulse(sessionId: String) async throws -> Pulse?
     func ratePulse(sessionId: String, rating: Int, comment: String?) async throws
@@ -90,7 +96,7 @@ final class RemoteCourseRepository: CourseRepository {
     func me() async throws -> Me { try await api.get("me?deviceId=\(deviceId)", cached: false) }
     func courses() async throws -> [CourseCard] { try await api.get("courses") }
     func course(id: String) async throws -> CourseDetail { try await api.get("courses/\(id)") }
-    func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)") }
+    func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)?deviceId=\(deviceId)") }
     func schedule() async throws -> [ScheduleItem] { try await api.get("schedule?deviceId=\(deviceId)") }
     func home() async throws -> HomeDigest { try await api.get("home?deviceId=\(deviceId)") }
     func subscriptions() async throws -> [ResolvedStream] { try await api.get("subscriptions?deviceId=\(deviceId)") }
@@ -121,6 +127,27 @@ final class RemoteCourseRepository: CourseRepository {
     func setApplicationStatus(id: String, status: ApplicationStatus) async throws {
         try await api.mutate("POST", "admin/applications/\(id)/status",
                              body: StatusBody(status: status.rawValue))
+    }
+
+    private struct DeclareBody: Encodable {
+        let deviceId: String; let amount: Int?; let receiptURL: String?; let note: String?
+    }
+    private struct PaymentStatusBody: Encodable { let status: String }
+
+    func payment(sessionId: String) async throws -> Payment? {
+        try await api.get("sessions/\(sessionId)/payment?deviceId=\(deviceId)", cached: false)
+    }
+    func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws {
+        try await api.mutate("POST", "sessions/\(sessionId)/payment",
+                             body: DeclareBody(deviceId: deviceId, amount: amount,
+                                               receiptURL: receiptURL, note: note))
+    }
+    func payments(sessionId: String) async throws -> [Payment] {
+        try await api.get("admin/sessions/\(sessionId)/payments", cached: false)
+    }
+    func setPaymentStatus(id: String, status: PaymentStatus) async throws {
+        try await api.mutate("POST", "admin/payments/\(id)/status",
+                             body: PaymentStatusBody(status: status.rawValue))
     }
 
     private struct PulseBody: Encodable { let deviceId: String; let rating: Int; let comment: String? }

@@ -45,8 +45,9 @@ final class PreviewRepository: CourseRepository {
                         session: CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
                                                startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
                                                format: .online, joinURL: "https://meet.google.com/x",
-                                               paymentStatus: .unpaid, order: 1),
-                        materials: [Self.videoMaterial])],
+                                               order: 1),
+                        materials: [Self.videoMaterial],
+                        payment: nil)],
                      materials: [Self.videoMaterial],
                      summaryOverride: nil, descriptionOverride: nil,
                      programOverride: nil, coverImageOverride: nil)
@@ -55,7 +56,8 @@ final class PreviewRepository: CourseRepository {
         [ScheduleItem(session: CourseSession(id: "ses-s5-1", streamId: "s-stress-5", title: "Заняття 1",
                                              startAt: "2026-07-08T17:00:00Z", durationMinutes: 120,
                                              format: .online, joinURL: "https://meet.google.com/x",
-                                             paymentStatus: .unpaid, order: 1),
+                                             order: 1),
+                      payment: nil,
                       streamId: "s-stress-5", streamTitle: "Потік 5",
                       courseId: "c-stress", courseTitle: "Стрес, втома і піклування про себе")]
     }
@@ -75,6 +77,11 @@ final class PreviewRepository: CourseRepository {
     func apply(streamId: String, name: String, contact: String, comment: String?) async throws {}
     func applications(streamId: String) async throws -> [Application] { [] }
     func setApplicationStatus(id: String, status: ApplicationStatus) async throws {}
+
+    func payment(sessionId: String) async throws -> Payment? { nil }
+    func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws {}
+    func payments(sessionId: String) async throws -> [Payment] { [] }
+    func setPaymentStatus(id: String, status: PaymentStatus) async throws {}
 
     func pulse(sessionId: String) async throws -> Pulse? { nil }
     func ratePulse(sessionId: String, rating: Int, comment: String?) async throws {}

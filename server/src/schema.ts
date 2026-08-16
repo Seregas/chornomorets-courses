@@ -72,11 +72,43 @@ export const sessions = sqliteTable("sessions", {
     .notNull()
     .default("online"),
   joinURL: text("join_url"),
-  paymentStatus: text("payment_status", { enum: ["unpaid", "paid", "free"] })
-    .notNull()
-    .default("unpaid"),
   order: integer("order").notNull().default(0),
 });
+
+/**
+ * Оплата за заняття — на пару «заняття + людина», а не на заняття.
+ *
+ * Раніше стан оплати стояв на самому занятті: одне значення на всіх. Для
+ * курсу, де кожен платить за кожну зустріч окремо, воно не здатне сказати
+ * правду нікому — тому поле із заняття прибране.
+ *
+ * Хід такий: студент заявляє про оплату й лишає квитанцію, адмін підтверджує.
+ * Статус `free` — для військових, ветеранів і системних волонтерів.
+ */
+export const payments = sqliteTable(
+  "payments",
+  {
+    id: id(),
+    sessionId: text("session_id")
+      .notNull()
+      .references(() => sessions.id, { onDelete: "cascade" }),
+    deviceId: text("device_id").notNull(),
+    authorEmail: text("author_email"),
+    status: text("status", {
+      enum: ["declared", "confirmed", "free", "rejected"],
+    })
+      .notNull()
+      .default("declared"),
+    /** Сума в гривнях. Буває не рівна ціні: часткова, наперед, зі знижкою. */
+    amount: integer("amount"),
+    /** Посилання на квитанцію. Файли поки не приймаємо — немає сховища. */
+    receiptURL: text("receipt_url"),
+    note: text("note"),
+    declaredAt: text("declared_at").notNull(),
+    reviewedAt: text("reviewed_at"),
+  },
+  (t) => [uniqueIndex("payment_session_device").on(t.sessionId, t.deviceId)],
+);
 
 /**
  * Тип матеріалу — КЕРОВАНИЙ каталог-ярлик (CRUD в адмінці). Суто косметичний:
@@ -267,6 +299,7 @@ export type Announcement = typeof announcements.$inferSelect;
 export type Submission = typeof submissions.$inferSelect;
 export type Pulse = typeof pulses.$inferSelect;
 export type ClientLog = typeof clientLogs.$inferSelect;
+export type Payment = typeof payments.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 
 export const schema = {
@@ -282,6 +315,7 @@ export const schema = {
   pulses,
   applications,
   clientLogs,
+  payments,
 };
 
 // Підказка для майбутнього перемикання БД: усі timestamp-и зберігаємо як

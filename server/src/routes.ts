@@ -2,7 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { z } from "zod";
 import { getIdentity, isAdminEmail } from "./auth.js";
-import { repository as repo } from "./repository.js";
+import { repository as repo, toPaymentDTO } from "./repository.js";
 import { buildPlaybackDescriptor, checkAccess } from "./video.js";
 
 const app = new Hono();
@@ -35,7 +35,7 @@ app.get("/courses/:id", async (c) => {
 });
 
 app.get("/streams/:id", async (c) => {
-  const detail = await repo.getStreamDetail(c.req.param("id"));
+  const detail = await repo.getStreamDetail(c.req.param("id"), c.req.query("deviceId"));
   return detail ? c.json(detail) : c.json({ error: "not found" }, 404);
 });
 
@@ -90,6 +90,36 @@ app.post("/streams/:id/application", zValidator("json", applyInput), async (c) =
     await repo.applyToStream({ streamId: c.req.param("id"), ...body }),
     201,
   );
+});
+
+// ──────────────────── Оплата заняття ────────────────────
+// Стан оплати — на пару «заняття + людина». Студент заявляє й лишає
+// квитанцію, адмін підтверджує. Файли поки не приймаємо: сховища немає,
+// тож квитанція — це посилання.
+
+app.get("/sessions/:id/payment", zValidator("query", deviceQuery), async (c) =>
+  c.json(
+    toPaymentDTO(
+      await repo.getPayment(c.req.param("id"), c.req.valid("query").deviceId),
+    ),
+  ),
+);
+
+const declareInput = z.object({
+  deviceId: z.string().min(1),
+  amount: z.number().int().positive().nullish(),
+  receiptURL: z.string().url().nullish(),
+  note: z.string().max(500).nullish(),
+});
+app.post("/sessions/:id/payment", zValidator("json", declareInput), async (c) => {
+  const body = c.req.valid("json");
+  const identity = await getIdentity(c);
+  const payment = await repo.declarePayment({
+    sessionId: c.req.param("id"),
+    ...body,
+    authorEmail: identity?.email ?? null,
+  });
+  return c.json(toPaymentDTO(payment), 201);
 });
 
 // ──────────────────── Пульс після заняття ────────────────────
@@ -316,6 +346,24 @@ admin.post(
   async (c) => {
     const r = await repo.setApplicationStatus(c.req.param("id"), c.req.valid("json").status);
     return r ? c.json(r) : c.json({ error: "not found" }, 404);
+  },
+);
+
+// payments — заявки на оплату по заняттю
+admin.get("/sessions/:id/payments", async (c) => {
+  const list = await repo.listPayments(c.req.param("id"));
+  return c.json(list.map((p) => toPaymentDTO(p, true)));
+});
+admin.post(
+  "/payments/:id/status",
+  zValidator("json", z.object({
+    status: z.enum(["declared", "confirmed", "free", "rejected"]),
+    note: z.string().max(500).nullish(),
+  })),
+  async (c) => {
+    const { status, note } = c.req.valid("json");
+    const r = await repo.setPaymentStatus(c.req.param("id"), status, note);
+    return r ? c.json(toPaymentDTO(r, true)) : c.json({ error: "not found" }, 404);
   },
 );
 

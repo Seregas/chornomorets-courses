@@ -249,10 +249,12 @@ struct StreamDetailView: View {
             }
         }
         .navigationDestination(for: SessionWithMaterials.self) { item in
-            SessionDetailView(item: item, types: vm.types) { await reload() }
+            SessionDetailView(item: item, types: vm.types,
+                              pricePerSession: vm.current?.pricePerSession) { await reload() }
         }
         .navigationDestination(item: $openSession) { item in
-            SessionDetailView(item: item, types: vm.types) { await reload() }
+            SessionDetailView(item: item, types: vm.types,
+                              pricePerSession: vm.current?.pricePerSession) { await reload() }
         }
         .task {
             await vm.load(repo, id: streamId)
@@ -392,7 +394,7 @@ struct SessionRow: View {
                 Text(Fmt.dayTime(session.startAt)).font(.caption).foregroundStyle(.secondary)
                 HStack(spacing: 6) {
                     FormatBadge(format: session.format)
-                    PaymentBadge(status: session.paymentStatus)
+                    PaymentBadge(payment: item.payment)
                     // Що є в занятті — видно, не відкриваючи його.
                     SessionContentIcons(item: item)
                 }

@@ -6,6 +6,8 @@ import SwiftUI
 struct SessionDetailView: View {
     let item: SessionWithMaterials
     let types: [MaterialType]
+    /// Ціна за заняття з потоку — підставляється у форму оплати.
+    var pricePerSession: Int? = nil
     /// Перезавантажити потік після адмінських правок.
     let onChanged: () async -> Void
 
@@ -15,6 +17,7 @@ struct SessionDetailView: View {
     @State private var sheet: SessionSheet?
     @State private var showQuestions = false
     @State private var showPulse = false
+    @State private var showPayment = false
 
     private enum SessionSheet: Identifiable {
         case newMaterial, editMaterial(String)
@@ -53,6 +56,9 @@ struct SessionDetailView: View {
         }
         .sheet(isPresented: $showQuestions) { SessionQuestionsView(session: session) }
         .sheet(isPresented: $showPulse) { SessionPulseView(session: session) }
+        .sheet(isPresented: $showPayment) {
+            SessionPaymentView(session: session, suggestedAmount: pricePerSession)
+        }
     }
 
     private var header: some View {
@@ -61,7 +67,7 @@ struct SessionDetailView: View {
                 .font(.title3.weight(.bold)).foregroundStyle(Color.sea)
             HStack(spacing: 8) {
                 FormatBadge(format: session.format)
-                PaymentBadge(status: session.paymentStatus)
+                PaymentBadge(payment: item.payment)
                 Text("\(session.durationMinutes) хв")
                     .font(.caption).foregroundStyle(.secondary)
             }
@@ -84,6 +90,14 @@ struct SessionDetailView: View {
         } label: {
             Label(isUpcoming ? "Питання до заняття" : "Як зайшло?",
                   systemImage: isUpcoming ? "questionmark.bubble" : "star.bubble")
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.bordered)
+
+        // Оплата — на пару «заняття + людина», тож живе тут, а не в потоці.
+        Button { showPayment = true } label: {
+            Label(item.payment == nil ? "Я оплатив" : "Оплата: \(item.payment!.status.label)",
+                  systemImage: "hryvniasign.circle")
                 .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)

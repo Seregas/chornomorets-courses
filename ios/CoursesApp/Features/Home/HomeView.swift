@@ -158,7 +158,7 @@ struct HomeView: View {
 
                 HStack(spacing: 8) {
                     FormatBadge(format: item.session.format)
-                    PaymentBadge(status: item.session.paymentStatus)
+                    PaymentBadge(payment: item.payment)
                     Text("\(item.session.durationMinutes) хв")
                         .font(.caption).foregroundStyle(.secondary)
                 }

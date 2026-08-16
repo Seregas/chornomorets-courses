@@ -23,12 +23,20 @@ struct FormatBadge: View {
 }
 
 struct PaymentBadge: View {
-    let status: PaymentStatus
+    let payment: Payment?
+
     var body: some View {
-        switch status {
-        case .paid: Pill(text: Fmt.paymentLabel(status), fg: .green, bg: .green.opacity(0.15))
-        case .free: Pill(text: Fmt.paymentLabel(status), fg: .sea, bg: .sea.opacity(0.12))
-        case .unpaid: Pill(text: Fmt.paymentLabel(status), fg: .red, bg: .red.opacity(0.12))
+        let tone = color
+        Pill(text: payment?.status.label ?? "не оплачено",
+             fg: tone, bg: tone.opacity(0.12))
+    }
+
+    private var color: Color {
+        switch payment?.status {
+        case .confirmed, .free: return .green
+        case .declared: return .orange
+        case .rejected: return .red
+        case nil: return .secondary
         }
     }
 }
