@@ -1,5 +1,6 @@
 import AVKit
 import Combine
+import SafariServices
 import SwiftUI
 import WebKit
 
@@ -52,22 +53,19 @@ struct VideoPlayerView: View {
         case .youtube(let videoId):
             WebPlayer(url: URL(string: "https://www.youtube.com/embed/\(videoId)?playsinline=1")!)
         case .googleDrive(let fileId):
-            // Раніше тут було drive.google.com/.../preview у веб-в'ю — воно не
-            // мало ні токена, ні куків Google, тож показувало «немає доступу»
-            // навіть тим, кому файл розшарено. Тепер тягнемо вміст напряму з
-            // Drive API, підписуючи запит токеном користувача.
-            if let token = AuthTokenStore.driveAccessToken,
-               let url = DriveAccess.mediaURL(fileId: fileId) {
-                DirectVideoPlayer(url: url, materialId: materialId, title: title,
-                                  headers: ["Authorization": "Bearer \(token)"])
-                    .ignoresSafeArea(edges: .bottom)
-            } else {
-                ContentUnavailableView {
-                    Label("Потрібен Google-акаунт", systemImage: "person.crop.circle.badge.exclamationmark")
-                } description: {
-                    Text("Запис лежить на Google Drive. Підключіть акаунт у Налаштуваннях — той, якому надано доступ до записів.")
-                }
-            }
+            // Грає плеєр самого Drive у Safari-контролері.
+            //
+            // Спроба тягнути вміст через Drive API впирається в 403
+            // cannotDownloadFile: у налаштуваннях доступу до записів вимкнено
+            // завантаження для глядачів. Це свідома політика власника — файли
+            // платного курсу не мають розходитися, — і обійти її не можна й не
+            // треба. Drive у такому режимі показує відео сам, не віддаючи байтів.
+            //
+            // Саме SFSafariViewController, а не WKWebView: він поділяє сесію з
+            // Safari, тож користувач уже залогінений у Google і нічого не
+            // вводить повторно.
+            SafariView(url: URL(string: "https://drive.google.com/file/d/\(fileId)/view")!)
+                .ignoresSafeArea()
         }
     }
 
@@ -290,7 +288,21 @@ struct DirectVideoPlayer: View {
     }
 }
 
-/// Вбудований веб-плеєр (YouTube embed / Drive preview) з inline-відтворенням.
+/// Плеєр Drive у Safari-контролері: ділить сесію з Safari, тож окремий вхід
+/// у Google не потрібен.
+struct SafariView: UIViewControllerRepresentable {
+    let url: URL
+
+    func makeUIViewController(context: Context) -> SFSafariViewController {
+        let config = SFSafariViewController.Configuration()
+        config.entersReaderIfAvailable = false
+        return SFSafariViewController(url: url, configuration: config)
+    }
+
+    func updateUIViewController(_ controller: SFSafariViewController, context: Context) {}
+}
+
+/// Вбудований веб-плеєр (YouTube embed) з inline-відтворенням.
 struct WebPlayer: UIViewRepresentable {
     let url: URL
 
