@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 @MainActor
@@ -11,6 +12,10 @@ final class SessionPaymentViewModel {
     var saving = false
     var loaded = false
     var error: String?
+    /// Прочитане зі скріншота — заповнює поля й показує розбіжності.
+    var facts: ReceiptFacts?
+    var problems: [String] = []
+    var uploading = false
 
     func load(_ repo: CourseRepository, sessionId: String, isAdmin: Bool) async {
         mine = try? await repo.payment(sessionId: sessionId)
@@ -37,6 +42,41 @@ final class SessionPaymentViewModel {
     }
 }
 
+extension SessionPaymentViewModel {
+    /// Розпізнає скріншот на пристрої, підставляє суму й одразу відправляє файл.
+    ///
+    /// Порядок саме такий: спершу заявка (щоб було до чого чіпляти), далі
+    /// картинка. Розпізнавання не є доказом оплати — воно лише прибирає ручне
+    /// набирання й показує викладачу, де числа не збіглися.
+    @MainActor
+    func attach(_ repo: CourseRepository, image: UIImage, session: CourseSession,
+                expected: Int?, isAdmin: Bool) async {
+        uploading = true
+        defer { uploading = false }
+
+        let read = await ReceiptScanner.scan(image)
+        facts = read
+        problems = ReceiptScanner.matches(
+            read, expectedAmount: expected, sessionDate: Fmt.date(session.startAt))
+        if amount.isEmpty, let found = read.amount { amount = String(found) }
+
+        do {
+            if mine == nil {
+                try await repo.declarePayment(
+                    sessionId: session.id, amount: Int(amount) ?? read.amount,
+                    receiptURL: nil, note: note.isEmpty ? nil : note)
+                mine = try? await repo.payment(sessionId: session.id)
+            }
+            guard let paymentId = mine?.id,
+                  let data = image.jpegData(compressionQuality: 0.8) else { return }
+            mine = try await repo.uploadReceipt(paymentId: paymentId, image: data, facts: read)
+            if isAdmin { all = (try? await repo.payments(sessionId: session.id)) ?? [] }
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
+}
+
 /// Оплата за конкретне заняття конкретною людиною.
 ///
 /// Гроші приходять на картку поза застосунком, тож застосунок лише веде облік:
@@ -52,6 +92,7 @@ struct SessionPaymentView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @State private var vm = SessionPaymentViewModel()
+    @State private var picked: PhotosPickerItem?
 
     var body: some View {
         NavigationStack {
@@ -69,6 +110,15 @@ struct SessionPaymentView: View {
             await vm.load(repo, sessionId: session.id, isAdmin: auth.isAdmin)
             if vm.amount.isEmpty, let suggestedAmount { vm.amount = String(suggestedAmount) }
         }
+        .onChange(of: picked) { _, item in
+            guard let item else { return }
+            Task {
+                guard let data = try? await item.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data) else { return }
+                await vm.attach(repo, image: image, session: session,
+                                expected: suggestedAmount, isAdmin: auth.isAdmin)
+            }
+        }
     }
 
     // MARK: - Студент
@@ -83,15 +133,30 @@ struct SessionPaymentView: View {
                 }
             }
             TextField("Сума, ₴", text: $vm.amount).keyboardType(.numberPad)
-            TextField("Посилання на квитанцію", text: $vm.receipt)
+            PhotosPicker(selection: $picked, matching: .images) {
+                Label(vm.mine?.hasReceiptImage == true ? "Замінити скріншот" : "Додати скріншот",
+                      systemImage: "photo.badge.plus")
+            }
+            if vm.uploading { ProgressView() }
+            if let facts = vm.facts, !facts.isEmpty {
+                VStack(alignment: .leading, spacing: 4) {
+                    if let a = facts.amount { Text("Прочитано: \(a) ₴").font(.caption) }
+                    if let d = facts.date { Text("Дата: \(d)").font(.caption) }
+                    ForEach(vm.problems, id: \.self) { problem in
+                        Label(problem, systemImage: "exclamationmark.triangle")
+                            .font(.caption).foregroundStyle(.orange)
+                    }
+                }
+            }
+            TextField("Або посилання на квитанцію", text: $vm.receipt)
                 .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
             TextField("Коментар (не обовʼязково)", text: $vm.note, axis: .vertical)
                 .lineLimit(1...3)
         } header: {
             Text("Ваша оплата")
         } footer: {
-            Text("Скріншот поки що не завантажується — покладіть його в Drive чи "
-                 + "Телеграм і вставте посилання. Викладач звірить із випискою й підтвердить.")
+            Text("Скріншот читається на вашому телефоні — сума й дата підставляються самі. "
+                 + "Викладач звірить із випискою й підтвердить.")
         }
 
         Section {
@@ -108,6 +173,10 @@ struct SessionPaymentView: View {
             }
             if let error = vm.error { Text(error).font(.caption).foregroundStyle(.red) }
         }
+    }
+
+    private func decodeFacts(_ raw: String) -> ReceiptFacts? {
+        try? JSONDecoder().decode(ReceiptFacts.self, from: Data(raw.utf8))
     }
 
     // MARK: - Викладач
@@ -130,8 +199,20 @@ struct SessionPaymentView: View {
                     if let note = payment.note, !note.isEmpty {
                         Text(note).font(.caption).foregroundStyle(.secondary)
                     }
-                    if let receipt = payment.receiptURL, let url = URL(string: receipt) {
+                    if payment.hasReceiptImage, let url = repo.receiptURL(paymentId: payment.id) {
+                        AsyncImage(url: url) { image in
+                            image.resizable().scaledToFit().frame(maxHeight: 260)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } placeholder: {
+                            ProgressView()
+                        }
+                    } else if let receipt = payment.receiptURL, let url = URL(string: receipt) {
                         Button("Квитанція") { openURL(url) }.font(.caption)
+                    }
+                    if let parsed = payment.receiptParsed, let read = decodeFacts(parsed) {
+                        Text("Прочитано: \(read.amount.map { "\($0) ₴" } ?? "—")"
+                             + (read.date.map { " · \($0)" } ?? ""))
+                            .font(.caption2).foregroundStyle(.secondary)
                     }
                     Picker("Стан", selection: Binding(
                         get: { payment.status },

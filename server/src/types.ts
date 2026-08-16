@@ -92,6 +92,10 @@ export interface PaymentDTO {
   note: string | null;
   declaredAt: string;
   reviewedAt: string | null;
+  /** Чи прикріплено скріншот — саме зображення тягнеться окремим запитом. */
+  hasReceiptImage: boolean;
+  /** Що вдалося прочитати зі скріншота (сума, дата, призначення). */
+  receiptParsed: string | null;
   /** Лише адміну: хто саме заявив. */
   deviceId?: string;
   authorEmail?: string | null;

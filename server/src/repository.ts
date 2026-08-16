@@ -67,6 +67,14 @@ export interface DeclarePaymentInput {
   authorEmail?: string | null;
 }
 
+export interface ReceiptRef {
+  fileId: string;
+  chatId: string;
+  messageId: number;
+  /** Що прочитали зі скріншота на пристрої. */
+  parsed?: unknown;
+}
+
 export interface ClientLogInput {
   deviceId: string;
   appVersion?: string | null;
@@ -170,6 +178,12 @@ export interface CourseRepository {
   declarePayment(input: DeclarePaymentInput): Promise<Payment>;
   /** Усі заявки по заняттю — адміну. */
   listPayments(sessionId: string): Promise<Payment[]>;
+  /** Прикріпити квитанцію (уже надіслану в телеграм) до заявки. */
+  attachReceipt(id: string, receipt: ReceiptRef): Promise<Payment | null>;
+  /** Оплата за id — щоб віддати квитанцію тому, кому можна. */
+  getPaymentById(id: string): Promise<Payment | null>;
+  /** Заняття за id — для підпису до квитанції. */
+  getSessionById(id: string): Promise<Session | null>;
   /** Підтвердити, відхилити або звільнити від оплати. */
   setPaymentStatus(
     id: string,
@@ -296,6 +310,8 @@ export function toPaymentDTO(
     status: payment.status,
     amount: payment.amount,
     receiptURL: payment.receiptURL,
+    hasReceiptImage: payment.receiptFileId != null,
+    receiptParsed: payment.receiptParsed,
     note: payment.note,
     declaredAt: payment.declaredAt,
     reviewedAt: payment.reviewedAt,
@@ -684,6 +700,30 @@ export class DrizzleCourseRepository implements CourseRepository {
       })
       .returning()
       .get();
+  }
+
+  async attachReceipt(id: string, receipt: ReceiptRef): Promise<Payment | null> {
+    return (
+      this.db
+        .update(payments)
+        .set({
+          receiptFileId: receipt.fileId,
+          receiptChatId: receipt.chatId,
+          receiptMessageId: receipt.messageId,
+          receiptParsed: receipt.parsed ? JSON.stringify(receipt.parsed) : null,
+        })
+        .where(eq(payments.id, id))
+        .returning()
+        .get() ?? null
+    );
+  }
+
+  async getPaymentById(id: string): Promise<Payment | null> {
+    return this.db.select().from(payments).where(eq(payments.id, id)).get() ?? null;
+  }
+
+  async getSessionById(id: string): Promise<Session | null> {
+    return this.db.select().from(sessions).where(eq(sessions.id, id)).get() ?? null;
   }
 
   async listPayments(sessionId: string): Promise<Payment[]> {

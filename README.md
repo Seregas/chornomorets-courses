@@ -54,6 +54,8 @@ npm run dev            # старт на http://localhost:3000
 | `DATABASE_URL` | шлях до SQLite-файлу | `./data.db` |
 | `ADMIN_EMAILS` | список admin-акаунтів через кому | порожньо (адмін недоступний) |
 | `GOOGLE_CLIENT_ID` | якщо задано — `Authorization` перевіряється як Google ID-token | не задано → потрібен `ALLOW_DEV_AUTH=1` |
+| `TELEGRAM_BOT_TOKEN` | бот, який складає скріншоти квитанцій у чат | не задано → приймання вимкнене |
+| `TELEGRAM_RECEIPTS_CHAT_ID` | чат, куди їх складати | не задано |
 | `ALLOW_DEV_AUTH` | `1` дозволяє dev-вхід за email. Лише для локальної розробки | не задано |
 
 **Dev-режим автентифікації:** якщо задано `ALLOW_DEV_AUTH=1` і не задано `GOOGLE_CLIENT_ID`,
@@ -82,6 +84,11 @@ npm run dev            # старт на http://localhost:3000
 - `GET /sessions/:id/payment?deviceId=…` · `POST /sessions/:id/payment` `{deviceId, amount, receiptURL?, note?}`
 - `GET /admin/sessions/:id/payments` · `POST /admin/payments/:id/status` `{status}` —
   `declared | confirmed | free | rejected`
+
+**Квитанції:**
+- `POST /payments/:id/receipt` (multipart: `image`, `deviceId`, `parsed`) — скріншот їде
+  в телеграм-чат викладача, у нас лишається лише посилання на нього
+- `GET /payments/:id/receipt?deviceId=…` — картинка назад; автору заявки або адміну
 
 **Пульс після заняття:**
 - `GET /sessions/:id/pulse?deviceId=…` · `POST /sessions/:id/pulse` `{deviceId, rating 1–5, comment?}`

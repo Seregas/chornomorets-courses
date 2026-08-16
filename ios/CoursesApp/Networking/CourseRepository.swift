@@ -24,6 +24,9 @@ protocol CourseRepository {
     // — Оплата заняття —
     func payment(sessionId: String) async throws -> Payment?
     func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws
+    func uploadReceipt(paymentId: String, image: Data, facts: ReceiptFacts) async throws -> Payment
+    /// Адреса картинки квитанції — показуємо її прямо із сервера.
+    func receiptURL(paymentId: String) -> URL?
     func payments(sessionId: String) async throws -> [Payment]
     func setPaymentStatus(id: String, status: PaymentStatus) async throws
 
@@ -142,6 +145,18 @@ final class RemoteCourseRepository: CourseRepository {
                              body: DeclareBody(deviceId: deviceId, amount: amount,
                                                receiptURL: receiptURL, note: note))
     }
+    func uploadReceipt(paymentId: String, image: Data, facts: ReceiptFacts) async throws -> Payment {
+        let parsed = (try? JSONEncoder().encode(facts)).map { String(decoding: $0, as: UTF8.self) }
+        return try await api.upload(
+            "payments/\(paymentId)/receipt",
+            image: image,
+            fields: ["deviceId": deviceId, "parsed": parsed ?? ""])
+    }
+
+    func receiptURL(paymentId: String) -> URL? {
+        URL(string: "payments/\(paymentId)/receipt?deviceId=\(deviceId)", relativeTo: api.baseURL)
+    }
+
     func payments(sessionId: String) async throws -> [Payment] {
         try await api.get("admin/sessions/\(sessionId)/payments", cached: false)
     }

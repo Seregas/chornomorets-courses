@@ -63,6 +63,46 @@ final class APIClient {
         cache.clear()
     }
 
+    /// Завантаження файлу (квитанція). Окремо від mutate: там JSON, а тут
+    /// multipart, і кеш чистити не треба.
+    func upload<T: Decodable>(
+        _ path: String, image: Data, fields: [String: String]
+    ) async throws -> T {
+        guard let url = URL(string: path, relativeTo: baseURL) else {
+            throw APIError(status: -1, body: "невалідний шлях: \(path)")
+        }
+        let boundary = "receipt-\(UUID().uuidString)"
+        var body = Data()
+        func append(_ text: String) { body.append(Data(text.utf8)) }
+
+        for (key, value) in fields {
+            append("--\(boundary)\r\n")
+            append("Content-Disposition: form-data; name=\"\(key)\"\r\n\r\n")
+            append("\(value)\r\n")
+        }
+        append("--\(boundary)\r\n")
+        append("Content-Disposition: form-data; name=\"image\"; filename=\"receipt.jpg\"\r\n")
+        append("Content-Type: image/jpeg\r\n\r\n")
+        body.append(image)
+        append("\r\n--\(boundary)--\r\n")
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        if let token = tokenProvider() {
+            req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
+        req.httpBody = body
+        req.timeoutInterval = 60
+
+        let (data, response) = try await session.data(for: req)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status) else {
+            throw APIError(status: status, body: String(decoding: data, as: UTF8.self))
+        }
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
     private func performRaw<Body: Encodable>(method: String, path: String, body: Body?) async throws -> Data {
         // URL(string:relativeTo:) зберігає query-рядок (appendingPathComponent його екранує).
         guard let url = URL(string: path, relativeTo: baseURL) else {

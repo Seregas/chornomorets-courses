@@ -101,8 +101,19 @@ export const payments = sqliteTable(
       .default("declared"),
     /** Сума в гривнях. Буває не рівна ціні: часткова, наперед, зі знижкою. */
     amount: integer("amount"),
-    /** Посилання на квитанцію. Файли поки не приймаємо — немає сховища. */
+    /** Посилання на квитанцію, якщо студент вставив його руками. */
     receiptURL: text("receipt_url"),
+    /**
+     * Завантажений скріншот. Файли не тримаємо в себе: пересилаємо в
+     * телеграм-чат викладача й запам'ятовуємо ідентифікатор файлу — так
+     * квитанція одразу перед очима там, де її й звіряють, а нам не треба
+     * ні сховища, ні бекапів.
+     */
+    receiptFileId: text("receipt_file_id"),
+    receiptChatId: text("receipt_chat_id"),
+    receiptMessageId: integer("receipt_message_id"),
+    /** Що вдалося прочитати зі скріншота на пристрої (JSON). */
+    receiptParsed: text("receipt_parsed"),
     note: text("note"),
     declaredAt: text("declared_at").notNull(),
     reviewedAt: text("reviewed_at"),

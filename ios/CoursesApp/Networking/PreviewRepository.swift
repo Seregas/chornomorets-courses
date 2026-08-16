@@ -80,6 +80,10 @@ final class PreviewRepository: CourseRepository {
 
     func payment(sessionId: String) async throws -> Payment? { nil }
     func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws {}
+    func uploadReceipt(paymentId: String, image: Data, facts: ReceiptFacts) async throws -> Payment {
+        throw APIError(status: 503, body: "прев'ю")
+    }
+    func receiptURL(paymentId: String) -> URL? { nil }
     func payments(sessionId: String) async throws -> [Payment] { [] }
     func setPaymentStatus(id: String, status: PaymentStatus) async throws {}
 

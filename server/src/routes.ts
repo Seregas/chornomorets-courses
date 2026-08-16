@@ -3,7 +3,13 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { getIdentity, isAdminEmail } from "./auth.js";
 import { repository as repo, toPaymentDTO } from "./repository.js";
+import { fetchReceipt, sendReceipt, telegramConfigured } from "./telegram.js";
 import { buildPlaybackDescriptor, checkAccess } from "./video.js";
+
+/** Розібрані на пристрої поля можуть прийти будь-якими — не падаємо через це. */
+function safeJSON(raw: string): unknown {
+  try { return JSON.parse(raw); } catch { return { raw }; }
+}
 
 const app = new Hono();
 
@@ -120,6 +126,72 @@ app.post("/sessions/:id/payment", zValidator("json", declareInput), async (c) =>
     authorEmail: identity?.email ?? null,
   });
   return c.json(toPaymentDTO(payment), 201);
+});
+
+/**
+ * Скріншот квитанції. Не зберігаємо в себе: пересилаємо в телеграм-чат
+ * викладача — там його і звіряють із випискою, і там він зберігається.
+ * Розібрані на пристрої поля йдуть поруч, щоб не читати картинку очима.
+ */
+app.post("/payments/:id/receipt", async (c) => {
+  if (!telegramConfigured) {
+    return c.json({ error: "приймання скріншотів не налаштоване" }, 503);
+  }
+  const payment = await repo.getPaymentById(c.req.param("id"));
+  if (!payment) return c.json({ error: "not found" }, 404);
+
+  const form = await c.req.formData();
+  const image = form.get("image");
+  if (!(image instanceof Blob)) return c.json({ error: "немає файлу" }, 400);
+  if (image.size > 10 * 1024 * 1024) return c.json({ error: "завеликий файл" }, 413);
+
+  // Заявку може прикріпити лише той, хто її подав.
+  if (form.get("deviceId") !== payment.deviceId) {
+    return c.json({ error: "чужа заявка" }, 403);
+  }
+
+  const parsedRaw = form.get("parsed");
+  const parsed = typeof parsedRaw === "string" ? safeJSON(parsedRaw) : undefined;
+
+  const session = await repo.getSessionById(payment.sessionId);
+  const caption = [
+    "Квитанція за заняття",
+    session ? `${session.title} (${session.startAt.slice(0, 10)})` : payment.sessionId,
+    payment.authorEmail ?? payment.deviceId,
+    payment.amount ? `${payment.amount} грн` : null,
+  ].filter(Boolean).join(" · ");
+
+  try {
+    const stored = await sendReceipt(image, caption);
+    const updated = await repo.attachReceipt(payment.id, { ...stored, parsed });
+    return c.json(toPaymentDTO(updated));
+  } catch (e) {
+    return c.json({ error: String(e) }, 502);
+  }
+});
+
+/** Показати квитанцію: власнику заявки або адміну. */
+app.get("/payments/:id/receipt", async (c) => {
+  const payment = await repo.getPaymentById(c.req.param("id"));
+  if (!payment?.receiptFileId) return c.json({ error: "not found" }, 404);
+
+  const identity = await getIdentity(c);
+  const isOwner = c.req.query("deviceId") === payment.deviceId;
+  if (!isOwner && !isAdminEmail(identity?.email)) {
+    return c.json({ error: "no access" }, 403);
+  }
+
+  try {
+    const file = await fetchReceipt(payment.receiptFileId);
+    return new Response(file.body, {
+      headers: {
+        "Content-Type": file.headers.get("content-type") ?? "image/jpeg",
+        "Cache-Control": "private, max-age=3600",
+      },
+    });
+  } catch (e) {
+    return c.json({ error: String(e) }, 502);
+  }
 });
 
 // ──────────────────── Пульс після заняття ────────────────────

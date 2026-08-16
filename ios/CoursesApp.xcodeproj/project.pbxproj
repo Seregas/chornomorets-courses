@@ -30,8 +30,10 @@
 		783B8E88F93C940AAF3D5467 /* SessionPaymentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 349BE3A11D4E6BA33B6751B7 /* SessionPaymentView.swift */; };
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
+		8A827D4915DD1EE753A321BE /* ReceiptScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65ABC4E02A95F96640123D39 /* ReceiptScanner.swift */; };
 		982F6FC9ADC351A21E53F345 /* SharedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */; };
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
+		A0F2E23222C20925F7FFECF0 /* ReceiptParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51768EA5F1F861B7AE6B2186 /* ReceiptParsing.swift */; };
 		A186AC8A733646F290D7B83F /* WidgetSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6490DE90C63D0315542FC7FF /* WidgetSync.swift */; };
 		A292BC9D259C0D452DE24725 /* AdminHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB60848B43122D61C5F0FB42 /* AdminHomeView.swift */; };
 		A2C50E491C58E562B231D0AC /* JournalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8338942F6F7BB082FB6777 /* JournalView.swift */; };
@@ -98,9 +100,11 @@
 		407F0AEDE6C248D820A2F82E /* CoursesWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoursesWidgets.entitlements; sourceTree = "<group>"; };
 		4AC69E20B206F4B40FB28259 /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
 		4F138B2577FF5EDFDA6B8F00 /* CoursesApp.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CoursesApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		51768EA5F1F861B7AE6B2186 /* ReceiptParsing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptParsing.swift; sourceTree = "<group>"; };
 		530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationScheduler.swift; sourceTree = "<group>"; };
 		56F44C3476908F03659EA0C7 /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		6490DE90C63D0315542FC7FF /* WidgetSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSync.swift; sourceTree = "<group>"; };
+		65ABC4E02A95F96640123D39 /* ReceiptScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReceiptScanner.swift; sourceTree = "<group>"; };
 		6CF4953E7EAD819BD46F4727 /* StreamDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StreamDetailView.swift; sourceTree = "<group>"; };
 		6E60CA068B28D05C7FDF8016 /* VideoPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerView.swift; sourceTree = "<group>"; };
 		7612B66619C3EB87F125DFDC /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
@@ -168,6 +172,8 @@
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
 				05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */,
+				51768EA5F1F861B7AE6B2186 /* ReceiptParsing.swift */,
+				65ABC4E02A95F96640123D39 /* ReceiptScanner.swift */,
 				C199B6B439D225C6D78F1C16 /* RemoteLog.swift */,
 				3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */,
 				6490DE90C63D0315542FC7FF /* WidgetSync.swift */,
@@ -476,6 +482,8 @@
 				769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */,
 				3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */,
 				DEC64D9BF98D988841DAD8EF /* PreviewRepository.swift in Sources */,
+				A0F2E23222C20925F7FFECF0 /* ReceiptParsing.swift in Sources */,
+				8A827D4915DD1EE753A321BE /* ReceiptScanner.swift in Sources */,
 				689F966B3AE44774691502D6 /* RemoteLog.swift in Sources */,
 				C136A6313DCCABBDE6EA57FF /* ResponseCache.swift in Sources */,
 				7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */,

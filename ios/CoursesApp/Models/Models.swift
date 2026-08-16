@@ -25,6 +25,8 @@ struct Payment: Codable, Identifiable, Hashable {
     let status: PaymentStatus
     let amount: Int?
     let receiptURL: String?
+    let hasReceiptImage: Bool
+    let receiptParsed: String?
     let note: String?
     let declaredAt: String
     let reviewedAt: String?
