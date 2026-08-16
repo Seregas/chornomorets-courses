@@ -45,6 +45,7 @@ struct SettingsView: View {
                 remindersSection
                 downloadsSection
                 devSection
+                aboutSection
             }
             .navigationTitle("Налаштування")
             .sheet(isPresented: $showConnect) {
@@ -162,6 +163,25 @@ struct SettingsView: View {
                 Text("скоро (Фаза 2)").font(.caption).foregroundStyle(.secondary)
             }
         }
+    }
+
+    /// Версія збірки. Без неї неможливо відповісти на просте питання «а яка
+    /// збірка зараз на телефоні» — TestFlight оновлює застосунок не сам.
+    private var aboutSection: some View {
+        Section {
+            HStack {
+                Text("Версія")
+                Spacer()
+                Text(Self.versionLabel).foregroundStyle(.secondary).textSelection(.enabled)
+            }
+        }
+    }
+
+    private static var versionLabel: String {
+        let info = Bundle.main.infoDictionary
+        let short = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(short) (\(build))"
     }
 
     private var devSection: some View {

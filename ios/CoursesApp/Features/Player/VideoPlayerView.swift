@@ -106,6 +106,14 @@ struct DirectVideoPlayer: View {
     @State private var duration: Double = 0
     @State private var speed = PlaybackSpeed.current
     @State private var failure: String?
+    @Environment(\.openURL) private var openURL
+
+    /// З media-посилання Drive збираємо звичайне «переглянути у Drive».
+    private var driveFallbackURL: URL? {
+        guard let id = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+            .path.split(separator: "/").last, url.host == "www.googleapis.com" else { return nil }
+        return URL(string: "https://drive.google.com/file/d/\(id)/view")
+    }
 
     var body: some View {
         Group {
@@ -116,6 +124,12 @@ struct DirectVideoPlayer: View {
                     Label("Не вдалося відтворити", systemImage: "play.slash")
                 } description: {
                     ScrollView { Text(failure).font(.footnote).textSelection(.enabled) }
+                } actions: {
+                    // Запасний шлях: у Safari є куки Google, тож там запис
+                    // відкриється навіть якщо вбудований плеєр не впорався.
+                    if let fallback = driveFallbackURL {
+                        Button("Відкрити у Drive") { openURL(fallback) }
+                    }
                 }
             } else {
                 VideoPlayer(player: player)
