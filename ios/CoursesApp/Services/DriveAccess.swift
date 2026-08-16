@@ -48,7 +48,34 @@ enum DriveAccess {
     static func reset() { cache.removeAll() }
 
     /// Пряме посилання на вміст файлу. AVPlayer тягне його з токеном у заголовку.
+    ///
+    /// acknowledgeAbuse=true — бо Drive не віддає файли, більші за 100 МБ, тому,
+    /// хто не є їхнім власником, поки той не підтвердить, що усвідомлює ризик
+    /// (там же лежить попередження про віруси). Записи занять по три години
+    /// важать значно більше, а дивляться їх саме не власники.
     static func mediaURL(fileId: String) -> URL? {
-        URL(string: "https://www.googleapis.com/drive/v3/files/\(fileId)?alt=media")
+        URL(string: "https://www.googleapis.com/drive/v3/files/\(fileId)?alt=media&acknowledgeAbuse=true")
+    }
+
+    /// Чому саме не грає: питаємо в Drive один байт і показуємо його відповідь.
+    /// Без цього AVKit малює перекреслений плей і не каже нічого.
+    static func diagnose(url: URL, headers: [String: String]) async -> String {
+        var request = URLRequest(url: url)
+        for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
+        // Одного байта досить, щоб побачити код і тіло помилки, і не тягнути гігабайт.
+        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        request.timeoutInterval = 15
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let code = (response as? HTTPURLResponse)?.statusCode ?? 0
+            if (200...299).contains(code) {
+                return "Drive віддає файл (код \(code)), але плеєр його не приймає."
+            }
+            let body = String(decoding: data.prefix(400), as: UTF8.self)
+            return "Drive відповів \(code).\n\n\(body)"
+        } catch {
+            return "Запит до Drive не пройшов: \(error.localizedDescription)"
+        }
     }
 }

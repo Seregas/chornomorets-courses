@@ -1,4 +1,5 @@
 import AVKit
+import Combine
 import SwiftUI
 import WebKit
 
@@ -104,14 +105,40 @@ struct DirectVideoPlayer: View {
     @State private var timeObserver: Any?
     @State private var duration: Double = 0
     @State private var speed = PlaybackSpeed.current
+    @State private var failure: String?
 
     var body: some View {
-        VideoPlayer(player: player)
-            .task { await start() }
-            .onDisappear(perform: stop)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) { speedMenu }
+        Group {
+            if let failure {
+                // AVKit на провал малює лише перекреслений плей і мовчить.
+                // Показуємо, що саме відповіло джерело.
+                ContentUnavailableView {
+                    Label("Не вдалося відтворити", systemImage: "play.slash")
+                } description: {
+                    ScrollView { Text(failure).font(.footnote).textSelection(.enabled) }
+                }
+            } else {
+                VideoPlayer(player: player)
             }
+        }
+        .task { await start() }
+        .onDisappear(perform: stop)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) { speedMenu }
+        }
+    }
+
+    /// Стежить за станом айтема: .failed — привід сходити по причину.
+    private func watchForFailure(_ item: AVPlayerItem) {
+        Task { @MainActor in
+            for await status in item.publisher(for: \.status).values where status == .failed {
+                let reason = item.error?.localizedDescription ?? "невідома помилка"
+                failure = headers.isEmpty
+                    ? reason
+                    : await DriveAccess.diagnose(url: url, headers: headers) + "\n\n(\(reason))"
+                return
+            }
+        }
     }
 
     private var speedMenu: some View {
@@ -153,7 +180,9 @@ struct DirectVideoPlayer: View {
         let asset = headers.isEmpty
             ? AVURLAsset(url: url)
             : AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
-        player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
+        let item = AVPlayerItem(asset: asset)
+        watchForFailure(item)
+        player.replaceCurrentItem(with: item)
         audio.bindRemoteCommands(to: player)
 
         if let saved = PlaybackProgressStore.position(for: materialId), saved.resumeSeconds > 0 {
