@@ -64,6 +64,8 @@ final class AuthStore {
     func disconnect() {
         AuthTokenStore.bearer = nil
         AuthTokenStore.driveAccessToken = nil
+        // Відповіді Drive про доступ після виходу нічого не варті.
+        DriveAccess.reset()
         UserDefaults.standard.removeObject(forKey: Self.emailKey)
         email = nil
         isAdmin = false

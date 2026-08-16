@@ -3,7 +3,7 @@ import SwiftUI
 import WebKit
 
 /// Плеєр відіграє playback-дескриптор від бекенду. Тип джерела ховається за
-/// дескриптором: direct → AVPlayer, youtube/drive → вбудований веб-плеєр.
+/// дескриптором: direct і Drive → AVPlayer, youtube → вбудований веб-плеєр.
 /// Додати джерело (HLS/R2) = новий case тут, без зміни решти застосунку.
 struct VideoPlayerView: View {
     let materialId: String
@@ -51,7 +51,22 @@ struct VideoPlayerView: View {
         case .youtube(let videoId):
             WebPlayer(url: URL(string: "https://www.youtube.com/embed/\(videoId)?playsinline=1")!)
         case .googleDrive(let fileId):
-            WebPlayer(url: URL(string: "https://drive.google.com/file/d/\(fileId)/preview")!)
+            // Раніше тут було drive.google.com/.../preview у веб-в'ю — воно не
+            // мало ні токена, ні куків Google, тож показувало «немає доступу»
+            // навіть тим, кому файл розшарено. Тепер тягнемо вміст напряму з
+            // Drive API, підписуючи запит токеном користувача.
+            if let token = AuthTokenStore.driveAccessToken,
+               let url = DriveAccess.mediaURL(fileId: fileId) {
+                DirectVideoPlayer(url: url, materialId: materialId, title: title,
+                                  headers: ["Authorization": "Bearer \(token)"])
+                    .ignoresSafeArea(edges: .bottom)
+            } else {
+                ContentUnavailableView {
+                    Label("Потрібен Google-акаунт", systemImage: "person.crop.circle.badge.exclamationmark")
+                } description: {
+                    Text("Запис лежить на Google Drive. Підключіть акаунт у Налаштуваннях — той, якому надано доступ до записів.")
+                }
+            }
         }
     }
 
@@ -81,6 +96,8 @@ struct DirectVideoPlayer: View {
     let url: URL
     let materialId: String
     let title: String
+    /// Заголовки запиту — для джерел, що вимагають авторизації (Drive).
+    var headers: [String: String] = [:]
 
     @State private var player = AVPlayer()
     @State private var audio = PlayerAudioController()
@@ -127,7 +144,16 @@ struct DirectVideoPlayer: View {
 
     private func start() async {
         audio.activate()
-        player.replaceCurrentItem(with: AVPlayerItem(url: url))
+        // AVURLAsset дозволяє підписати запити до джерела — без цього Drive
+        // відповідає 401 і плеєр показує чорний екран.
+        //
+        // Відоме вузьке місце: якщо Drive колись почне відповідати редиректом,
+        // заголовок може не пережити переходу — тоді знадобиться
+        // AVAssetResourceLoaderDelegate, який підписує кожен запит окремо.
+        let asset = headers.isEmpty
+            ? AVURLAsset(url: url)
+            : AVURLAsset(url: url, options: ["AVURLAssetHTTPHeaderFieldsKey": headers])
+        player.replaceCurrentItem(with: AVPlayerItem(asset: asset))
         audio.bindRemoteCommands(to: player)
 
         if let saved = PlaybackProgressStore.position(for: materialId), saved.resumeSeconds > 0 {

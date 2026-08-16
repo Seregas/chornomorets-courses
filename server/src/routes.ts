@@ -197,8 +197,15 @@ app.get("/video/:materialId/playback", async (c) => {
   if (!descriptor) return c.json({ error: "no video for material" }, 404);
 
   const identity = await getIdentity(c);
-  const access = checkAccess(material, identity);
-  if (access !== "granted") {
+  const access = await checkAccess(material, identity, c.req.header("x-drive-token"));
+
+  // Для Drive «unknown» — не відмова: сервер просто не бачить чужого токена
+  // (застосунок навмисно тримає його в себе, бо scope drive.readonly відкриває
+  // весь диск). Дескриптор віддаємо, а чи відкриється файл — вирішить сам Drive.
+  // Але лише тим, хто увійшов: fileId не має розсипатися з відкритого API.
+  const undecidable =
+    access === "unknown" && material.videoProvider === "drive" && identity !== null;
+  if (access !== "granted" && !undecidable) {
     return c.json({ access, error: "no access" }, 403);
   }
   return c.json({ access, descriptor });
@@ -210,7 +217,7 @@ app.get("/video/:materialId/access", async (c) => {
   if (!material) return c.json({ error: "not found" }, 404);
   const identity = await getIdentity(c);
   return c.json({
-    access: checkAccess(material, identity),
+    access: await checkAccess(material, identity, c.req.header("x-drive-token")),
     provider: material.videoProvider,
   });
 });

@@ -46,7 +46,7 @@ struct MaterialRow: View {
         .task {
             if material.hasVideo {
                 progress = PlaybackProgressStore.position(for: material.id)
-                access = (try? await repo.access(materialId: material.id))?.access ?? .unknown
+                access = await resolveAccess()
             }
             // Демо/скриншоти: одразу відкрити потрібний матеріал (плеєр або домашку).
             if ProcessInfo.processInfo.environment["OPEN_MATERIAL"] == material.id {
@@ -63,6 +63,18 @@ struct MaterialRow: View {
         .onChange(of: showPlayer) { _, shown in
             if !shown { progress = PlaybackProgressStore.position(for: material.id) }
         }
+    }
+
+    /// Для Drive питаємо Google напряму: сервер токена не бачить і чесно
+    /// відповідає «unknown». Спершу дізнаємось fileId із дескриптора —
+    /// сирий референс у списку матеріалів не віддається навмисно.
+    private func resolveAccess() async -> AccessState {
+        guard material.videoProvider == .drive else {
+            return (try? await repo.access(materialId: material.id))?.access ?? .unknown
+        }
+        guard let descriptor = try? await repo.playback(materialId: material.id).descriptor,
+              case .googleDrive(let fileId) = descriptor else { return .unknown }
+        return await DriveAccess.check(fileId: fileId)
     }
 
     /// Смужка «де я зупинився» під відео-матеріалом.
