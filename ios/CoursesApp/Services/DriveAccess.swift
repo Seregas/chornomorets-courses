@@ -63,17 +63,33 @@ enum DriveAccess {
     /// Що насправді віддає джерело: код, тип вмісту, чи був редирект.
     /// AVFoundation мовчазна, коли не розуміє формат, — це єдиний спосіб побачити.
     static func probe(url: URL, headers: [String: String]) async -> String {
+        // Перевіряємо обидва варіанти: із підтвердженням «розумію ризик» і без
+        // нього. Drive у частині випадків відмовляє саме через цей прапорець,
+        // тож без порівняння не зрозуміти, хто винен.
+        let plain = URL(string: url.absoluteString.replacingOccurrences(
+            of: "&acknowledgeAbuse=true", with: "")) ?? url
+        async let withAck = single(url: url, headers: headers)
+        async let without = single(url: plain, headers: headers)
+        return "з acknowledgeAbuse: \(await withAck)\nбез: \(await without)"
+    }
+
+    private static func single(url: URL, headers: [String: String]) async -> String {
         var request = URLRequest(url: url)
         for (key, value) in headers { request.setValue(value, forHTTPHeaderField: key) }
         request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
         request.timeoutInterval = 15
         do {
-            let (_, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await URLSession.shared.data(for: request)
             guard let http = response as? HTTPURLResponse else { return "не HTTP-відповідь" }
             let type = http.value(forHTTPHeaderField: "Content-Type") ?? "—"
-            let range = http.value(forHTTPHeaderField: "Content-Range") ?? "—"
             let redirected = http.url?.host != url.host
-            return "код=\(http.statusCode) тип=\(type) range=\(range) редирект=\(redirected ? (http.url?.host ?? "так") : "ні")"
+            var line = "код=\(http.statusCode) тип=\(type) редирект=\(redirected ? (http.url?.host ?? "так") : "ні")"
+            // Тіло помилки — те єдине, що називає причину словами.
+            if http.statusCode >= 400 {
+                line += " тіло=" + String(decoding: data.prefix(600), as: UTF8.self)
+                    .replacingOccurrences(of: "\n", with: " ")
+            }
+            return line
         } catch {
             return "запит не пройшов: \(error.localizedDescription)"
         }
