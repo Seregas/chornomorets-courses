@@ -167,17 +167,25 @@ struct HomeView: View {
                         Spacer()
                         Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
                     }
-                    Text(item.streamTitle).font(.caption).foregroundStyle(.secondary)
-                    ProgressView(value: progress(item))
-                        .tint(.sea)
+                    HStack(spacing: 6) {
+                        Text(item.streamTitle).font(.caption).foregroundStyle(.secondary)
+                        StatusBadge(status: item.status)
+                    }
+                    // Смужка прогресу — лише коли попереду є заплановані заняття.
+                    // Інакше вона показувала б «10 з 10» курсу, який триває, і
+                    // виглядала б як «усе позаду».
+                    if item.nextSessionAt != nil {
+                        ProgressView(value: progress(item)).tint(.sea)
+                    }
                     HStack(spacing: 8) {
-                        Text("\(item.sessionsPassed) з \(item.sessionsTotal) занять")
+                        Text(sessionsLabel(item))
                             .font(.caption).foregroundStyle(.secondary)
                         if let next = item.nextSessionAt {
                             Text("· далі \(Fmt.relativeDayTime(next))")
                                 .font(.caption).foregroundStyle(Color.sea)
-                        } else {
-                            Text("· курс завершено").font(.caption).foregroundStyle(.secondary)
+                        } else if item.status != .finished {
+                            Text("· дату наступного ще не призначено")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
                         // Скільки занять ще не підтверджено оплатою — те, через
@@ -200,6 +208,14 @@ struct HomeView: View {
     private func progress(_ item: EnrolledStream) -> Double {
         guard item.sessionsTotal > 0 else { return 0 }
         return Double(item.sessionsPassed) / Double(item.sessionsTotal)
+    }
+
+    /// «3 з 10 занять», поки попереду є заплановані; інакше просто скільки
+    /// пройшло — знаменник у курсі, що триває, ще не відомий.
+    private func sessionsLabel(_ item: EnrolledStream) -> String {
+        item.nextSessionAt != nil
+            ? "\(item.sessionsPassed) з \(item.sessionsTotal) занять"
+            : "\(item.sessionsPassed) занять пройшло"
     }
 
     // MARK: - Оголошення

@@ -66,7 +66,8 @@ final class PreviewRepository: CourseRepository {
         let items = try await schedule()
         return HomeDigest(
             streams: [EnrolledStream(
-                streamId: "s-stress-5", streamTitle: "Потік 5", courseId: "c-stress",
+                streamId: "s-stress-5", streamTitle: "Потік 5", status: .ongoing,
+                courseId: "c-stress",
                 courseTitle: "Стрес, втома і піклування про себе",
                 sessionsPassed: 1, sessionsTotal: 3,
                 nextSessionAt: items.first?.session.startAt, unpaidSessions: 2)],

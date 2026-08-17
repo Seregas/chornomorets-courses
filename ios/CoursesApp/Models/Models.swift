@@ -275,6 +275,10 @@ struct EnrolledStream: Codable, Identifiable, Hashable {
     var id: String { streamId }
     let streamId: String
     let streamTitle: String
+    /// Стан потоку так, як його виставив викладач. Тільки він вирішує, чи курс
+    /// завершено: порожній розклад попереду означає лише, що наступну дату ще
+    /// не назвали.
+    let status: StreamStatus
     let courseId: String
     let courseTitle: String
     let sessionsPassed: Int

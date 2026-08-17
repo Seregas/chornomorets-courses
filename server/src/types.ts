@@ -177,10 +177,16 @@ export interface EnrolledStream {
   streamTitle: string;
   courseId: string;
   courseTitle: string;
+  /**
+   * Стан потоку так, як його виставив викладач. Саме він вирішує, чи курс
+   * завершено: відсутність запланованих занять попереду означає лише, що
+   * наступну дату ще не назвали.
+   */
+  status: Stream["status"];
   /** Скільки занять уже відбулося з усіх. */
   sessionsPassed: number;
   sessionsTotal: number;
-  /** Найближче заняття попереду; null — курс уже пройшов. */
+  /** Найближче заняття попереду; null — наступної дати ще немає. */
   nextSessionAt: string | null;
   /** За скільки занять оплата ще не підтверджена. */
   unpaidSessions: number;

@@ -579,7 +579,13 @@ export class DrizzleCourseRepository implements CourseRepository {
     const [nextSession, ...upcoming] = schedule;
 
     const streamRows = this.db
-      .select({ streamId: streams.id, streamTitle: streams.title, courseId: courses.id, courseTitle: courses.title })
+      .select({
+        streamId: streams.id,
+        streamTitle: streams.title,
+        streamStatus: streams.status,
+        courseId: courses.id,
+        courseTitle: courses.title,
+      })
       .from(enrollments)
       .innerJoin(streams, eq(enrollments.streamId, streams.id))
       .innerJoin(courses, eq(streams.courseId, courses.id))
@@ -626,6 +632,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       return {
         streamId: row.streamId,
         streamTitle: row.streamTitle,
+        status: row.streamStatus,
         courseId: row.courseId,
         courseTitle: row.courseTitle,
         sessionsPassed: own.filter((s) => s.startAt <= now).length,
@@ -635,7 +642,9 @@ export class DrizzleCourseRepository implements CourseRepository {
       };
     });
     // Спершу ті, що тривають: завершений курс — довідка, а не те, чим живуть.
+    const rank = (s: EnrolledStream) => (s.status === "finished" ? 1 : 0);
     enrolled.sort((a, b) => {
+      if (rank(a) !== rank(b)) return rank(a) - rank(b);
       if (!!a.nextSessionAt !== !!b.nextSessionAt) return a.nextSessionAt ? -1 : 1;
       return (a.nextSessionAt ?? "") < (b.nextSessionAt ?? "") ? -1 : 1;
     });
