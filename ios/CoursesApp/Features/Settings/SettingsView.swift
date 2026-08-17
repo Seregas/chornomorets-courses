@@ -31,6 +31,8 @@ struct SettingsView: View {
     @State private var showConnect = false
     @State private var google = GoogleSignInService()
     @State private var googleError: String?
+    @State private var showDeleteAccount = false
+    @State private var deleting = false
 
     @AppStorage("reminders_enabled") private var remindersEnabled = true
     @AppStorage("reminder_lead") private var reminderLead = 30
@@ -48,6 +50,14 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationTitle("Налаштування")
+            .alert("Видалити акаунт?", isPresented: $showDeleteAccount) {
+                Button("Скасувати", role: .cancel) {}
+                Button("Видалити", role: .destructive) { Task { await deleteAccount() } }
+            } message: {
+                Text("Зникнуть підписки, відмітки про оплату, здані домашки й питання. "
+                     + "Це не можна скасувати. Записи курсу лишаться доступними, "
+                     + "поки викладач ділиться ними з вашим Google-акаунтом.")
+            }
             .sheet(isPresented: $showConnect) {
                 ConnectGoogleSheet { email in
                     auth.connectDev(email: email)
@@ -74,6 +84,14 @@ struct SettingsView: View {
                     }
                     .font(.subheadline)
                 }
+                // Вимога App Store 5.1.1(v): акаунт має видалятися зсередини
+                // застосунку, а не листуванням із підтримкою.
+                if deleting {
+                    ProgressView()
+                } else {
+                    Button("Видалити акаунт", role: .destructive) { showDeleteAccount = true }
+                        .font(.subheadline)
+                }
             } else if GoogleAuthConfig.isConfigured {
                 Button { Task { await signInWithGoogle() } } label: {
                     Label("Увійти через Google", systemImage: "person.crop.circle.badge.plus")
@@ -88,6 +106,20 @@ struct SettingsView: View {
             }
             Text("Потрібен, щоб відкривати відео з обмеженим доступом.")
                 .font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func deleteAccount() async {
+        deleting = true
+        defer { deleting = false }
+        do {
+            try await repo.deleteAccount()
+            google.signOut()
+            auth.disconnect()
+            vm.subscriptions = []
+            notifications.cancelAll()
+        } catch {
+            googleError = error.localizedDescription
         }
     }
 

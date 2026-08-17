@@ -203,6 +203,8 @@ export interface CourseRepository {
   // — Акаунти —
   /** Запам'ятати або оновити акаунт, що зайшов. Повертає його id. */
   touchAccount(input: { id: string; email: string; name?: string | null }): Promise<string>;
+  /** Видалити акаунт з усім, що на ньому висить. Незворотно. */
+  deleteAccount(accountId: string): Promise<boolean>;
 
   // — Логи з клієнтів —
   writeClientLog(input: ClientLogInput): Promise<void>;
@@ -885,6 +887,19 @@ export class DrizzleCourseRepository implements CourseRepository {
     // Могли відмітити оплату наперед — тепер їй є до кого прикріпитися.
     this.claimPlaceholder(input.id, input.email);
     return input.id;
+  }
+
+  /**
+   * Видаляє акаунт і все особисте разом із ним — цього вимагає App Store
+   * (5.1.1(v)): якщо застосунок заводить акаунти, він має вміти їх стирати.
+   *
+   * Дочірні рядки йдуть каскадом за FK, тому це справді видалення, а не
+   * позначка «видалений». Квитанції, вже надіслані в телеграм викладачу,
+   * лишаються там: це його бухгалтерія, а не наші дані.
+   */
+  async deleteAccount(accountId: string): Promise<boolean> {
+    const result = this.db.delete(accounts).where(eq(accounts.id, accountId)).run();
+    return result.changes > 0;
   }
 
   // — Логи з клієнтів —

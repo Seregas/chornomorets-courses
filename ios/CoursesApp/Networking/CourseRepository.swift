@@ -4,6 +4,8 @@ import Foundation
 /// конкретної реалізації — легко підкласти мок/прев'ю.
 protocol CourseRepository {
     func me() async throws -> Me
+    /// Видалити свій акаунт разом з усім, що на ньому висить.
+    func deleteAccount() async throws
     func courses() async throws -> [CourseCard]
     func course(id: String) async throws -> CourseDetail
     func stream(id: String) async throws -> StreamDetail
@@ -99,6 +101,7 @@ final class RemoteCourseRepository: CourseRepository {
     private struct SubBody: Encodable { let streamId: String }
 
     func me() async throws -> Me { try await api.get("me", cached: false) }
+    func deleteAccount() async throws { try await api.mutate("DELETE", "me") }
     func courses() async throws -> [CourseCard] { try await api.get("courses") }
     func course(id: String) async throws -> CourseDetail { try await api.get("courses/\(id)") }
     func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)") }

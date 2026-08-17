@@ -55,6 +55,18 @@ app.get("/me", async (c) => {
   });
 });
 
+/**
+ * Видалити свій акаунт. Вимога App Store 5.1.1(v): застосунок, який заводить
+ * акаунти, мусить уміти їх стирати — і саме зсередини, без листування з нами.
+ * Разом з акаунтом зникають підписки, оплати, домашки, питання й заявки.
+ */
+app.delete("/me", async (c) => {
+  const identity = await getIdentity(c);
+  if (!identity) return c.json(needSignIn, 401);
+  await repo.deleteAccount(identity.sub);
+  return c.body(null, 204);
+});
+
 app.get("/courses", async (c) => c.json(await repo.listCourses()));
 
 app.get("/courses/:id", async (c) => {

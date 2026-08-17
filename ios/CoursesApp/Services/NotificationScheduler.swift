@@ -69,6 +69,15 @@ final class NotificationScheduler {
         }
     }
 
+    /// Зняти всі нагадування — після виходу чи видалення акаунта. Інакше
+    /// телефон і далі кликав би на заняття курсу, з якого людина пішла.
+    func cancelAll() {
+        center.getPendingNotificationRequests { requests in
+            let ids = requests.map(\.identifier).filter { $0.hasPrefix(self.prefix) }
+            self.center.removePendingNotificationRequests(withIdentifiers: ids)
+        }
+    }
+
     // MARK: - Побудова плану
 
     private struct ReminderPlan {
