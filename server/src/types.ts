@@ -168,10 +168,31 @@ export interface MaterialInContext {
 }
 
 /**
+ * Курс, на якому людина вчиться зараз. Розклад показує окремі заняття, а це —
+ * відповідь на «де я взагалі вчуся»: без цього курс, у якого всі заняття вже
+ * позаду, зникав з екрана зовсім, лишаючи по собі самі записи.
+ */
+export interface EnrolledStream {
+  streamId: string;
+  streamTitle: string;
+  courseId: string;
+  courseTitle: string;
+  /** Скільки занять уже відбулося з усіх. */
+  sessionsPassed: number;
+  sessionsTotal: number;
+  /** Найближче заняття попереду; null — курс уже пройшов. */
+  nextSessionAt: string | null;
+  /** За скільки занять оплата ще не підтверджена. */
+  unpaidSessions: number;
+}
+
+/**
  * Зведення для екрана «Моє навчання»: усе, що стосується того, хто ВЖЕ вчиться.
  * Каталог відповідає на питання «що взяти», а це — на «що зараз і що я пропустив».
  */
 export interface HomeDigest {
+  /** Курси, на яких людина вчиться — включно з тими, що вже завершилися. */
+  streams: EnrolledStream[];
   nextSession: ScheduleItem | null;
   /** Свіжі оголошення підписаних потоків — найголовніше, що міг сказати викладач. */
   announcements: AnnouncementDTO[];
@@ -181,6 +202,18 @@ export interface HomeDigest {
   homework: MaterialInContext[];
   /** Записи занять підписаних потоків. */
   recordings: MaterialInContext[];
+}
+
+/**
+ * Заявка разом із курсом і потоком — для списку «усі нерозглянуті».
+ * Без нього заявки видно лише зайшовши в кожен потік окремо, і про нову
+ * викладач дізнається випадково.
+ */
+export interface ApplicationInContext {
+  application: Application;
+  streamId: string;
+  streamTitle: string;
+  courseTitle: string;
 }
 
 /** Зведення відгуків по заняттю — для викладача. */

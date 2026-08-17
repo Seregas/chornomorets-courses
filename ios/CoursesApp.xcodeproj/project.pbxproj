@@ -40,6 +40,7 @@
 		A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02BBAE671589458E514D6982 /* DownloadManager.swift */; };
 		A6DB7E1366B4E457CB095A1C /* SessionQuestionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E34575CAF1DE1C885E9E6297 /* SessionQuestionsView.swift */; };
 		A6EB7DA81C75477192861B68 /* CoursesWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 7EF02AD2FA6891A041577E5E /* CoursesWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A724D6ABC623A116A31BE1D4 /* PendingApplicationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C081A50882CB429ECBFDEF25 /* PendingApplicationsView.swift */; };
 		AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */; };
 		B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22908673233FCDC3FD42F9D1 /* SharedUI.swift */; };
 		BCDCD44595891C3CA77BCABB /* ApplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */; };
@@ -123,6 +124,7 @@
 		B2C74DE8F2270766C2835F7C /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
 		B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedSchedule.swift; sourceTree = "<group>"; };
 		B6EBE10093E1D103FD317A5B /* CatalogView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CatalogView.swift; sourceTree = "<group>"; };
+		C081A50882CB429ECBFDEF25 /* PendingApplicationsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingApplicationsView.swift; sourceTree = "<group>"; };
 		C199B6B439D225C6D78F1C16 /* RemoteLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteLog.swift; sourceTree = "<group>"; };
 		C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MaterialRow.swift; sourceTree = "<group>"; };
 		CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseDetailView.swift; sourceTree = "<group>"; };
@@ -337,6 +339,7 @@
 				CA1ED564F1E76786E094B1B7 /* CourseDetailView.swift */,
 				B2C74DE8F2270766C2835F7C /* HomeworkView.swift */,
 				C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */,
+				C081A50882CB429ECBFDEF25 /* PendingApplicationsView.swift */,
 				16415B1D3ED9D1F80AC53EF4 /* Routes.swift */,
 				0552402326D4C6B62130979E /* SessionDetailView.swift */,
 				349BE3A11D4E6BA33B6751B7 /* SessionPaymentView.swift */,
@@ -478,6 +481,7 @@
 				AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */,
 				82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */,
 				3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */,
+				A724D6ABC623A116A31BE1D4 /* PendingApplicationsView.swift in Sources */,
 				E5E3C8021EA5D2D1BE29D56B /* PlaybackProgress.swift in Sources */,
 				769C76A78A98793862DEFD0A /* PlayerAudio.swift in Sources */,
 				3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */,
@@ -548,7 +552,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -690,7 +694,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 13;
+				CURRENT_PROJECT_VERSION = 14;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_NS_ASSERTIONS = NO;

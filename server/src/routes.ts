@@ -447,6 +447,9 @@ admin.get("/logs", async (c) => {
 });
 
 // applications — заявки на потік
+/** Усі нерозглянуті заявки — щоб не обходити потоки по одному. */
+admin.get("/applications", async (c) => c.json(await repo.listPendingApplications()));
+
 admin.get("/streams/:id/applications", async (c) =>
   c.json(await repo.listApplications(c.req.param("id"))),
 );

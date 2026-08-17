@@ -93,12 +93,16 @@ npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
 запиті. Акаунт сервер бере з токена (`sub`) і сам заводить його при першому вході.
 
 - `GET /schedule` — найближчі заняття підписаних потоків
-- `GET /home` — зведення «Моє навчання»: найближче заняття, наступні, домашка з дедлайнами, записи
+- `GET /home` — зведення «Моє навчання»: свої курси з прогресом, найближче заняття,
+  наступні, домашка з дедлайнами, записи
 
 **Заявки на потік** (заміна Google Forms):
 - `GET /streams/:id/application` · `POST /streams/:id/application` `{name, contact, comment?}`
-- `GET /admin/streams/:id/applications` · `POST /admin/applications/:id/status` `{status}`
-- статус `enrolled` одразу підписує акаунт на потік
+- `GET /admin/applications` — усі нерозглянуті (`new` + `waiting_payment`) з усіх потоків,
+  з назвами курсу й потоку; `GET /admin/streams/:id/applications` — по одному потоку
+- `POST /admin/applications/:id/status` `{status}`
+- статус `enrolled` одразу підписує акаунт на потік — це і є момент, після якого курс
+  з'являється в людини на екрані «Навчання»
 
 **Оплата заняття** (на пару «заняття + людина»):
 - `GET /sessions/:id/payment` · `POST /sessions/:id/payment` `{amount, receiptURL?, note?}`

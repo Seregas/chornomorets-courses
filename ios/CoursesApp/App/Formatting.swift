@@ -21,22 +21,35 @@ enum Fmt {
         return Self.iso.date(from: iso) ?? Self.isoFractional.date(from: iso)
     }
 
-    /// «8 лип, 20:00»
+    /// «8 лип. 2026, 20:00».
+    ///
+    /// Рік показуємо завжди, навіть цьогорічний. Застосунок веде курси, які
+    /// повторюються потоками рік за роком, і викладач гортає і минулі, і
+    /// майбутні — «8 лип.» без року в такому списку читається неоднозначно.
     static func dayTime(_ iso: String) -> String {
         guard let d = date(iso) else { return iso }
         let f = DateFormatter()
         f.locale = Locale(identifier: "uk_UA")
-        f.dateFormat = "d MMM, HH:mm"
+        f.dateFormat = "d MMM yyyy, HH:mm"
         return f.string(from: d)
     }
 
-    /// «8 липня» (для заголовків груп розкладу)
+    /// «8 липня 2026, Пн» (для заголовків груп розкладу)
     static func dayHeader(_ iso: String) -> String {
         guard let d = date(iso) else { return iso }
         let f = DateFormatter()
         f.locale = Locale(identifier: "uk_UA")
-        f.dateFormat = "d MMMM, EEE"
+        f.dateFormat = "d MMMM yyyy, EEE"
         return f.string(from: d).capitalized
+    }
+
+    /// «23 лют. 2026» — для дат без часу (початок потоку приходить як `2026-02-23`).
+    static func day(_ isoDate: String) -> String {
+        guard let d = date(isoDate) ?? date(isoDate + "T00:00:00Z") else { return isoDate }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "uk_UA")
+        f.dateFormat = "d MMM yyyy"
+        return f.string(from: d)
     }
 
     static func price(_ full: Int?, perSession: Int?) -> String? {

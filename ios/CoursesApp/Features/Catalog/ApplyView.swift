@@ -32,7 +32,7 @@ struct ApplyView: View {
             Form {
                 Section(stream.title) {
                     if let date = stream.startDate {
-                        Text("старт \(date)").font(.caption).foregroundStyle(.secondary)
+                        Text("старт \(Fmt.day(date))").font(.caption).foregroundStyle(.secondary)
                     }
                     if let price = Fmt.price(stream.priceFull, perSession: stream.pricePerSession) {
                         Text(price).font(.subheadline.weight(.medium))

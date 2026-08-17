@@ -25,6 +25,8 @@ import type {
   CourseCard,
   CourseDetail,
   Enrollment,
+  EnrolledStream,
+  ApplicationInContext,
   HomeDigest,
   Material,
   MaterialDTO,
@@ -214,6 +216,8 @@ export interface CourseRepository {
   getApplication(streamId: string, accountId: string): Promise<Application | null>;
   applyToStream(input: ApplyInput): Promise<Application>;
   listApplications(streamId: string): Promise<Application[]>;
+  /** Усі нерозглянуті заявки з усіх потоків — щоб вони не губилися по курсах. */
+  listPendingApplications(): Promise<ApplicationInContext[]>;
   /** Статус «enrolled» одразу підписує акаунт на потік — інакше довелося б робити це двічі. */
   setApplicationStatus(id: string, status: ApplicationStatus): Promise<Application | null>;
 
@@ -583,6 +587,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .all();
     if (streamRows.length === 0) {
       return {
+        streams: [],
         nextSession: null,
         announcements: [],
         upcoming: [],
@@ -592,6 +597,48 @@ export class DrizzleCourseRepository implements CourseRepository {
     }
 
     const context = new Map(streamRows.map((r) => [r.streamId, r]));
+
+    // «Де я вчуся» — окремо від «що найближче»: курс, у якого всі заняття вже
+    // позаду, з екрана зникав зовсім, лишаючи по собі самі записи без назви.
+    const now = new Date().toISOString();
+    const allSessions = this.db
+      .select({ id: sessions.id, streamId: sessions.streamId, startAt: sessions.startAt })
+      .from(sessions)
+      .where(inArray(sessions.streamId, [...context.keys()]))
+      .orderBy(asc(sessions.startAt))
+      .all();
+    const paidSessionIds = new Set(
+      this.db
+        .select({ sessionId: payments.sessionId })
+        .from(payments)
+        .where(
+          and(
+            eq(payments.accountId, accountId),
+            inArray(payments.status, ["confirmed", "free"]),
+          ),
+        )
+        .all()
+        .map((p) => p.sessionId),
+    );
+
+    const enrolled: EnrolledStream[] = streamRows.map((row) => {
+      const own = allSessions.filter((s) => s.streamId === row.streamId);
+      return {
+        streamId: row.streamId,
+        streamTitle: row.streamTitle,
+        courseId: row.courseId,
+        courseTitle: row.courseTitle,
+        sessionsPassed: own.filter((s) => s.startAt <= now).length,
+        sessionsTotal: own.length,
+        nextSessionAt: own.find((s) => s.startAt > now)?.startAt ?? null,
+        unpaidSessions: own.filter((s) => !paidSessionIds.has(s.id)).length,
+      };
+    });
+    // Спершу ті, що тривають: завершений курс — довідка, а не те, чим живуть.
+    enrolled.sort((a, b) => {
+      if (!!a.nextSessionAt !== !!b.nextSessionAt) return a.nextSessionAt ? -1 : 1;
+      return (a.nextSessionAt ?? "") < (b.nextSessionAt ?? "") ? -1 : 1;
+    });
     // Матеріали потоку — і матеріали його занять: після того, як записи
     // переїхали на заняття, пошук лише по потоку перестав їх знаходити,
     // і секція «Записи занять» на головному екрані спорожніла.
@@ -662,6 +709,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .all();
 
     return {
+      streams: enrolled,
       nextSession: nextSession ?? null,
       announcements: announcementRows.map(toAnnouncementDTO),
       upcoming: upcoming.slice(0, 3),
@@ -977,6 +1025,24 @@ export class DrizzleCourseRepository implements CourseRepository {
       .select()
       .from(applications)
       .where(eq(applications.streamId, streamId))
+      .orderBy(asc(applications.createdAt))
+      .all();
+  }
+
+  async listPendingApplications(): Promise<ApplicationInContext[]> {
+    return this.db
+      .select({
+        application: applications,
+        streamId: streams.id,
+        streamTitle: streams.title,
+        courseTitle: courses.title,
+      })
+      .from(applications)
+      .innerJoin(streams, eq(applications.streamId, streams.id))
+      .innerJoin(courses, eq(streams.courseId, courses.id))
+      // «Очікує оплати» теж нерозглянута: людина вже сказала «хочу», і поки
+      // викладач не поставив «зараховано», курс у неї не з'явиться.
+      .where(inArray(applications.status, ["new", "waitingPayment"]))
       .orderBy(asc(applications.createdAt))
       .all();
   }

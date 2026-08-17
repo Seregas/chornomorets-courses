@@ -95,9 +95,8 @@ struct CourseRow: View {
 
     private func nextLabel(_ s: StreamBrief) -> String {
         if s.status == .finished { return s.title }
-        if let d = s.startDate, let date = Fmt.date(d + "T00:00:00Z") {
-            let f = DateFormatter(); f.locale = Locale(identifier: "uk_UA"); f.dateFormat = "d MMM"
-            return "Новий потік · з \(f.string(from: date))"
+        if let d = s.startDate {
+            return "Новий потік · з \(Fmt.day(d))"
         }
         return "Новий потік"
     }

@@ -146,7 +146,7 @@ struct StreamCard: View {
                 Image(systemName: "chevron.right").font(.footnote).foregroundStyle(.tertiary)
             }
             if let date = stream.startDate {
-                Text(date).font(.subheadline).foregroundStyle(.secondary)
+                Text(Fmt.day(date)).font(.subheadline).foregroundStyle(.secondary)
             }
             if let price = Fmt.price(stream.priceFull, perSession: stream.pricePerSession) {
                 Text(price).font(.subheadline.weight(.semibold))

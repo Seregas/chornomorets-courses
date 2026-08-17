@@ -64,13 +64,20 @@ final class PreviewRepository: CourseRepository {
     }
     func home() async throws -> HomeDigest {
         let items = try await schedule()
-        return HomeDigest(nextSession: items.first, announcements: [],
-                          upcoming: [], homework: [], recordings: [])
+        return HomeDigest(
+            streams: [EnrolledStream(
+                streamId: "s-stress-5", streamTitle: "Потік 5", courseId: "c-stress",
+                courseTitle: "Стрес, втома і піклування про себе",
+                sessionsPassed: 1, sessionsTotal: 3,
+                nextSessionAt: items.first?.session.startAt, unpaidSessions: 2)],
+            nextSession: items.first, announcements: [],
+            upcoming: [], homework: [], recordings: [])
     }
     func subscriptions() async throws -> [ResolvedStream] { [Self.stream5] }
     func materialTypes() async throws -> [MaterialType] {
         [MaterialType(id: "mt-video", name: "Відеозапис", icon: "play.rectangle.fill", color: "#0E7C86", order: 1)]
     }
+    func pendingApplications() async throws -> [ApplicationInContext] { [] }
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
 

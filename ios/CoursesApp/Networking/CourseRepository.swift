@@ -21,6 +21,8 @@ protocol CourseRepository {
     func application(streamId: String) async throws -> Application?
     func apply(streamId: String, name: String, contact: String, comment: String?) async throws
     func applications(streamId: String) async throws -> [Application]
+    /// Усі нерозглянуті заявки з усіх потоків — для викладача.
+    func pendingApplications() async throws -> [ApplicationInContext]
     func setApplicationStatus(id: String, status: ApplicationStatus) async throws
 
     // — Оплата заняття —
@@ -131,6 +133,9 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func applications(streamId: String) async throws -> [Application] {
         try await api.get("admin/streams/\(streamId)/applications")
+    }
+    func pendingApplications() async throws -> [ApplicationInContext] {
+        try await api.get("admin/applications", cached: false)
     }
     func setApplicationStatus(id: String, status: ApplicationStatus) async throws {
         try await api.mutate("POST", "admin/applications/\(id)/status",

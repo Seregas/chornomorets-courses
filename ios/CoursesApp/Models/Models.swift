@@ -193,6 +193,15 @@ struct Application: Codable, Identifiable, Hashable {
     let createdAt: String
 }
 
+/// Заявка разом із курсом і потоком — для списку «усі нерозглянуті».
+struct ApplicationInContext: Codable, Identifiable, Hashable {
+    var id: String { application.id }
+    let application: Application
+    let streamId: String
+    let streamTitle: String
+    let courseTitle: String
+}
+
 /// «Як зайшло заняття»: оцінка 1–5 і необовʼязковий коментар.
 struct Pulse: Codable, Identifiable, Hashable {
     let id: String
@@ -260,7 +269,22 @@ struct MaterialInContext: Codable, Identifiable, Hashable {
 }
 
 /// Зведення для екрана «Моє навчання».
+/// Курс, на якому людина вчиться. Окремо від розкладу: курс, у якого всі
+/// заняття вже позаду, зникав з екрана зовсім — лишалися самі записи.
+struct EnrolledStream: Codable, Identifiable, Hashable {
+    var id: String { streamId }
+    let streamId: String
+    let streamTitle: String
+    let courseId: String
+    let courseTitle: String
+    let sessionsPassed: Int
+    let sessionsTotal: Int
+    let nextSessionAt: String?
+    let unpaidSessions: Int
+}
+
 struct HomeDigest: Codable, Hashable {
+    let streams: [EnrolledStream]
     let nextSession: ScheduleItem?
     let announcements: [Announcement]
     let upcoming: [ScheduleItem]
@@ -268,7 +292,7 @@ struct HomeDigest: Codable, Hashable {
     let recordings: [MaterialInContext]
 
     var isEmpty: Bool {
-        nextSession == nil && announcements.isEmpty && upcoming.isEmpty
+        streams.isEmpty && nextSession == nil && announcements.isEmpty && upcoming.isEmpty
             && homework.isEmpty && recordings.isEmpty
     }
 }

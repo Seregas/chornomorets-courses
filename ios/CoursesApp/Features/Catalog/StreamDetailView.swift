@@ -318,7 +318,7 @@ struct StreamDetailView: View {
                 StatusBadge(status: stream.status)
             }
             if let date = stream.startDate {
-                Text(date).foregroundStyle(.secondary)
+                Text(Fmt.day(date)).foregroundStyle(.secondary)
             }
             if let price = Fmt.price(stream.priceFull, perSession: stream.pricePerSession) {
                 Text(price).font(.headline)

@@ -4,10 +4,15 @@ import SwiftUI
 @Observable
 final class HomeViewModel {
     var state: LoadState<HomeDigest> = .loading
+    /// Скільки заявок чекає на рішення викладача (лише для адміна).
+    var pendingApplications = 0
 
-    func load(_ repo: CourseRepository) async {
+    func load(_ repo: CourseRepository, isAdmin: Bool) async {
         do { state = .loaded(try await repo.home()) }
         catch { state = .from(error) }
+        pendingApplications = isAdmin
+            ? ((try? await repo.pendingApplications()) ?? []).count
+            : 0
     }
 }
 
@@ -20,14 +25,16 @@ struct HomeView: View {
 
     @Environment(\.repository) private var repo
     @Environment(\.openURL) private var openURL
+    @Environment(AuthStore.self) private var auth
     @State private var vm = HomeViewModel()
     @State private var path: [Route] = []
     @State private var homeworkToOpen: MaterialDTO?
     @State private var journal = PracticeJournal.shared
+    @State private var showApplications = false
 
     var body: some View {
         NavigationStack(path: $path) {
-            LoadStateView(state: vm.state, retry: { Task { await vm.load(repo) } }) { digest in
+            LoadStateView(state: vm.state, retry: { Task { await vm.load(repo, isAdmin: auth.isAdmin) } }) { digest in
                 if digest.isEmpty {
                     emptyState
                 } else {
@@ -38,6 +45,11 @@ struct HomeView: View {
                             if !digest.announcements.isEmpty {
                                 announcementsSection(digest.announcements)
                             }
+                            if vm.pendingApplications > 0 { applicationsCard }
+                            // Курси — вище за розклад: спершу «де я вчуся»,
+                            // потім «що найближче». Курс із завершеними
+                            // заняттями інакше зникав з екрана взагалі.
+                            if !digest.streams.isEmpty { streamsSection(digest.streams) }
                             if let next = digest.nextSession { nextSessionCard(next) }
                             checkInCard
                             if !digest.homework.isEmpty { homeworkSection(digest.homework) }
@@ -57,11 +69,14 @@ struct HomeView: View {
                 case .journal: JournalView()
                 }
             }
-            .refreshable { await vm.load(repo) }
+            .refreshable { await vm.load(repo, isAdmin: auth.isAdmin) }
             .sheet(item: $homeworkToOpen) { HomeworkView(material: $0) }
+            .sheet(isPresented: $showApplications) {
+                PendingApplicationsView()
+            }
         }
         .task {
-            await vm.load(repo)
+            await vm.load(repo, isAdmin: auth.isAdmin)
             // Демо/скриншоти: одразу відкрити щоденник.
             if ProcessInfo.processInfo.environment["OPEN_JOURNAL"] != nil, path.isEmpty {
                 path = [.journal]
@@ -110,6 +125,81 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    // MARK: - Заявки (викладачу)
+
+    /// Заявки лежать у меню «…» кожного потоку окремо — знайти їх там можна,
+    /// лише знаючи, що вони там є. А людина, яка подала заявку, до рішення
+    /// викладача курсу в себе не бачить, тож затримка коштує дорого.
+    private var applicationsCard: some View {
+        Button {
+            showApplications = true
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "person.badge.clock")
+                    .font(.title3).foregroundStyle(.orange).frame(width: 26)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(vm.pendingApplications) заявок чекають рішення")
+                        .font(.subheadline.weight(.medium))
+                    Text("Зарахування відкриває людині курс").font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Мої курси
+
+    private func streamsSection(_ items: [EnrolledStream]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            SectionHeader(title: "Мої курси")
+            ForEach(items) { item in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(item.courseTitle).font(.subheadline.weight(.semibold))
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                    }
+                    Text(item.streamTitle).font(.caption).foregroundStyle(.secondary)
+                    ProgressView(value: progress(item))
+                        .tint(.sea)
+                    HStack(spacing: 8) {
+                        Text("\(item.sessionsPassed) з \(item.sessionsTotal) занять")
+                            .font(.caption).foregroundStyle(.secondary)
+                        if let next = item.nextSessionAt {
+                            Text("· далі \(Fmt.relativeDayTime(next))")
+                                .font(.caption).foregroundStyle(Color.sea)
+                        } else {
+                            Text("· курс завершено").font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        // Скільки занять ще не підтверджено оплатою — те, через
+                        // що студент і викладач найчастіше листуються.
+                        if item.unpaidSessions > 0 {
+                            Pill(text: "\(item.unpaidSessions) без оплати",
+                                 fg: .orange, bg: .orange.opacity(0.15))
+                        }
+                    }
+                }
+                .padding(12)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                .contentShape(Rectangle())
+                .onTapGesture { path.append(.stream(item.streamId)) }
+            }
+        }
+    }
+
+    private func progress(_ item: EnrolledStream) -> Double {
+        guard item.sessionsTotal > 0 else { return 0 }
+        return Double(item.sessionsPassed) / Double(item.sessionsTotal)
     }
 
     // MARK: - Оголошення
@@ -228,7 +318,14 @@ struct HomeView: View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Записи занять")
             ForEach(items) { item in
-                MaterialRow(material: item.material)
+                VStack(alignment: .leading, spacing: 2) {
+                    MaterialRow(material: item.material)
+                    // Записи з різних курсів лежать одним списком — без назви
+                    // курсу незрозуміло, чий це запис.
+                    Text(item.courseTitle)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .padding(.horizontal, 12)
+                }
             }
         }
     }
