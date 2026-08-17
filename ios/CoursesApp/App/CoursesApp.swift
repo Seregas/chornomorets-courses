@@ -15,15 +15,14 @@ struct CoursesApp: App {
                 .task {
                     // Відновити попередній Google-вхід (якщо налаштований реальний клієнт).
                     if GoogleAuthConfig.isConfigured, let s = await GoogleSignInService().restore() {
-                        auth.connectGoogle(email: s.email, idToken: s.idToken, accessToken: s.accessToken)
+                        auth.connectGoogle(email: s.email, idToken: s.idToken)
                     }
                     // Токен живе годину, а на ньому тримається все особисте —
                     // тож даємо мережевому шару спосіб оновити його на 401.
                     TokenRefresher.refresh = { [auth] in
                         guard GoogleAuthConfig.isConfigured,
                               let s = await GoogleSignInService().refreshIfNeeded() else { return false }
-                        await auth.connectGoogle(email: s.email, idToken: s.idToken,
-                                                 accessToken: s.accessToken)
+                        await auth.connectGoogle(email: s.email, idToken: s.idToken)
                         return true
                     }
                     if ProcessInfo.processInfo.environment["SKIP_NOTIF_PROMPT"] == nil {

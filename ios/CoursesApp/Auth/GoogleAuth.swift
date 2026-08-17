@@ -24,16 +24,21 @@ enum GoogleAuthError: LocalizedError {
     }
 }
 
-/// Обгортка над GoogleSignIn SDK. SDK сам робить PKCE, оновлення токенів і Keychain.
+/**
+ Обгортка над GoogleSignIn SDK. SDK сам робить PKCE, оновлення токенів і Keychain.
+
+ Просимо лише базові дані (пошта, ім'я) — жодних scope до Drive. Записи
+ відкриваються плеєром самого Drive у Safari-контролері, під тим Google-акаунтом,
+ яким людина вже залогінена в браузері, тож наш токен для перегляду не потрібен.
+ Раніше тут стояв `drive.readonly` — читання ВСЬОГО диска — заради єдиного
+ бейджа «є доступ / немає». Ціна: екран згоди, який лякає, і restricted scope,
+ що вимагає щорічного зовнішнього аудиту безпеки для публікації.
+ */
 @MainActor
 final class GoogleSignInService {
-    /// Scope для читання файлів Drive (щоб бачити реальні відеозаписи).
-    static let driveScope = "https://www.googleapis.com/auth/drive.readonly"
-
     struct Session {
         let email: String
-        let idToken: String      // → Authorization Bearer на бекенд
-        let accessToken: String  // → Google Drive API
+        let idToken: String  // → Authorization Bearer на бекенд
     }
 
     init() {
@@ -44,8 +49,7 @@ final class GoogleSignInService {
 
     func signIn() async throws -> Session {
         guard let presenter = Self.topViewController() else { throw GoogleAuthError.noPresenter }
-        let result = try await GIDSignIn.sharedInstance.signIn(
-            withPresenting: presenter, hint: nil, additionalScopes: [Self.driveScope])
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
         return try session(from: result.user)
     }
 
@@ -68,9 +72,7 @@ final class GoogleSignInService {
 
     private func session(from user: GIDGoogleUser) throws -> Session {
         guard let idToken = user.idToken?.tokenString else { throw GoogleAuthError.missingIdToken }
-        return Session(email: user.profile?.email ?? "",
-                       idToken: idToken,
-                       accessToken: user.accessToken.tokenString)
+        return Session(email: user.profile?.email ?? "", idToken: idToken)
     }
 
     static func topViewController() -> UIViewController? {

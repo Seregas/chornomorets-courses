@@ -21,7 +21,6 @@
 		3C77B34CBE043F6F516A4707 /* PracticeJournal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05C795F63DA046BF2FB2B8C5 /* PracticeJournal.swift */; };
 		3F779A31E567B9ECCD468D50 /* NotificationScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = 530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */; };
 		44A80D04288E4F7E84CAC6C1 /* SessionDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0552402326D4C6B62130979E /* SessionDetailView.swift */; };
-		4EA3BCAE8B9862196C18CE8E /* DriveAccess.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96DA74E6F659D77F3A57B987 /* DriveAccess.swift */; };
 		5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AC69E20B206F4B40FB28259 /* CourseRepository.swift */; };
 		5CBF101294E0B4E5ECE1BC5E /* InputModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3496CE3358F9446DCA54BD00 /* InputModels.swift */; };
 		689F966B3AE44774691502D6 /* RemoteLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = C199B6B439D225C6D78F1C16 /* RemoteLog.swift */; };
@@ -118,7 +117,6 @@
 		8654363C85DBACD175C3662E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8B401C57783FD8F76C2E4014 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		91DE23CCE4CF33ADCA210C21 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		96DA74E6F659D77F3A57B987 /* DriveAccess.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriveAccess.swift; sourceTree = "<group>"; };
 		9FCC229F2E9F45F26B497C88 /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyView.swift; sourceTree = "<group>"; };
 		B2C74DE8F2270766C2835F7C /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
@@ -169,7 +167,6 @@
 			isa = PBXGroup;
 			children = (
 				02BBAE671589458E514D6982 /* DownloadManager.swift */,
-				96DA74E6F659D77F3A57B987 /* DriveAccess.swift */,
 				530E9F2F114BBBA52DD04551 /* NotificationScheduler.swift */,
 				7EBAD09441CFC8CA841CEF29 /* PlaybackProgress.swift */,
 				E357D321925857DB4617ED43 /* PlayerAudio.swift */,
@@ -470,7 +467,6 @@
 				5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */,
 				E1181ECC35BDDE315096B220 /* CoursesApp.swift in Sources */,
 				A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */,
-				4EA3BCAE8B9862196C18CE8E /* DriveAccess.swift in Sources */,
 				E694361F4F841C1A01A589FD /* Formatting.swift in Sources */,
 				E2D2BB9C3579A6136B51187A /* GoogleAuth.swift in Sources */,
 				3540A191BA50183D0B135094 /* HomeView.swift in Sources */,
@@ -552,7 +548,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -694,7 +690,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 16;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_NS_ASSERTIONS = NO;

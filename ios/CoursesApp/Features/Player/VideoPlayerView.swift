@@ -92,15 +92,13 @@ struct VideoPlayerView: View {
 /// і дописує позицію під час перегляду. Записи по дві години — починати їх
 /// щоразу з нуля означає щоразу шукати те місце вручну.
 ///
-/// Для youtube/drive позиція поки не зберігається: там грає веб-в'ю, чий стан
-/// нам не видно. Коли Drive поїде через AVPlayer (задача про доступ до Drive),
-/// він потрапить сюди й отримає те саме безкоштовно.
+/// Для youtube/drive позиція не зберігається: там грає веб-в'ю, чий стан нам не
+/// видно. Тягнути вміст Drive через AVPlayer не вийде — власник вимкнув
+/// завантаження для глядачів, і це свідома політика, а не перешкода.
 struct DirectVideoPlayer: View {
     let url: URL
     let materialId: String
     let title: String
-    /// Заголовки запиту — для джерел, що вимагають авторизації (Drive).
-    var headers: [String: String] = [:]
 
     @State private var player = AVPlayer()
     @State private var audio = PlayerAudioController()
@@ -185,10 +183,6 @@ struct DirectVideoPlayer: View {
                     "HTTP \(entry.errorStatusCode) · \(entry.errorComment ?? "без коментаря")")
             }
         }
-        if !headers.isEmpty {
-            parts.append(await DriveAccess.diagnose(url: url, headers: headers))
-        }
-
         let text = parts.joined(separator: "\n\n")
         failure = text
         player.pause()
@@ -225,22 +219,9 @@ struct DirectVideoPlayer: View {
 
     private func start() async {
         audio.activate()
-        // AVURLAsset дозволяє підписати запити до джерела — без цього Drive
-        // відповідає 401 і плеєр показує чорний екран.
-        //
-        // Відоме вузьке місце: якщо Drive колись почне відповідати редиректом,
-        // заголовок може не пережити переходу — тоді знадобиться
-        // AVAssetResourceLoaderDelegate, який підписує кожен запит окремо.
-        // OutOfBandMIMEType — бо в посиланні Drive немає розширення файлу, а без
-        // підказки AVFoundation іноді просто не береться за вміст: не падає й не
-        // готується, через що плеєр показує перекреслений плей і мовчить.
-        let asset = headers.isEmpty
-            ? AVURLAsset(url: url)
-            : AVURLAsset(url: url, options: [
-                "AVURLAssetHTTPHeaderFieldsKey": headers,
-                "AVURLAssetOutOfBandMIMETypeKey": "video/mp4",
-              ])
-        let item = AVPlayerItem(asset: asset)
+        // Сюди потрапляють лише відкриті джерела: Drive і YouTube грають
+        // власними плеєрами у веб-в'ю, тож підписувати запити нічим і нікому.
+        let item = AVPlayerItem(asset: AVURLAsset(url: url))
         watchForFailure(item)
         player.replaceCurrentItem(with: item)
         audio.bindRemoteCommands(to: player)
@@ -252,14 +233,7 @@ struct DirectVideoPlayer: View {
         player.play()
         RemoteLog.send(
             "playback.start",
-            "material=\(materialId) host=\(url.host ?? "?") auth=\(headers.isEmpty ? "ні" : "так")")
-
-        // Джерело питаємо одразу, не чекаючи провалу: коли плеєр «зависає» без
-        // помилки, це єдине, що показує, чим саме він удавився.
-        if !headers.isEmpty {
-            let facts = await DriveAccess.probe(url: url, headers: headers)
-            RemoteLog.send("playback.probe", "material=\(materialId) \(facts)")
-        }
+            "material=\(materialId) host=\(url.host ?? "?")")
 
         // Раз на 5 с — досить, щоб не загубити місце, і не смикає диск дарма.
         timeObserver = player.addPeriodicTimeObserver(

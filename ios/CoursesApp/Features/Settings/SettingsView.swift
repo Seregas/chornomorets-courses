@@ -127,7 +127,7 @@ struct SettingsView: View {
         googleError = nil
         do {
             let s = try await google.signIn()
-            auth.connectGoogle(email: s.email, idToken: s.idToken, accessToken: s.accessToken)
+            auth.connectGoogle(email: s.email, idToken: s.idToken)
             await auth.refreshAdmin(using: repo)
         } catch is CancellationError {
             // користувач скасував — мовчки

@@ -51,24 +51,6 @@ struct StatusBadge: View {
     }
 }
 
-/// Бейдж стану доступу до відео (🔓 / 🔒 / не підключено).
-struct AccessBadge: View {
-    let state: AccessState
-    let provider: VideoProvider?
-
-    var body: some View {
-        switch state {
-        case .granted:
-            Pill(text: provider == .youtube ? "YouTube" : "доступно",
-                 fg: .green, bg: .green.opacity(0.15), systemImage: "lock.open.fill")
-        case .denied:
-            Pill(text: "немає доступу", fg: .red, bg: .red.opacity(0.12), systemImage: "lock.fill")
-        case .unknown:
-            Pill(text: "підключіть Google", fg: .orange, bg: .orange.opacity(0.15), systemImage: "lock.fill")
-        }
-    }
-}
-
 struct SectionHeader: View {
     let title: String
     var body: some View {
@@ -191,8 +173,7 @@ struct SignInPrompt: View {
             defer { signingIn = false }
             do {
                 let session = try await GoogleSignInService().signIn()
-                auth.connectGoogle(email: session.email, idToken: session.idToken,
-                                   accessToken: session.accessToken)
+                auth.connectGoogle(email: session.email, idToken: session.idToken)
                 retry()
             } catch {
                 self.error = error.localizedDescription

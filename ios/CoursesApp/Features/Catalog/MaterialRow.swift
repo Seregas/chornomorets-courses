@@ -9,9 +9,7 @@ struct MaterialRow: View {
     let material: MaterialDTO
     var adminEdit: (() -> Void)? = nil
     var adminDelete: (() -> Void)? = nil
-    @Environment(\.repository) private var repo
     @Environment(\.openURL) private var openURL
-    @State private var access: AccessState?
     @State private var showPlayer = false
     @State private var showHomework = false
     @State private var progress: PlaybackPosition?
@@ -46,7 +44,6 @@ struct MaterialRow: View {
         .task {
             if material.hasVideo {
                 progress = PlaybackProgressStore.position(for: material.id)
-                access = await resolveAccess()
             }
             // Демо/скриншоти: одразу відкрити потрібний матеріал (плеєр або домашку).
             if ProcessInfo.processInfo.environment["OPEN_MATERIAL"] == material.id {
@@ -63,18 +60,6 @@ struct MaterialRow: View {
         .onChange(of: showPlayer) { _, shown in
             if !shown { progress = PlaybackProgressStore.position(for: material.id) }
         }
-    }
-
-    /// Для Drive питаємо Google напряму: сервер токена не бачить і чесно
-    /// відповідає «unknown». Спершу дізнаємось fileId із дескриптора —
-    /// сирий референс у списку матеріалів не віддається навмисно.
-    private func resolveAccess() async -> AccessState {
-        guard material.videoProvider == .drive else {
-            return (try? await repo.access(materialId: material.id))?.access ?? .unknown
-        }
-        guard let descriptor = try? await repo.playback(materialId: material.id).descriptor,
-              case .googleDrive(let fileId) = descriptor else { return .unknown }
-        return await DriveAccess.check(fileId: fileId)
     }
 
     /// Смужка «де я зупинився» під відео-матеріалом.
@@ -102,8 +87,11 @@ struct MaterialRow: View {
 
     @ViewBuilder private var trailing: some View {
         HStack(spacing: 8) {
+            // Бейджа «є доступ» більше немає: щоб його показати, довелося б
+            // просити в людини читання всього Google Диска. Про відсутність
+            // доступу скаже сам Drive, коли запис відкриють.
             if material.hasVideo {
-                AccessBadge(state: access ?? .unknown, provider: material.videoProvider)
+                Image(systemName: "play.circle").font(.footnote).foregroundStyle(.tertiary)
             } else if material.url != nil {
                 Image(systemName: "arrow.up.right").font(.footnote).foregroundStyle(.tertiary)
             }

@@ -35,7 +35,6 @@ struct Payment: Codable, Identifiable, Hashable {
 }
 enum StreamStatus: String, Codable { case upcoming, ongoing, finished }
 enum VideoProvider: String, Codable { case drive, youtube, other }
-enum AccessState: String, Codable { case granted, denied, unknown }
 
 struct StreamBrief: Codable, Hashable {
     let id: String
@@ -345,11 +344,5 @@ extension PlaybackDescriptor: Decodable {
 }
 
 struct PlaybackResponse: Decodable {
-    let access: AccessState
     let descriptor: PlaybackDescriptor
-}
-
-struct AccessResponse: Decodable {
-    let access: AccessState
-    let provider: VideoProvider?
 }

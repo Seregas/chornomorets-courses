@@ -149,8 +149,9 @@ npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
   `GET /admin/logs`
 
 **Відео:**
-- `GET /video/:materialId/playback` — типізований дескриптор `direct | youtube | google-drive`; `403` якщо немає доступу
-- `GET /video/:materialId/access` — `{ access: granted|denied|unknown, provider }`
+- `GET /video/:materialId/playback` — типізований дескриптор `direct | youtube | google-drive`.
+  Потрібен вхід (`401` без нього): сире джерело (`videoRef`) не має розсипатися з
+  відкритого API. Чи відкриється файл — вирішує сам Drive
 
 **Адмін (потрібен admin Google-акаунт):** `POST` / `PUT :id` / `DELETE :id` під
 `/admin/courses`, `/admin/streams`, `/admin/sessions`, `/admin/materials`, `/admin/material-types`.
@@ -169,6 +170,10 @@ npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
   на Postgres/файли/зовнішнє API: нова реалізація інтерфейсу + драйвер у `db.ts`. Роути не чіпаються.
 - **Джерело відео** — лише через `video.ts`. Бекенд віддає playback-дескриптор; застосунок має
   хендлер під кожен тип. Додати R2/S3/HLS = новий тип тут + хендлер у застосунку.
+- **Доступ до записів** — не наша відповідальність: викладач ділиться файлом на Drive із
+  Google-акаунтом студента, Drive і вирішує. Ми навмисно не просимо scope `drive.readonly`:
+  він відкриває весь диск людини, а дає лише бейдж-замочок — і при цьому як restricted scope
+  вимагає щорічного зовнішнього аудиту для публікації. Вхід просить тільки пошту й ім'я.
 - **Identity** — усе особисте висить на Google-акаунті: ключ `accounts.id` = `sub` із
   токена (номер акаунта, який Google видає раз і назавжди), пошта лежить поруч і
   оновлюється при кожному вході. Раніше цю роль грав `deviceId` — і зміна телефона

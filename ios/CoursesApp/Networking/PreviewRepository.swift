@@ -124,10 +124,7 @@ final class PreviewRepository: CourseRepository {
     func deleteQuestion(id: String) async throws {}
     func markQuestionAnswered(id: String, answered: Bool) async throws {}
     func playback(materialId: String) async throws -> PlaybackResponse {
-        PlaybackResponse(access: .granted, descriptor: .youtube(videoId: "dQw4w9WgXcQ"))
-    }
-    func access(materialId: String) async throws -> AccessResponse {
-        AccessResponse(access: .granted, provider: .drive)
+        PlaybackResponse(descriptor: .youtube(videoId: "dQw4w9WgXcQ"))
     }
 
     // Адмін-методи у прев'ю — no-op.

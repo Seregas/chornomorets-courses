@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getIdentity, isAdminEmail } from "./auth.js";
 import { repository as repo, toPaymentDTO } from "./repository.js";
 import { fetchReceipt, sendReceipt, telegramConfigured } from "./telegram.js";
-import { buildPlaybackDescriptor, checkAccess } from "./video.js";
+import { buildPlaybackDescriptor } from "./video.js";
 
 /** Розібрані на пристрої поля можуть прийти будь-якими — не падаємо через це. */
 function safeJSON(raw: string): unknown {
@@ -345,38 +345,28 @@ app.delete("/subscriptions", zValidator("json", subBody), async (c) => {
 
 // ───────────────────────── Відео ─────────────────────────
 
-/** Типізований playback-дескриптор. Сире джерело (videoRef) застосунку не видно інакше. */
+/**
+ * Типізований playback-дескриптор. Сире джерело (videoRef) застосунку не видно
+ * інакше — тому й потрібен вхід: fileId записів платного курсу не має
+ * розсипатися з відкритого API.
+ *
+ * Чи відкриється файл, вирішує сам Drive: доступ до записів роздається
+ * пошарингом на Google-акаунт, і перевірити його ми могли б лише попросивши в
+ * кожного студента право читати весь його диск. Така ціна за бейдж-замочок
+ * зависока, тож про відсутність доступу людині скаже Drive, коли вона
+ * відкриє запис.
+ */
 app.get("/video/:materialId/playback", async (c) => {
+  const identity = await getIdentity(c);
+  if (!identity) return c.json(needSignIn, 401);
+
   const material = await repo.getMaterialRaw(c.req.param("materialId"));
   if (!material) return c.json({ error: "not found" }, 404);
 
   const descriptor = buildPlaybackDescriptor(material);
   if (!descriptor) return c.json({ error: "no video for material" }, 404);
 
-  const identity = await getIdentity(c);
-  const access = await checkAccess(material, identity, c.req.header("x-drive-token"));
-
-  // Для Drive «unknown» — не відмова: сервер просто не бачить чужого токена
-  // (застосунок навмисно тримає його в себе, бо scope drive.readonly відкриває
-  // весь диск). Дескриптор віддаємо, а чи відкриється файл — вирішить сам Drive.
-  // Але лише тим, хто увійшов: fileId не має розсипатися з відкритого API.
-  const undecidable =
-    access === "unknown" && material.videoProvider === "drive" && identity !== null;
-  if (access !== "granted" && !undecidable) {
-    return c.json({ access, error: "no access" }, 403);
-  }
-  return c.json({ access, descriptor });
-});
-
-/** Стан доступу (для бейджа 🔓/🔒) без видачі самого playback. */
-app.get("/video/:materialId/access", async (c) => {
-  const material = await repo.getMaterialRaw(c.req.param("materialId"));
-  if (!material) return c.json({ error: "not found" }, 404);
-  const identity = await getIdentity(c);
-  return c.json({
-    access: await checkAccess(material, identity, c.req.header("x-drive-token")),
-    provider: material.videoProvider,
-  });
+  return c.json({ descriptor });
 });
 
 // ───────────────────────── Адмін (Google-allowlist) ─────────────────────────

@@ -57,7 +57,6 @@ protocol CourseRepository {
     func markQuestionAnswered(id: String, answered: Bool) async throws
 
     func playback(materialId: String) async throws -> PlaybackResponse
-    func access(materialId: String) async throws -> AccessResponse
 
     // — Адмін (за Google-allowlist на бекенді) —
     func adminMaterial(id: String) async throws -> AdminMaterial
@@ -242,9 +241,6 @@ final class RemoteCourseRepository: CourseRepository {
 
     func playback(materialId: String) async throws -> PlaybackResponse {
         try await api.get("video/\(materialId)/playback")
-    }
-    func access(materialId: String) async throws -> AccessResponse {
-        try await api.get("video/\(materialId)/access")
     }
 
     // — Адмін —
