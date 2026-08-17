@@ -177,16 +177,23 @@ struct StreamDetailView: View {
                                     } label: { Image(systemName: "plus.circle.fill") }
                                 }
                             }
+                            // Тап по рядку, а не NavigationLink(value:): обидва
+                            // стеки, з яких сюди приходять, мають типізований
+                            // шлях [Route], тож посилання зі значенням іншого
+                            // типу в них просто не спрацьовувало — заняття не
+                            // відкривалося взагалі. Через openSession екран
+                            // відкривається з будь-якого стека, а вкладені
+                            // «Приєднатися» й адмін-меню лишаються натисними
+                            // (усередині Button вони б перестали ловити тапи).
                             ForEach(stream.sessions) { item in
-                                NavigationLink(value: item) {
-                                    SessionRow(
-                                        item: item,
-                                        adminEdit: auth.isAdmin ? { sheet = .editSession(item.session.id) } : nil,
-                                        adminDelete: auth.isAdmin ? {
-                                            Task { try? await repo.deleteSession(id: item.session.id); await reload() }
-                                        } : nil)
-                                }
-                                .buttonStyle(.plain)
+                                SessionRow(
+                                    item: item,
+                                    adminEdit: auth.isAdmin ? { sheet = .editSession(item.session.id) } : nil,
+                                    adminDelete: auth.isAdmin ? {
+                                        Task { try? await repo.deleteSession(id: item.session.id); await reload() }
+                                    } : nil)
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { openSession = item }
                             }
                         }
                     }
@@ -257,10 +264,6 @@ struct StreamDetailView: View {
                 MaterialFormView(ownerType: "stream", ownerId: streamId, editingId: id,
                                  types: vm.types) { await reload() }
             }
-        }
-        .navigationDestination(for: SessionWithMaterials.self) { item in
-            SessionDetailView(item: item, types: vm.types,
-                              pricePerSession: vm.current?.pricePerSession) { await reload() }
         }
         .navigationDestination(item: $openSession) { item in
             SessionDetailView(item: item, types: vm.types,
