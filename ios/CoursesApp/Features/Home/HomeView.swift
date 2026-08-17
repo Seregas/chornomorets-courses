@@ -7,7 +7,7 @@ final class HomeViewModel {
 
     func load(_ repo: CourseRepository) async {
         do { state = .loaded(try await repo.home()) }
-        catch { state = .failed(error.localizedDescription) }
+        catch { state = .from(error) }
     }
 }
 

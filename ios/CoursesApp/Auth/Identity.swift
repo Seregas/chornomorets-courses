@@ -1,8 +1,9 @@
 import Foundation
 import Observation
 
-/// Анонімний ідентифікатор пристрою (для підписок). Identity-ready: згодом
-/// замінюється на реального користувача без зміни моделей.
+/// Анонімний ідентифікатор пристрою — лишився тільки для логів із телефона:
+/// вони пишуться ще до входу й саме тоді, коли ламається вхід. Усе особисте
+/// (підписки, оплати, домашки) висить на Google-акаунті, а не на пристрої.
 enum DeviceID {
     private static let key = "device_id"
     static var current: String {
@@ -32,6 +33,19 @@ enum AuthTokenStore {
         if let value { UserDefaults.standard.set(value, forKey: key) }
         else { UserDefaults.standard.removeObject(forKey: key) }
     }
+}
+
+/**
+ Оновлення протухлого токена.
+
+ Google видає ID-token на годину. Оскільки на ньому тепер тримається все
+ особисте, без оновлення застосунок через годину виглядав би залогіненим, а
+ сервер відповідав би 401 на розклад, оплати й домашки. Хук ставить застосунок
+ на старті; APIClient смикає його, коли отримав 401, і повторює запит.
+ */
+enum TokenRefresher {
+    /// Повертає true, якщо вдалося оновити токен і запит варто повторити.
+    nonisolated(unsafe) static var refresh: (() async -> Bool)?
 }
 
 /// Спостережуваний стан Google-входу для UI.

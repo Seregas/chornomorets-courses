@@ -103,7 +103,20 @@ final class APIClient {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
+    /// 401 — це майже завжди протухлий Google ID-token (він живе годину), а не
+    /// справжня відмова: усе особисте тепер ходить із ним. Один раз мовчки
+    /// оновлюємо токен і повторюємо — інакше застосунок раз на годину показував
+    /// би порожній розклад залогіненій людині.
     private func performRaw<Body: Encodable>(method: String, path: String, body: Body?) async throws -> Data {
+        do {
+            return try await send(method: method, path: path, body: body)
+        } catch let error as APIError where error.status == 401 {
+            guard let refresh = TokenRefresher.refresh, await refresh() else { throw error }
+            return try await send(method: method, path: path, body: body)
+        }
+    }
+
+    private func send<Body: Encodable>(method: String, path: String, body: Body?) async throws -> Data {
         // URL(string:relativeTo:) зберігає query-рядок (appendingPathComponent його екранує).
         guard let url = URL(string: path, relativeTo: baseURL) else {
             throw APIError(status: -1, body: "невалідний шлях: \(path)")

@@ -57,6 +57,15 @@ final class GoogleSignInService {
 
     func signOut() { GIDSignIn.sharedInstance.signOut() }
 
+    /// Оновлює ID-token, якщо той протух (SDK тримає refresh-token у Keychain).
+    /// Повертає nil, якщо входу немає або оновити не вдалося — тоді потрібен
+    /// справжній повторний вхід.
+    func refreshIfNeeded() async -> Session? {
+        guard let user = GIDSignIn.sharedInstance.currentUser else { return nil }
+        guard let refreshed = try? await user.refreshTokensIfNeeded() else { return nil }
+        return try? session(from: refreshed)
+    }
+
     private func session(from user: GIDGoogleUser) throws -> Session {
         guard let idToken = user.idToken?.tokenString else { throw GoogleAuthError.missingIdToken }
         return Session(email: user.profile?.email ?? "",

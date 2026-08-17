@@ -11,7 +11,7 @@ final class SessionQuestionsViewModel {
 
     func load(_ repo: CourseRepository, sessionId: String) async {
         do { state = .loaded(try await repo.questions(sessionId: sessionId)) }
-        catch { state = .failed(error.localizedDescription) }
+        catch { state = .from(error) }
     }
 
     func send(_ repo: CourseRepository, sessionId: String) async {

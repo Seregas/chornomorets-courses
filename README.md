@@ -27,7 +27,7 @@
     App/               — точка входу, DI-контейнер (AppEnvironment), теми, форматування
     Models/            — Codable-моделі API
     Networking/        — APIClient + CourseRepository (protocol) + Remote/Preview + InputModels
-    Auth/              — deviceId, AuthTokenStore, GoogleSignIn
+    Auth/              — Google-вхід, токени, оновлення протухлого ID-token
     Features/          — Catalog, Schedule, Player, Settings, Admin
     Services/          — локальні нагадування, заглушка завантажень
 /design         — мокапи екранів (PNG/SVG) і скриншоти застосунку
@@ -40,7 +40,7 @@ cd server
 npm install
 cp .env.example .env   # і вписати свої ADMIN_EMAILS / GOOGLE_CLIENT_ID
 npm run db:push        # створити таблиці у data.db
-npm run seed           # демо-дані (deviceId=demo-device має підписки)
+npm run seed           # демо-дані (акаунт demo-account має підписки)
 npm run dev            # старт на http://localhost:3000
 ```
 
@@ -63,6 +63,19 @@ npm run dev            # старт на http://localhost:3000
 і прототипу. Без жодного з них сервер **не стартує**: мовчазне падіння в dev-режим на
 публічному сервері відкрило б адмінку кожному, хто знає адресу з `ADMIN_EMAILS`.
 
+### Скрипти для живої бази
+
+`seed.ts` спершу все витирає, тож для живої бази — окремі ідемпотентні скрипти
+в `server/src/scripts/`:
+
+```bash
+npx tsx src/scripts/add-biohardcore.ts            # додати реальний курс, не чіпаючи решту
+npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
+```
+
+`mark-paid.ts` відмічає всі заняття потоку оплаченими для однієї людини — по пошті,
+навіть якщо вона ще жодного разу не заходила в застосунок (див. заочні акаунти нижче).
+
 ## Ендпоінти
 
 **Читання (відкрите):**
@@ -70,33 +83,43 @@ npm run dev            # старт на http://localhost:3000
 - `GET /courses` — каталог карток (із `nextStream`)
 - `GET /courses/:id` — курс + його потоки (зі злитим описом) + матеріали рівня курсу
 - `GET /streams/:id` — потік: злитий опис + заняття + матеріали потоку
-- `GET /schedule?deviceId=…` — найближчі заняття підписаних потоків
-- `GET /home?deviceId=…` — зведення «Моє навчання»: найближче заняття, наступні, домашка з дедлайнами, записи
 - `GET /material-types` — каталог типів матеріалів
-- `GET /me?deviceId=…` — `{ deviceId, email, isAdmin }`
+- `GET /me` — `{ accountId, email, isAdmin }`
+
+**Особисте (потрібен вхід, інакше `401`):**
+
+Усе, що належить людині, ходить під Google-токеном — ніяких ідентифікаторів у
+запиті. Акаунт сервер бере з токена (`sub`) і сам заводить його при першому вході.
+
+- `GET /schedule` — найближчі заняття підписаних потоків
+- `GET /home` — зведення «Моє навчання»: найближче заняття, наступні, домашка з дедлайнами, записи
 
 **Заявки на потік** (заміна Google Forms):
-- `GET /streams/:id/application?deviceId=…` · `POST /streams/:id/application` `{deviceId, name, contact, comment?}`
+- `GET /streams/:id/application` · `POST /streams/:id/application` `{name, contact, comment?}`
 - `GET /admin/streams/:id/applications` · `POST /admin/applications/:id/status` `{status}`
-- статус `enrolled` одразу підписує пристрій на потік
+- статус `enrolled` одразу підписує акаунт на потік
 
 **Оплата заняття** (на пару «заняття + людина»):
-- `GET /sessions/:id/payment?deviceId=…` · `POST /sessions/:id/payment` `{deviceId, amount, receiptURL?, note?}`
+- `GET /sessions/:id/payment` · `POST /sessions/:id/payment` `{amount, receiptURL?, note?}`
 - `GET /admin/sessions/:id/payments` · `POST /admin/payments/:id/status` `{status}` —
   `declared | confirmed | free | rejected`
+- `POST /admin/sessions/:id/payments/mark` `{email, status?, amount?, note?}` — відмітити
+  оплату за людину по **пошті**. Якщо вона ще не входила в застосунок, заводиться заочний
+  акаунт `email:…`, і при першому вході все переїде на справжній (`sub`)
 
 **Квитанції:**
-- `POST /payments/:id/receipt` (multipart: `image`, `deviceId`, `parsed`) — скріншот їде
+- `POST /payments/:id/receipt` (multipart: `image`, `parsed`) — скріншот їде
   в телеграм-чат викладача, у нас лишається лише посилання на нього
-- `GET /payments/:id/receipt?deviceId=…` — картинка назад; автору заявки або адміну
+- `GET /payments/:id/receipt?token=…` — картинка назад; автору заявки або адміну.
+  Токен у query, бо URL віддається `AsyncImage`, а той заголовків не ставить
 
 **Пульс після заняття:**
-- `GET /sessions/:id/pulse?deviceId=…` · `POST /sessions/:id/pulse` `{deviceId, rating 1–5, comment?}`
+- `GET /sessions/:id/pulse` · `POST /sessions/:id/pulse` `{rating 1–5, comment?}`
 - `GET /admin/sessions/:id/pulses` — зведення (середня, гістограма, коментарі)
 
 **Домашка:**
-- `GET /materials/:id/submission?deviceId=…` — своя здача (або `null`)
-- `POST /materials/:id/submission` `{deviceId, text}` — здати або переписати свою
+- `GET /materials/:id/submission` — своя здача (або `null`)
+- `POST /materials/:id/submission` `{text}` — здати або переписати свою
 - `GET /admin/materials/:id/submissions` — усі здачі (адмін)
 - `POST /admin/submissions/:id/feedback` `{feedback}` — відповідь викладача
 
@@ -105,14 +128,20 @@ npm run dev            # старт на http://localhost:3000
 - `POST /admin/announcements` `{streamId, text}` · `DELETE /admin/announcements/:id`
 
 **Питання до заняття:**
-- `GET /sessions/:id/questions?deviceId=…` — список; `isMine` для своїх, `authorEmail` лише адміну
-- `POST /sessions/:id/questions` `{deviceId, text, isAnonymous?}`
-- `DELETE /questions/:id?deviceId=…` — автор або адмін
+- `GET /sessions/:id/questions` — список (читання відкрите); `isMine` для своїх,
+  `authorEmail` лише адміну
+- `POST /sessions/:id/questions` `{text, isAnonymous?}`
+- `DELETE /questions/:id` — автор або адмін
 - `POST /admin/questions/:id/answered` `{answered}` — позначити розібраним
 
-**Підписки (deviceId):**
-- `GET /subscriptions?deviceId=…`
-- `POST /subscriptions` `{deviceId, streamId}` · `DELETE /subscriptions` `{deviceId, streamId}`
+**Підписки:**
+- `GET /subscriptions`
+- `POST /subscriptions` `{streamId}` · `DELETE /subscriptions` `{streamId}`
+
+**Логи з телефонів** — єдине місце, де лишився `deviceId`: вони пишуться ще до входу
+й саме тоді, коли ламається вхід.
+- `POST /logs` `{deviceId, appVersion?, event, detail?}` (відкрито на запис) ·
+  `GET /admin/logs`
 
 **Відео:**
 - `GET /video/:materialId/playback` — типізований дескриптор `direct | youtube | google-drive`; `403` якщо немає доступу
@@ -135,17 +164,22 @@ npm run dev            # старт на http://localhost:3000
   на Postgres/файли/зовнішнє API: нова реалізація інтерфейсу + драйвер у `db.ts`. Роути не чіпаються.
 - **Джерело відео** — лише через `video.ts`. Бекенд віддає playback-дескриптор; застосунок має
   хендлер під кожен тип. Додати R2/S3/HLS = новий тип тут + хендлер у застосунку.
-- **Identity** — анонімний `deviceId` для підписок; Google-вхід окремо, лише для доступу до відео
-  й адмін-режиму. Заміна `deviceId` на реального користувача не зачіпає моделі.
+- **Identity** — усе особисте висить на Google-акаунті: ключ `accounts.id` = `sub` із
+  токена (номер акаунта, який Google видає раз і назавжди), пошта лежить поруч і
+  оновлюється при кожному вході. Раніше цю роль грав `deviceId` — і зміна телефона
+  стирала людині підписки, домашки й оплати. Пошта ключем бути не може: її змінюють.
+  ID-token живе годину, тож застосунок мовчки оновлює його й повторює запит на `401`.
 
 ## Модель даних (стисло)
 
 `Course` (вічний опис) → `Stream` (потік/cohort; може перевизначати опис) → `Session` (заняття).
 `Material` (вміст вирішує поведінку: текст / відео / лінк / дедлайн; `typeId` — косметичний ярлик
 з керованого каталогу `MaterialType`, може бути порожнім). Власник матеріалу — `course`,
-`stream` або `session`: запис і домашка належать конкретній зустрічі, а дошка й реквізити — потоку. `Enrollment` = підписка `deviceId`↔`streamId`.
-`Question` = питання до заняття (`deviceId` автора, опційний `authorEmail`, прапорець анонімності).
-`Announcement` = оголошення викладача на потік. `Submission` = здана домашка (одна на матеріал+пристрій). `Pulse` = оцінка заняття 1–5. `Payment` = оплата пари «заняття + людина» (сума, квитанція, підтвердження). `Application` = заявка на потік (одна на потік+пристрій).
+`stream` або `session`: запис і домашка належать конкретній зустрічі, а дошка й реквізити — потоку.
+`Account` = Google-користувач (`sub` як ключ, пошта поруч) — до нього прив'язане все особисте.
+`Enrollment` = підписка `accountId`↔`streamId`.
+`Question` = питання до заняття (акаунт автора, прапорець анонімності; пошту віддаємо лише адміну).
+`Announcement` = оголошення викладача на потік. `Submission` = здана домашка (одна на матеріал+акаунт). `Pulse` = оцінка заняття 1–5. `Payment` = оплата пари «заняття + людина» (сума, квитанція, підтвердження). `Application` = заявка на потік (одна на потік+акаунт).
 
 ## iOS-застосунок
 
@@ -226,12 +260,14 @@ ASC_KEY_ID=XXXXXXXXXX ASC_ISSUER_ID=xxxxxxxx-… \
 
 ## Статус і що далі
 
-Бекенд і iOS-застосунок робочі та перевірені наживо (симулятор проти локального сервера).
+Бекенд і iOS-застосунок робочі та перевірені наживо, зокрема на реальному курсі
+«Біохардкор» із десятьма записами на Google Drive. Збірка їздить у TestFlight.
 Лишилось:
 
-- **Стрімінг захищеного Drive-відео** — зараз плеєр відкриває `drive.google.com/.../preview`
-  у `WKWebView` без токена; потрібен `AVURLAsset` із заголовком або `SFSafariViewController`.
-- **Справжня перевірка доступу до Drive** — `video.ts` поки повертає `granted` оптимістично,
-  без виклику Drive API.
+- **Транскрипти записів** — пошук по сказаному й автоконспект (потрібне рішення
+  щодо ASR-сервісу й бюджету).
+- **Live Activity** «почнеться за 10 хв» на локскріні та в Dynamic Island.
+- **Ризик 4.8 (Sign in with Apple)** — перевірити перед публікацією в App Store:
+  застосунок пропонує вхід через Google, і Apple може вимагати свій поруч.
 - Полірування UI (бейджі в рядку розкладу переносяться).
 - Android — нативний застосунок на Kotlin/Compose поверх того самого бекенду.

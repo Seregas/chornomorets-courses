@@ -14,7 +14,7 @@ final class ScheduleViewModel {
             await notifications.sync(with: items)
             WidgetSync.update(nextSession: items.first)
         } catch {
-            state = .failed(error.localizedDescription)
+            state = .from(error)
         }
     }
 

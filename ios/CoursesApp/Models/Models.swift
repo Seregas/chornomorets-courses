@@ -18,7 +18,7 @@ enum PaymentStatus: String, Codable {
     }
 }
 
-/// Заявлена оплата. `deviceId`/`authorEmail` приходять лише адміну.
+/// Заявлена оплата. `accountId`/`authorEmail` приходять лише адміну.
 struct Payment: Codable, Identifiable, Hashable {
     let id: String
     let sessionId: String
@@ -30,7 +30,7 @@ struct Payment: Codable, Identifiable, Hashable {
     let note: String?
     let declaredAt: String
     let reviewedAt: String?
-    let deviceId: String?
+    let accountId: String?
     let authorEmail: String?
 }
 enum StreamStatus: String, Codable { case upcoming, ongoing, finished }
@@ -185,7 +185,7 @@ enum ApplicationStatus: String, Codable {
 struct Application: Codable, Identifiable, Hashable {
     let id: String
     let streamId: String
-    let deviceId: String
+    let accountId: String
     let name: String
     let contact: String
     let comment: String?
@@ -211,12 +211,13 @@ struct PulseSummary: Codable, Hashable {
     let comments: [String]
 }
 
-/// Здана домашка. Одна на матеріал і пристрій: повторна здача перезаписує текст,
+/// Здана домашка. Одна на матеріал і акаунт: повторна здача перезаписує текст,
 /// але не стирає відповідь викладача.
 struct Submission: Codable, Identifiable, Hashable {
     let id: String
     let materialId: String
-    let deviceId: String
+    let accountId: String
+    /// Пошта автора — приходить лише адміну.
     let authorEmail: String?
     let text: String
     let submittedAt: String
@@ -281,14 +282,14 @@ struct MaterialType: Codable, Identifiable, Hashable {
 }
 
 struct Me: Codable, Hashable {
-    let deviceId: String?
+    let accountId: String?
     let email: String?
     let isAdmin: Bool
 }
 
 struct Enrollment: Codable, Identifiable, Hashable {
     let id: String
-    let deviceId: String
+    let accountId: String
     let streamId: String
     let subscribedAt: String
 }

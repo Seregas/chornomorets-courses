@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import {
+  accounts,
   announcements,
   courses,
   enrollments,
@@ -9,6 +10,9 @@ import {
   sessions,
   streams,
 } from "./schema.js";
+
+/** Демо-студент: усе особисте (підписки, оплати, домашки) висить на акаунті. */
+const DEMO_ACCOUNT = "demo-account";
 
 /**
  * Наповнення БД демо-даними (курси Петра Чорноморця).
@@ -170,13 +174,21 @@ function seed() {
     { id: "m-s5-hw", ownerType: "session", ownerId: "ses-s5-1", typeId: "mt-hw", title: "Підготовка до заняття 1", description: "До першого заняття занотуйте, у які моменти тижня втома накриває найсильніше.", dueAt: S5[0], order: 1 },
   ]).run();
 
+  // — Демо-акаунт: усе особисте висить на акаунті, тож він потрібен першим —
+  db.insert(accounts).values({
+    id: DEMO_ACCOUNT,
+    email: "demo@example.com",
+    name: "Демо-студент",
+    lastSeenAt: new Date().toISOString(),
+  }).run();
+
   // — Демо-підписка для розкладу —
   db.insert(enrollments).values([
     // Правдоподібна історія студента: пройшов минулий потік «Стресу» (звідти
     // записи й домашка), записався на наступний і ще на «Самооцінку».
-    { id: "en-demo-0", deviceId: "demo-device", streamId: "s-stress-4", subscribedAt: new Date().toISOString() },
-    { id: "en-demo-1", deviceId: "demo-device", streamId: "s-stress-5", subscribedAt: new Date().toISOString() },
-    { id: "en-demo-2", deviceId: "demo-device", streamId: "s-esteem-3", subscribedAt: new Date().toISOString() },
+    { id: "en-demo-0", accountId: DEMO_ACCOUNT, streamId: "s-stress-4", subscribedAt: new Date().toISOString() },
+    { id: "en-demo-1", accountId: DEMO_ACCOUNT, streamId: "s-stress-5", subscribedAt: new Date().toISOString() },
+    { id: "en-demo-2", accountId: DEMO_ACCOUNT, streamId: "s-esteem-3", subscribedAt: new Date().toISOString() },
   ]).run();
 
   // — Оголошення потоку —

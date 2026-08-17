@@ -17,6 +17,15 @@ struct CoursesApp: App {
                     if GoogleAuthConfig.isConfigured, let s = await GoogleSignInService().restore() {
                         auth.connectGoogle(email: s.email, idToken: s.idToken, accessToken: s.accessToken)
                     }
+                    // Токен живе годину, а на ньому тримається все особисте —
+                    // тож даємо мережевому шару спосіб оновити його на 401.
+                    TokenRefresher.refresh = { [auth] in
+                        guard GoogleAuthConfig.isConfigured,
+                              let s = await GoogleSignInService().refreshIfNeeded() else { return false }
+                        await auth.connectGoogle(email: s.email, idToken: s.idToken,
+                                                 accessToken: s.accessToken)
+                        return true
+                    }
                     if ProcessInfo.processInfo.environment["SKIP_NOTIF_PROMPT"] == nil {
                         await env.notifications.requestAuthorization()
                     }

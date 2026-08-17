@@ -40,6 +40,8 @@ struct VideoPlayerView: View {
             } description: {
                 Text(message)
             }
+        case .needsSignIn:
+            SignInPrompt(retry: { Task { await resolve() } })
         }
     }
 

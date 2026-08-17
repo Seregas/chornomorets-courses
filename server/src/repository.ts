@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, inArray } from "drizzle-orm";
 import { db as defaultDb, type DB } from "./db.js";
 import {
+  accounts,
   announcements,
   applications,
   clientLogs,
@@ -43,28 +44,26 @@ import type {
   Submission,
 } from "./types.js";
 
-/** Хто дивиться список питань: свої впізнаються за deviceId, авторів бачить лише адмін. */
+/** Хто дивиться список питань: свої впізнаються за accountId, авторів бачить лише адмін. */
 export interface QuestionViewer {
-  deviceId: string;
+  /** null — гість: питання бачить, але «своїх» серед них немає. */
+  accountId: string | null;
   isAdmin: boolean;
 }
 
 export interface AskQuestionInput {
   sessionId: string;
-  deviceId: string;
+  accountId: string;
   text: string;
   isAnonymous: boolean;
-  /** Email автора, якщо він увійшов і не приховався. */
-  authorEmail?: string | null;
 }
 
 export interface DeclarePaymentInput {
   sessionId: string;
-  deviceId: string;
+  accountId: string;
   amount?: number | null;
   receiptURL?: string | null;
   note?: string | null;
-  authorEmail?: string | null;
 }
 
 export interface ReceiptRef {
@@ -73,6 +72,14 @@ export interface ReceiptRef {
   messageId: number;
   /** Що прочитали зі скріншота на пристрої. */
   parsed?: unknown;
+}
+
+export interface MarkPaymentInput {
+  sessionId: string;
+  email: string;
+  status: Payment["status"];
+  amount?: number | null;
+  note?: string | null;
 }
 
 export interface ClientLogInput {
@@ -86,7 +93,7 @@ export type ApplicationStatus = "new" | "waitingPayment" | "enrolled" | "decline
 
 export interface ApplyInput {
   streamId: string;
-  deviceId: string;
+  accountId: string;
   name: string;
   contact: string;
   comment?: string | null;
@@ -94,7 +101,7 @@ export interface ApplyInput {
 
 export interface RatePulseInput {
   sessionId: string;
-  deviceId: string;
+  accountId: string;
   /** 1–5. */
   rating: number;
   comment?: string | null;
@@ -102,7 +109,7 @@ export interface RatePulseInput {
 
 export interface SubmitHomeworkInput {
   materialId: string;
-  deviceId: string;
+  accountId: string;
   text: string;
   authorEmail?: string | null;
 }
@@ -147,11 +154,11 @@ export interface CourseRepository {
   // — Читання (відкрите для застосунку) —
   listCourses(): Promise<CourseCard[]>;
   getCourseDetail(courseId: string): Promise<CourseDetail | null>;
-  getStreamDetail(streamId: string, deviceId?: string): Promise<StreamDetail | null>;
-  getSchedule(deviceId: string): Promise<ScheduleItem[]>;
+  getStreamDetail(streamId: string, accountId?: string | null): Promise<StreamDetail | null>;
+  getSchedule(accountId: string): Promise<ScheduleItem[]>;
   /** Зведення для екрана «Моє навчання». */
-  getHomeDigest(deviceId: string): Promise<HomeDigest>;
-  listEnrollments(deviceId: string): Promise<ResolvedStream[]>;
+  getHomeDigest(accountId: string): Promise<HomeDigest>;
+  listEnrollments(accountId: string): Promise<ResolvedStream[]>;
   listMaterialTypes(): Promise<MaterialType[]>;
   /** Сирий матеріал з videoRef — лише для відео-шару (playback). Не віддавати клієнту. */
   getMaterialRaw(materialId: string): Promise<Material | null>;
@@ -163,21 +170,21 @@ export interface CourseRepository {
 
   // — Здача домашки —
   /** Своя здача (або null). */
-  getSubmission(materialId: string, deviceId: string): Promise<Submission | null>;
+  getSubmission(materialId: string, accountId: string): Promise<Submission | null>;
   /** Здати або переписати свою — домашку доробляють, а не подають удруге. */
   submitHomework(input: SubmitHomeworkInput): Promise<Submission>;
   /** Усі здачі по матеріалу — адміну. */
-  listSubmissions(materialId: string): Promise<Submission[]>;
+  listSubmissions(materialId: string): Promise<Array<Submission & { email: string | null }>>;
   /** Відповідь викладача. */
   reviewSubmission(id: string, feedback: string): Promise<Submission | null>;
 
   // — Оплати (пара «заняття + людина») —
   /** Своя оплата за заняття. */
-  getPayment(sessionId: string, deviceId: string): Promise<Payment | null>;
+  getPayment(sessionId: string, accountId: string): Promise<Payment | null>;
   /** Заявити оплату (або переписати свою заявку, поки її не розглянули). */
   declarePayment(input: DeclarePaymentInput): Promise<Payment>;
   /** Усі заявки по заняттю — адміну. */
-  listPayments(sessionId: string): Promise<Payment[]>;
+  listPayments(sessionId: string): Promise<Array<Payment & { email: string | null }>>;
   /** Прикріпити квитанцію (уже надіслану в телеграм) до заявки. */
   attachReceipt(id: string, receipt: ReceiptRef): Promise<Payment | null>;
   /** Оплата за id — щоб віддати квитанцію тому, кому можна. */
@@ -190,20 +197,26 @@ export interface CourseRepository {
     status: Payment["status"],
     note?: string | null,
   ): Promise<Payment | null>;
+  /** Відмітити оплату за людину по пошті (акаунт може ще не існувати). */
+  markPaymentByEmail(input: MarkPaymentInput): Promise<Payment>;
+
+  // — Акаунти —
+  /** Запам'ятати або оновити акаунт, що зайшов. Повертає його id. */
+  touchAccount(input: { id: string; email: string; name?: string | null }): Promise<string>;
 
   // — Логи з клієнтів —
   writeClientLog(input: ClientLogInput): Promise<void>;
   listClientLogs(limit: number): Promise<ClientLog[]>;
 
   // — Заявки на потік —
-  getApplication(streamId: string, deviceId: string): Promise<Application | null>;
+  getApplication(streamId: string, accountId: string): Promise<Application | null>;
   applyToStream(input: ApplyInput): Promise<Application>;
   listApplications(streamId: string): Promise<Application[]>;
-  /** Статус «enrolled» одразу підписує пристрій на потік — інакше довелося б робити це двічі. */
+  /** Статус «enrolled» одразу підписує акаунт на потік — інакше довелося б робити це двічі. */
   setApplicationStatus(id: string, status: ApplicationStatus): Promise<Application | null>;
 
   // — Пульс після заняття —
-  getPulse(sessionId: string, deviceId: string): Promise<Pulse | null>;
+  getPulse(sessionId: string, accountId: string): Promise<Pulse | null>;
   ratePulse(input: RatePulseInput): Promise<Pulse>;
   /** Зведення для викладача. */
   getPulseSummary(sessionId: string): Promise<PulseSummary>;
@@ -212,15 +225,15 @@ export interface CourseRepository {
   /** `viewer` вирішує, кому показати автора: email бачить лише адмін. */
   listQuestions(sessionId: string, viewer: QuestionViewer): Promise<QuestionDTO[]>;
   askQuestion(input: AskQuestionInput): Promise<Question>;
-  /** Видалити може автор (за deviceId) або адмін. */
+  /** Видалити може автор (за accountId) або адмін. */
   deleteQuestion(id: string, viewer: QuestionViewer): Promise<boolean>;
   /** Позначити розібраним (адмін). */
   markQuestionAnswered(id: string, answered: boolean): Promise<Question | null>;
 
-  // — Підписки (deviceId) —
-  subscribe(deviceId: string, streamId: string): Promise<Enrollment>;
-  unsubscribe(deviceId: string, streamId: string): Promise<void>;
-  isEnrolled(deviceId: string, streamId: string): Promise<boolean>;
+  // — Підписки (accountId) —
+  subscribe(accountId: string, streamId: string): Promise<Enrollment>;
+  unsubscribe(accountId: string, streamId: string): Promise<void>;
+  isEnrolled(accountId: string, streamId: string): Promise<boolean>;
 
   // — Запис (адмін) —
   createCourse(input: CourseInsert): Promise<Course>;
@@ -298,10 +311,11 @@ function toAnnouncementDTO(row: {
   };
 }
 
-/** Оплата для клієнта. deviceId і email — лише коли дивиться адмін. */
+/** Оплата для клієнта. accountId і email — лише коли дивиться адмін. */
 export function toPaymentDTO(
   payment: Payment | undefined | null,
   forAdmin = false,
+  email?: string | null,
 ): PaymentDTO | null {
   if (!payment) return null;
   return {
@@ -316,7 +330,7 @@ export function toPaymentDTO(
     declaredAt: payment.declaredAt,
     reviewedAt: payment.reviewedAt,
     ...(forAdmin
-      ? { deviceId: payment.deviceId, authorEmail: payment.authorEmail }
+      ? { accountId: payment.accountId, authorEmail: email ?? null }
       : {}),
   };
 }
@@ -421,7 +435,7 @@ export class DrizzleCourseRepository implements CourseRepository {
 
   async getStreamDetail(
     streamId: string,
-    deviceId?: string,
+    accountId?: string | null,
   ): Promise<StreamDetail | null> {
     const stream = this.db
       .select()
@@ -453,15 +467,15 @@ export class DrizzleCourseRepository implements CourseRepository {
       .all();
 
     // Оплати того, хто питає: стан «оплачено» тепер персональний, і без
-    // deviceId ми не можемо сказати нічого — тоді просто нічого й не кажемо.
+    // accountId ми не можемо сказати нічого — тоді просто нічого й не кажемо.
     const myPayments = new Map<string, Payment>();
-    if (deviceId && streamSessions.length) {
+    if (accountId && streamSessions.length) {
       for (const p of this.db
         .select()
         .from(payments)
         .where(
           and(
-            eq(payments.deviceId, deviceId),
+            eq(payments.accountId, accountId),
             inArray(payments.sessionId, streamSessions.map((s) => s.id)),
           ),
         )
@@ -504,11 +518,11 @@ export class DrizzleCourseRepository implements CourseRepository {
     };
   }
 
-  async getSchedule(deviceId: string): Promise<ScheduleItem[]> {
+  async getSchedule(accountId: string): Promise<ScheduleItem[]> {
     const enrolled = this.db
       .select({ streamId: enrollments.streamId })
       .from(enrollments)
-      .where(eq(enrollments.deviceId, deviceId))
+      .where(eq(enrollments.accountId, accountId))
       .all();
     const streamIds = enrolled.map((e) => e.streamId);
     if (streamIds.length === 0) return [];
@@ -535,7 +549,7 @@ export class DrizzleCourseRepository implements CourseRepository {
     for (const p of this.db
       .select()
       .from(payments)
-      .where(eq(payments.deviceId, deviceId))
+      .where(eq(payments.accountId, accountId))
       .all()) {
       myPayments.set(p.sessionId, p);
     }
@@ -554,8 +568,8 @@ export class DrizzleCourseRepository implements CourseRepository {
    * Зведення «Моє навчання». Каталог — вітрина для нових; тому, хто вже вчиться,
    * потрібне інше: коли наступне заняття, що не здано і які записи є.
    */
-  async getHomeDigest(deviceId: string): Promise<HomeDigest> {
-    const schedule = await this.getSchedule(deviceId);
+  async getHomeDigest(accountId: string): Promise<HomeDigest> {
+    const schedule = await this.getSchedule(accountId);
     const [nextSession, ...upcoming] = schedule;
 
     const streamRows = this.db
@@ -563,7 +577,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .from(enrollments)
       .innerJoin(streams, eq(enrollments.streamId, streams.id))
       .innerJoin(courses, eq(streams.courseId, courses.id))
-      .where(eq(enrollments.deviceId, deviceId))
+      .where(eq(enrollments.accountId, accountId))
       .all();
     if (streamRows.length === 0) {
       return {
@@ -656,18 +670,18 @@ export class DrizzleCourseRepository implements CourseRepository {
 
   // — Оплати —
 
-  async getPayment(sessionId: string, deviceId: string): Promise<Payment | null> {
+  async getPayment(sessionId: string, accountId: string): Promise<Payment | null> {
     return (
       this.db
         .select()
         .from(payments)
-        .where(and(eq(payments.sessionId, sessionId), eq(payments.deviceId, deviceId)))
+        .where(and(eq(payments.sessionId, sessionId), eq(payments.accountId, accountId)))
         .get() ?? null
     );
   }
 
   async declarePayment(input: DeclarePaymentInput): Promise<Payment> {
-    const existing = await this.getPayment(input.sessionId, input.deviceId);
+    const existing = await this.getPayment(input.sessionId, input.accountId);
     const now = new Date().toISOString();
     if (existing) {
       // Поки заявку не розглянули, її можна виправити — наприклад, прикріпити
@@ -690,8 +704,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .insert(payments)
       .values({
         sessionId: input.sessionId,
-        deviceId: input.deviceId,
-        authorEmail: input.authorEmail ?? null,
+        accountId: input.accountId,
         amount: input.amount ?? null,
         receiptURL: input.receiptURL ?? null,
         note: input.note ?? null,
@@ -726,13 +739,15 @@ export class DrizzleCourseRepository implements CourseRepository {
     return this.db.select().from(sessions).where(eq(sessions.id, id)).get() ?? null;
   }
 
-  async listPayments(sessionId: string): Promise<Payment[]> {
-    return this.db
-      .select()
+  async listPayments(sessionId: string): Promise<Array<Payment & { email: string | null }>> {
+    const rows = this.db
+      .select({ payment: payments, email: accounts.email })
       .from(payments)
+      .leftJoin(accounts, eq(payments.accountId, accounts.id))
       .where(eq(payments.sessionId, sessionId))
       .orderBy(asc(payments.declaredAt))
       .all();
+    return rows.map((r) => ({ ...r.payment, email: r.email }));
   }
 
   async setPaymentStatus(
@@ -748,6 +763,128 @@ export class DrizzleCourseRepository implements CourseRepository {
         .returning()
         .get() ?? null
     );
+  }
+
+  async markPaymentByEmail(input: MarkPaymentInput): Promise<Payment> {
+    const accountId = await this.accountIdForEmail(input.email);
+    const now = new Date().toISOString();
+    const existing = this.db
+      .select()
+      .from(payments)
+      .where(and(eq(payments.sessionId, input.sessionId), eq(payments.accountId, accountId)))
+      .get();
+
+    if (existing) {
+      return this.db
+        .update(payments)
+        .set({
+          status: input.status,
+          // Суму й нотатку не затираємо, якщо їх не передали: студент міг сам
+          // заявити оплату з квитанцією, і викладач лише підтверджує.
+          amount: input.amount ?? existing.amount,
+          note: input.note ?? existing.note,
+          reviewedAt: now,
+        })
+        .where(eq(payments.id, existing.id))
+        .returning()
+        .get();
+    }
+
+    return this.db
+      .insert(payments)
+      .values({
+        sessionId: input.sessionId,
+        accountId,
+        status: input.status,
+        amount: input.amount ?? null,
+        note: input.note ?? null,
+        declaredAt: now,
+        reviewedAt: now,
+      })
+      .returning()
+      .get();
+  }
+
+  /** Акаунт за поштою; якщо людина ще не входила — заочний. */
+  private async accountIdForEmail(email: string): Promise<string> {
+    const normalized = email.trim().toLowerCase();
+    const existing = this.db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.email, normalized))
+      .get();
+    if (existing) return existing.id;
+
+    const id = DrizzleCourseRepository.placeholderAccountId(normalized);
+    this.db.insert(accounts).values({ id, email: normalized }).run();
+    return id;
+  }
+
+  // — Акаунти —
+
+  /**
+   * Заочний акаунт: викладач знає пошту студента задовго до того, як той
+   * поставить застосунок. Такий акаунт тримає оплати й доступи, поки людина
+   * не увійде вперше — тоді `touchAccount` перенесе все на справжній номер
+   * Google-акаунта й видалить заглушку.
+   */
+  static placeholderAccountId(email: string): string {
+    return `email:${email.trim().toLowerCase()}`;
+  }
+
+  /**
+   * Забирає заочний акаунт із тією ж поштою під справжній номер акаунта.
+   * Переносимо рядки, а не міняємо ключ: FK оголошені без ON UPDATE CASCADE,
+   * і мовчазна зміна первинного ключа — надто тихий спосіб втратити дані.
+   */
+  private claimPlaceholder(realId: string, email: string): void {
+    const placeholderId = DrizzleCourseRepository.placeholderAccountId(email);
+    if (placeholderId === realId) return;
+    const placeholder = this.db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.id, placeholderId))
+      .get();
+    if (!placeholder) return;
+
+    this.db.transaction((tx) => {
+      for (const table of [payments, enrollments, questions, submissions, pulses, applications]) {
+        tx.update(table)
+          .set({ accountId: realId })
+          .where(eq(table.accountId, placeholderId))
+          .run();
+      }
+      tx.delete(accounts).where(eq(accounts.id, placeholderId)).run();
+    });
+  }
+
+  async touchAccount(input: {
+    id: string;
+    email: string;
+    name?: string | null;
+  }): Promise<string> {
+    const now = new Date().toISOString();
+    const existing = this.db
+      .select()
+      .from(accounts)
+      .where(eq(accounts.id, input.id))
+      .get();
+    if (existing) {
+      // Пошту оновлюємо щоразу: людина могла її змінити, а нам із нею шарити відео.
+      this.db
+        .update(accounts)
+        .set({ email: input.email, name: input.name ?? existing.name, lastSeenAt: now })
+        .where(eq(accounts.id, input.id))
+        .run();
+    } else {
+      this.db
+        .insert(accounts)
+        .values({ id: input.id, email: input.email, name: input.name ?? null, lastSeenAt: now })
+        .run();
+    }
+    // Могли відмітити оплату наперед — тепер їй є до кого прикріпитися.
+    this.claimPlaceholder(input.id, input.email);
+    return input.id;
   }
 
   // — Логи з клієнтів —
@@ -775,7 +912,7 @@ export class DrizzleCourseRepository implements CourseRepository {
 
   async getApplication(
     streamId: string,
-    deviceId: string,
+    accountId: string,
   ): Promise<Application | null> {
     return (
       this.db
@@ -784,7 +921,7 @@ export class DrizzleCourseRepository implements CourseRepository {
         .where(
           and(
             eq(applications.streamId, streamId),
-            eq(applications.deviceId, deviceId),
+            eq(applications.accountId, accountId),
           ),
         )
         .get() ?? null
@@ -792,7 +929,7 @@ export class DrizzleCourseRepository implements CourseRepository {
   }
 
   async applyToStream(input: ApplyInput): Promise<Application> {
-    const existing = await this.getApplication(input.streamId, input.deviceId);
+    const existing = await this.getApplication(input.streamId, input.accountId);
     if (existing) {
       // Передумав щодо контакту чи коментаря — оновлюємо, але статус лишаємо
       // за викладачем: не студенту вирішувати, що він уже зарахований.
@@ -811,7 +948,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .insert(applications)
       .values({
         streamId: input.streamId,
-        deviceId: input.deviceId,
+        accountId: input.accountId,
         name: input.name,
         contact: input.contact,
         comment: input.comment ?? null,
@@ -843,25 +980,25 @@ export class DrizzleCourseRepository implements CourseRepository {
     if (updated && status === "enrolled") {
       // Зарахували — значить, потік має зʼявитися в людини на екрані
       // «Навчання» сам, без окремої дії «підписатися».
-      await this.subscribe(updated.deviceId, updated.streamId);
+      await this.subscribe(updated.accountId, updated.streamId);
     }
     return updated;
   }
 
   // — Пульс після заняття —
 
-  async getPulse(sessionId: string, deviceId: string): Promise<Pulse | null> {
+  async getPulse(sessionId: string, accountId: string): Promise<Pulse | null> {
     return (
       this.db
         .select()
         .from(pulses)
-        .where(and(eq(pulses.sessionId, sessionId), eq(pulses.deviceId, deviceId)))
+        .where(and(eq(pulses.sessionId, sessionId), eq(pulses.accountId, accountId)))
         .get() ?? null
     );
   }
 
   async ratePulse(input: RatePulseInput): Promise<Pulse> {
-    const existing = await this.getPulse(input.sessionId, input.deviceId);
+    const existing = await this.getPulse(input.sessionId, input.accountId);
     if (existing) {
       return this.db
         .update(pulses)
@@ -874,7 +1011,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .insert(pulses)
       .values({
         sessionId: input.sessionId,
-        deviceId: input.deviceId,
+        accountId: input.accountId,
         rating: input.rating,
         comment: input.comment ?? null,
       })
@@ -909,7 +1046,7 @@ export class DrizzleCourseRepository implements CourseRepository {
 
   async getSubmission(
     materialId: string,
-    deviceId: string,
+    accountId: string,
   ): Promise<Submission | null> {
     return (
       this.db
@@ -918,7 +1055,7 @@ export class DrizzleCourseRepository implements CourseRepository {
         .where(
           and(
             eq(submissions.materialId, materialId),
-            eq(submissions.deviceId, deviceId),
+            eq(submissions.accountId, accountId),
           ),
         )
         .get() ?? null
@@ -926,7 +1063,7 @@ export class DrizzleCourseRepository implements CourseRepository {
   }
 
   async submitHomework(input: SubmitHomeworkInput): Promise<Submission> {
-    const existing = await this.getSubmission(input.materialId, input.deviceId);
+    const existing = await this.getSubmission(input.materialId, input.accountId);
     const now = new Date().toISOString();
     if (existing) {
       // Переписуємо текст, але НЕ чіпаємо відповідь викладача: зникла б рецензія
@@ -942,8 +1079,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .insert(submissions)
       .values({
         materialId: input.materialId,
-        deviceId: input.deviceId,
-        authorEmail: input.authorEmail ?? null,
+        accountId: input.accountId,
         text: input.text,
         submittedAt: now,
       })
@@ -951,13 +1087,17 @@ export class DrizzleCourseRepository implements CourseRepository {
       .get();
   }
 
-  async listSubmissions(materialId: string): Promise<Submission[]> {
-    return this.db
-      .select()
+  async listSubmissions(
+    materialId: string,
+  ): Promise<Array<Submission & { email: string | null }>> {
+    const rows = this.db
+      .select({ submission: submissions, email: accounts.email })
       .from(submissions)
+      .leftJoin(accounts, eq(submissions.accountId, accounts.id))
       .where(eq(submissions.materialId, materialId))
       .orderBy(asc(submissions.submittedAt))
       .all();
+    return rows.map((r) => ({ ...r.submission, email: r.email }));
   }
 
   async reviewSubmission(
@@ -1016,16 +1156,28 @@ export class DrizzleCourseRepository implements CourseRepository {
       .orderBy(asc(questions.createdAt))
       .all();
 
+    // Пошту тягнемо з акаунтів однією вибіркою — копії в питаннях не тримаємо.
+    const emails = new Map<string, string>();
+    if (viewer.isAdmin && rows.length) {
+      for (const a of this.db
+        .select()
+        .from(accounts)
+        .where(inArray(accounts.id, rows.map((r) => r.accountId)))
+        .all()) {
+        emails.set(a.id, a.email);
+      }
+    }
+
     return rows.map((q) => ({
       id: q.id,
       sessionId: q.sessionId,
       text: q.text,
       createdAt: q.createdAt.toISOString(),
       answeredAt: q.answeredAt,
-      isMine: q.deviceId === viewer.deviceId,
+      isMine: q.accountId === viewer.accountId,
       // Автора віддаємо лише адміну й лише якщо питання не анонімне.
       ...(viewer.isAdmin
-        ? { authorEmail: q.isAnonymous ? null : q.authorEmail }
+        ? { authorEmail: q.isAnonymous ? null : emails.get(q.accountId) ?? null }
         : {}),
     }));
   }
@@ -1035,10 +1187,9 @@ export class DrizzleCourseRepository implements CourseRepository {
       .insert(questions)
       .values({
         sessionId: input.sessionId,
-        deviceId: input.deviceId,
+        accountId: input.accountId,
         text: input.text,
         isAnonymous: input.isAnonymous,
-        authorEmail: input.isAnonymous ? null : (input.authorEmail ?? null),
       })
       .returning()
       .get();
@@ -1051,7 +1202,7 @@ export class DrizzleCourseRepository implements CourseRepository {
       .where(eq(questions.id, id))
       .get();
     if (!existing) return false;
-    if (!viewer.isAdmin && existing.deviceId !== viewer.deviceId) return false;
+    if (!viewer.isAdmin && existing.accountId !== viewer.accountId) return false;
     this.db.delete(questions).where(eq(questions.id, id)).run();
     return true;
   }
@@ -1070,13 +1221,13 @@ export class DrizzleCourseRepository implements CourseRepository {
     );
   }
 
-  async listEnrollments(deviceId: string): Promise<ResolvedStream[]> {
+  async listEnrollments(accountId: string): Promise<ResolvedStream[]> {
     const rows = this.db
       .select({ stream: streams, course: courses })
       .from(enrollments)
       .innerJoin(streams, eq(enrollments.streamId, streams.id))
       .innerJoin(courses, eq(streams.courseId, courses.id))
-      .where(eq(enrollments.deviceId, deviceId))
+      .where(eq(enrollments.accountId, accountId))
       .all();
     return rows.map((r) => resolveStream(r.course, r.stream));
   }
@@ -1096,13 +1247,13 @@ export class DrizzleCourseRepository implements CourseRepository {
     );
   }
 
-  async subscribe(deviceId: string, streamId: string): Promise<Enrollment> {
+  async subscribe(accountId: string, streamId: string): Promise<Enrollment> {
     const existing = this.db
       .select()
       .from(enrollments)
       .where(
         and(
-          eq(enrollments.deviceId, deviceId),
+          eq(enrollments.accountId, accountId),
           eq(enrollments.streamId, streamId),
         ),
       )
@@ -1110,30 +1261,30 @@ export class DrizzleCourseRepository implements CourseRepository {
     if (existing) return existing;
     return this.db
       .insert(enrollments)
-      .values({ deviceId, streamId, subscribedAt: new Date().toISOString() })
+      .values({ accountId, streamId, subscribedAt: new Date().toISOString() })
       .returning()
       .get();
   }
 
-  async unsubscribe(deviceId: string, streamId: string): Promise<void> {
+  async unsubscribe(accountId: string, streamId: string): Promise<void> {
     this.db
       .delete(enrollments)
       .where(
         and(
-          eq(enrollments.deviceId, deviceId),
+          eq(enrollments.accountId, accountId),
           eq(enrollments.streamId, streamId),
         ),
       )
       .run();
   }
 
-  async isEnrolled(deviceId: string, streamId: string): Promise<boolean> {
+  async isEnrolled(accountId: string, streamId: string): Promise<boolean> {
     const row = this.db
       .select({ id: enrollments.id })
       .from(enrollments)
       .where(
         and(
-          eq(enrollments.deviceId, deviceId),
+          eq(enrollments.accountId, accountId),
           eq(enrollments.streamId, streamId),
         ),
       )

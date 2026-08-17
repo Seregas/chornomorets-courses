@@ -14,7 +14,7 @@ final class CourseDetailViewModel {
             async let t = repo.materialTypes()
             state = .loaded(try await detail)
             types = (try? await t) ?? []
-        } catch { state = .failed(error.localizedDescription) }
+        } catch { state = .from(error) }
     }
 }
 

@@ -1,5 +1,5 @@
 import { zValidator } from "@hono/zod-validator";
-import { Hono } from "hono";
+import { Hono, type Context } from "hono";
 import { z } from "zod";
 import { getIdentity, isAdminEmail } from "./auth.js";
 import { repository as repo, toPaymentDTO } from "./repository.js";
@@ -17,17 +17,39 @@ const format = z.enum(["online", "offline", "hybrid"]);
 const paymentStatus = z.enum(["unpaid", "paid", "free"]);
 const streamStatus = z.enum(["upcoming", "ongoing", "finished"]);
 const videoProvider = z.enum(["drive", "youtube", "other"]);
-const deviceQuery = z.object({ deviceId: z.string().min(1) });
+/**
+ * Особисті дані живуть на акаунті, а не на пристрої: зміна телефона не має
+ * стирати людині оплати, підписки й домашки. Тому все особисте вимагає входу.
+ * Повертає id акаунта (Google `sub`) або null, якщо не увійшли.
+ */
+async function accountOf(c: Context): Promise<string | null> {
+  const identity = await getIdentity(c);
+  if (!identity) return null;
+  return repo.touchAccount({
+    id: identity.sub,
+    email: identity.email,
+    name: identity.name,
+  });
+}
+
+const needSignIn = { error: "потрібен вхід через Google" } as const;
 
 // ───────────────────────── Публічне читання ─────────────────────────
 
 app.get("/health", (c) => c.json({ ok: true }));
 
-/** Хто я: deviceId (анонім) + чи адмін (за Google-токеном). */
-app.get("/me", zValidator("query", z.object({ deviceId: z.string().optional() })), async (c) => {
+/** Хто я: акаунт (якщо увійшов) + чи адмін. */
+app.get("/me", async (c) => {
   const identity = await getIdentity(c);
+  if (identity) {
+    await repo.touchAccount({
+      id: identity.sub,
+      email: identity.email,
+      name: identity.name,
+    });
+  }
   return c.json({
-    deviceId: c.req.valid("query").deviceId ?? null,
+    accountId: identity?.sub ?? null,
     email: identity?.email ?? null,
     isAdmin: isAdminEmail(identity?.email),
   });
@@ -40,18 +62,21 @@ app.get("/courses/:id", async (c) => {
   return detail ? c.json(detail) : c.json({ error: "not found" }, 404);
 });
 
+/** Потік можна дивитися й без входу — тоді просто без «своїх» позначок. */
 app.get("/streams/:id", async (c) => {
-  const detail = await repo.getStreamDetail(c.req.param("id"), c.req.query("deviceId"));
+  const detail = await repo.getStreamDetail(c.req.param("id"), await accountOf(c));
   return detail ? c.json(detail) : c.json({ error: "not found" }, 404);
 });
 
-app.get("/schedule", zValidator("query", deviceQuery), async (c) =>
-  c.json(await repo.getSchedule(c.req.valid("query").deviceId)),
-);
+app.get("/schedule", async (c) => {
+  const accountId = await accountOf(c);
+  return accountId ? c.json(await repo.getSchedule(accountId)) : c.json(needSignIn, 401);
+});
 
-app.get("/home", zValidator("query", deviceQuery), async (c) =>
-  c.json(await repo.getHomeDigest(c.req.valid("query").deviceId)),
-);
+app.get("/home", async (c) => {
+  const accountId = await accountOf(c);
+  return accountId ? c.json(await repo.getHomeDigest(accountId)) : c.json(needSignIn, 401);
+});
 
 app.get("/material-types", async (c) => c.json(await repo.listMaterialTypes()));
 
@@ -61,8 +86,9 @@ app.get("/streams/:id/announcements", async (c) =>
 );
 
 /**
- * Логи з телефонів. Відкрито на запис навмисно: воно має працювати ще до
- * входу, коли ламається саме вхід. Читання — лише адміну.
+ * Логи з телефонів. Єдине місце, де лишається deviceId: логи пишуться ще до
+ * входу — і саме тоді, коли ламається вхід. Відкрито на запис навмисно;
+ * читання — лише адміну.
  */
 const logInput = z.object({
   deviceId: z.string().min(1).max(200),
@@ -78,52 +104,52 @@ app.post("/logs", zValidator("json", logInput), async (c) => {
 // ──────────────────── Заявки на потік ────────────────────
 // Заміна Google Forms: студент лишає контакт, викладач веде статус.
 
-app.get("/streams/:id/application", zValidator("query", deviceQuery), async (c) =>
-  c.json(
-    await repo.getApplication(c.req.param("id"), c.req.valid("query").deviceId),
-  ),
-);
+app.get("/streams/:id/application", async (c) => {
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  return c.json(await repo.getApplication(c.req.param("id"), accountId));
+});
 
 const applyInput = z.object({
-  deviceId: z.string().min(1),
   name: z.string().min(1).max(200),
   contact: z.string().min(3).max(200),
   comment: z.string().max(1000).nullish(),
 });
 app.post("/streams/:id/application", zValidator("json", applyInput), async (c) => {
-  const body = c.req.valid("json");
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
   return c.json(
-    await repo.applyToStream({ streamId: c.req.param("id"), ...body }),
+    await repo.applyToStream({
+      streamId: c.req.param("id"),
+      accountId,
+      ...c.req.valid("json"),
+    }),
     201,
   );
 });
 
 // ──────────────────── Оплата заняття ────────────────────
-// Стан оплати — на пару «заняття + людина». Студент заявляє й лишає
-// квитанцію, адмін підтверджує. Файли поки не приймаємо: сховища немає,
-// тож квитанція — це посилання.
+// Стан оплати — на пару «заняття + людина», де людина це акаунт, а не
+// пристрій. Студент заявляє й лишає квитанцію, адмін підтверджує.
 
-app.get("/sessions/:id/payment", zValidator("query", deviceQuery), async (c) =>
-  c.json(
-    toPaymentDTO(
-      await repo.getPayment(c.req.param("id"), c.req.valid("query").deviceId),
-    ),
-  ),
-);
+app.get("/sessions/:id/payment", async (c) => {
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  return c.json(toPaymentDTO(await repo.getPayment(c.req.param("id"), accountId)));
+});
 
 const declareInput = z.object({
-  deviceId: z.string().min(1),
   amount: z.number().int().positive().nullish(),
   receiptURL: z.string().url().nullish(),
   note: z.string().max(500).nullish(),
 });
 app.post("/sessions/:id/payment", zValidator("json", declareInput), async (c) => {
-  const body = c.req.valid("json");
-  const identity = await getIdentity(c);
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
   const payment = await repo.declarePayment({
     sessionId: c.req.param("id"),
-    ...body,
-    authorEmail: identity?.email ?? null,
+    accountId,
+    ...c.req.valid("json"),
   });
   return c.json(toPaymentDTO(payment), 201);
 });
@@ -137,18 +163,18 @@ app.post("/payments/:id/receipt", async (c) => {
   if (!telegramConfigured) {
     return c.json({ error: "приймання скріншотів не налаштоване" }, 503);
   }
+  const identity = await getIdentity(c);
+  if (!identity) return c.json(needSignIn, 401);
+
   const payment = await repo.getPaymentById(c.req.param("id"));
   if (!payment) return c.json({ error: "not found" }, 404);
+  // Заявку може прикріпити лише той, хто її подав.
+  if (payment.accountId !== identity.sub) return c.json({ error: "чужа заявка" }, 403);
 
   const form = await c.req.formData();
   const image = form.get("image");
   if (!(image instanceof Blob)) return c.json({ error: "немає файлу" }, 400);
   if (image.size > 10 * 1024 * 1024) return c.json({ error: "завеликий файл" }, 413);
-
-  // Заявку може прикріпити лише той, хто її подав.
-  if (form.get("deviceId") !== payment.deviceId) {
-    return c.json({ error: "чужа заявка" }, 403);
-  }
 
   const parsedRaw = form.get("parsed");
   const parsed = typeof parsedRaw === "string" ? safeJSON(parsedRaw) : undefined;
@@ -157,7 +183,7 @@ app.post("/payments/:id/receipt", async (c) => {
   const caption = [
     "Квитанція за заняття",
     session ? `${session.title} (${session.startAt.slice(0, 10)})` : payment.sessionId,
-    payment.authorEmail ?? payment.deviceId,
+    identity.email,
     payment.amount ? `${payment.amount} грн` : null,
   ].filter(Boolean).join(" · ");
 
@@ -176,7 +202,7 @@ app.get("/payments/:id/receipt", async (c) => {
   if (!payment?.receiptFileId) return c.json({ error: "not found" }, 404);
 
   const identity = await getIdentity(c);
-  const isOwner = c.req.query("deviceId") === payment.deviceId;
+  const isOwner = identity?.sub === payment.accountId;
   if (!isOwner && !isAdminEmail(identity?.email)) {
     return c.json({ error: "no access" }, 403);
   }
@@ -197,45 +223,44 @@ app.get("/payments/:id/receipt", async (c) => {
 // ──────────────────── Пульс після заняття ────────────────────
 // Оцінка 1–5 і необовʼязковий коментар; зведення бачить лише викладач.
 
-app.get("/sessions/:id/pulse", zValidator("query", deviceQuery), async (c) =>
-  c.json(await repo.getPulse(c.req.param("id"), c.req.valid("query").deviceId)),
-);
+app.get("/sessions/:id/pulse", async (c) => {
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  return c.json(await repo.getPulse(c.req.param("id"), accountId));
+});
 
 const pulseInput = z.object({
-  deviceId: z.string().min(1),
   rating: z.number().int().min(1).max(5),
   comment: z.string().max(1000).nullish(),
 });
 app.post("/sessions/:id/pulse", zValidator("json", pulseInput), async (c) => {
-  const { deviceId, rating, comment } = c.req.valid("json");
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  const { rating, comment } = c.req.valid("json");
   return c.json(
-    await repo.ratePulse({ sessionId: c.req.param("id"), deviceId, rating, comment }),
+    await repo.ratePulse({ sessionId: c.req.param("id"), accountId, rating, comment }),
     201,
   );
 });
 
 // ──────────────────── Здача домашки ────────────────────
-// Своя здача — за deviceId; чужих студент не бачить узагалі.
+// Своя здача — за акаунтом; чужих студент не бачить узагалі.
 
-app.get("/materials/:id/submission", zValidator("query", deviceQuery), async (c) =>
-  c.json(
-    await repo.getSubmission(c.req.param("id"), c.req.valid("query").deviceId),
-  ),
-);
-
-const submitInput = z.object({
-  deviceId: z.string().min(1),
-  text: z.string().min(1).max(5000),
+app.get("/materials/:id/submission", async (c) => {
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  return c.json(await repo.getSubmission(c.req.param("id"), accountId));
 });
+
+const submitInput = z.object({ text: z.string().min(1).max(5000) });
 app.post("/materials/:id/submission", zValidator("json", submitInput), async (c) => {
-  const { deviceId, text } = c.req.valid("json");
-  const identity = await getIdentity(c);
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
   return c.json(
     await repo.submitHomework({
       materialId: c.req.param("id"),
-      deviceId,
-      text,
-      authorEmail: identity?.email ?? null,
+      accountId,
+      text: c.req.valid("json").text,
     }),
     201,
   );
@@ -243,63 +268,66 @@ app.post("/materials/:id/submission", zValidator("json", submitInput), async (c)
 
 // ──────────────────── Питання до заняття ────────────────────
 // Читання відкрите (усі бачать питання свого заняття, без імен), створення —
-// за deviceId. Автора віддаємо лише адміну й лише якщо питання не анонімне.
+// за акаунтом. Автора віддаємо лише адміну й лише якщо питання не анонімне.
 
-app.get("/sessions/:id/questions", zValidator("query", deviceQuery), async (c) => {
+app.get("/sessions/:id/questions", async (c) => {
   const identity = await getIdentity(c);
   return c.json(
     await repo.listQuestions(c.req.param("id"), {
-      deviceId: c.req.valid("query").deviceId,
+      accountId: identity?.sub ?? null,
       isAdmin: isAdminEmail(identity?.email),
     }),
   );
 });
 
 const askInput = z.object({
-  deviceId: z.string().min(1),
   text: z.string().min(3).max(1000),
   isAnonymous: z.boolean().optional(),
 });
 app.post("/sessions/:id/questions", zValidator("json", askInput), async (c) => {
-  const { deviceId, text, isAnonymous } = c.req.valid("json");
-  const identity = await getIdentity(c);
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  const { text, isAnonymous } = c.req.valid("json");
   return c.json(
     await repo.askQuestion({
       sessionId: c.req.param("id"),
-      deviceId,
+      accountId,
       text,
       isAnonymous: isAnonymous ?? false,
-      authorEmail: identity?.email ?? null,
     }),
     201,
   );
 });
 
-app.delete("/questions/:id", zValidator("query", deviceQuery), async (c) => {
+app.delete("/questions/:id", async (c) => {
   const identity = await getIdentity(c);
+  if (!identity) return c.json(needSignIn, 401);
   const ok = await repo.deleteQuestion(c.req.param("id"), {
-    deviceId: c.req.valid("query").deviceId,
-    isAdmin: isAdminEmail(identity?.email),
+    accountId: identity.sub,
+    isAdmin: isAdminEmail(identity.email),
   });
   return ok ? c.body(null, 204) : c.json({ error: "not found" }, 404);
 });
 
-// ───────────────────────── Підписки (deviceId) ─────────────────────────
+// ───────────────────────── Підписки ─────────────────────────
 
-app.get("/subscriptions", zValidator("query", deviceQuery), async (c) =>
-  c.json(await repo.listEnrollments(c.req.valid("query").deviceId)),
-);
+app.get("/subscriptions", async (c) => {
+  const accountId = await accountOf(c);
+  return accountId ? c.json(await repo.listEnrollments(accountId)) : c.json(needSignIn, 401);
+});
 
-const subBody = z.object({ deviceId: z.string().min(1), streamId: z.string().min(1) });
+const subBody = z.object({ streamId: z.string().min(1) });
 
 app.post("/subscriptions", zValidator("json", subBody), async (c) => {
-  const { deviceId, streamId } = c.req.valid("json");
-  return c.json(await repo.subscribe(deviceId, streamId), 201);
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  return c.json(await repo.subscribe(accountId, c.req.valid("json").streamId), 201);
 });
 
 app.delete("/subscriptions", zValidator("json", subBody), async (c) => {
-  const { deviceId, streamId } = c.req.valid("json");
-  await repo.unsubscribe(deviceId, streamId);
+  const accountId = await accountOf(c);
+  if (!accountId) return c.json(needSignIn, 401);
+  await repo.unsubscribe(accountId, c.req.valid("json").streamId);
   return c.body(null, 204);
 });
 
@@ -424,7 +452,7 @@ admin.post(
 // payments — заявки на оплату по заняттю
 admin.get("/sessions/:id/payments", async (c) => {
   const list = await repo.listPayments(c.req.param("id"));
-  return c.json(list.map((p) => toPaymentDTO(p, true)));
+  return c.json(list.map((p) => toPaymentDTO(p, true, p.email)));
 });
 admin.post(
   "/payments/:id/status",
@@ -436,6 +464,31 @@ admin.post(
     const { status, note } = c.req.valid("json");
     const r = await repo.setPaymentStatus(c.req.param("id"), status, note);
     return r ? c.json(toPaymentDTO(r, true)) : c.json({ error: "not found" }, 404);
+  },
+);
+
+/**
+ * Відмітити оплату за людину — по пошті, а не по акаунту.
+ *
+ * Викладач знає пошту студента (нею ж шарить відео) задовго до того, як той
+ * поставить застосунок. Якщо акаунта ще немає — створюємо заочний; при
+ * першому вході Google все переїде на справжній номер акаунта.
+ */
+admin.post(
+  "/sessions/:id/payments/mark",
+  zValidator("json", z.object({
+    email: z.string().email(),
+    status: z.enum(["declared", "confirmed", "free", "rejected"]).default("confirmed"),
+    amount: z.number().int().positive().nullish(),
+    note: z.string().max(500).nullish(),
+  })),
+  async (c) => {
+    const body = c.req.valid("json");
+    const payment = await repo.markPaymentByEmail({
+      sessionId: c.req.param("id"),
+      ...body,
+    });
+    return c.json(toPaymentDTO(payment, true, body.email), 201);
   },
 );
 

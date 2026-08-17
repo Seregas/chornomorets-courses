@@ -190,7 +190,7 @@ struct SessionPaymentView: View {
             ForEach(vm.all) { payment in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
-                        Text(payment.authorEmail ?? payment.deviceId ?? "—")
+                        Text(payment.authorEmail ?? payment.accountId ?? "—")
                             .font(.subheadline.weight(.medium)).lineLimit(1)
                         Spacer()
                         Text(payment.amount.map { "\($0) ₴" } ?? "—")

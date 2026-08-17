@@ -2,12 +2,14 @@ import { OAuth2Client } from "google-auth-library";
 import type { Context } from "hono";
 
 /**
- * Ідентичність користувача за Google-входом. deviceId (анонімний) — окремо,
- * це не тут: Google-ідентичність потрібна лише для доступу до відео й адмін-режиму.
+ * Ідентичність за Google-входом — на ній тримається все особисте: підписки,
+ * оплати, домашки. Ключ — `sub`, а не email: адресу можна змінити, номер
+ * акаунта — ні.
  */
 export interface Identity {
   email: string;
   sub: string; // Google subject id
+  name?: string | null;
 }
 
 const ADMIN_EMAILS = new Set(
@@ -40,16 +42,20 @@ if (!googleClient && process.env.ALLOW_DEV_AUTH !== "1") {
 }
 
 /**
- * Дістає ідентичність із заголовка Authorization: Bearer <token>.
+ * Дістає ідентичність із заголовка Authorization: Bearer <token>
+ * (або з ?token= — див. нижче).
  *
  * Прод-режим (заданий GOOGLE_CLIENT_ID): token — це Google ID-token, перевіряємо підпис.
  * Dev-режим (ALLOW_DEV_AUTH=1 і без GOOGLE_CLIENT_ID): token трактуємо як email
  *   напряму — щоб curl і прототип працювали без реального Google-конфігу.
  */
 export async function getIdentity(c: Context): Promise<Identity | null> {
+  // Заголовок — основний шлях. Query-параметр потрібен там, де URL віддається
+  // системному завантажувачу (AsyncImage, AVPlayer): він заголовків не ставить.
   const header = c.req.header("authorization");
-  if (!header?.startsWith("Bearer ")) return null;
-  const token = header.slice("Bearer ".length).trim();
+  const token = header?.startsWith("Bearer ")
+    ? header.slice("Bearer ".length).trim()
+    : (c.req.query("token") ?? "").trim();
   if (!token) return null;
 
   if (googleClient) {
@@ -60,7 +66,11 @@ export async function getIdentity(c: Context): Promise<Identity | null> {
       });
       const payload = ticket.getPayload();
       if (!payload?.email || !payload.sub) return null;
-      return { email: payload.email.toLowerCase(), sub: payload.sub };
+      return {
+        email: payload.email.toLowerCase(),
+        sub: payload.sub,
+        name: payload.name ?? null,
+      };
     } catch {
       return null;
     }

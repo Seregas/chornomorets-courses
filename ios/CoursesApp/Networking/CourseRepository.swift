@@ -84,45 +84,47 @@ protocol CourseRepository {
     func deleteMaterialType(id: String) async throws
 }
 
-/// Реалізація поверх REST API. Знає deviceId; ховає формат запитів.
+/// Реалізація поверх REST API. Ховає формат запитів.
+///
+/// Особисті дані сервер бере з акаунта у Google-токені, який ставить APIClient,
+/// — тут їх передавати не треба й не можна. Раніше цю роль грав deviceId, і
+/// зміна телефона стирала людині підписки, оплати й домашки.
 final class RemoteCourseRepository: CourseRepository {
     private let api: APIClient
-    private let deviceId: String
 
-    init(api: APIClient, deviceId: String = DeviceID.current) {
+    init(api: APIClient) {
         self.api = api
-        self.deviceId = deviceId
     }
 
-    private struct SubBody: Encodable { let deviceId: String; let streamId: String }
+    private struct SubBody: Encodable { let streamId: String }
 
-    func me() async throws -> Me { try await api.get("me?deviceId=\(deviceId)", cached: false) }
+    func me() async throws -> Me { try await api.get("me", cached: false) }
     func courses() async throws -> [CourseCard] { try await api.get("courses") }
     func course(id: String) async throws -> CourseDetail { try await api.get("courses/\(id)") }
-    func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)?deviceId=\(deviceId)") }
-    func schedule() async throws -> [ScheduleItem] { try await api.get("schedule?deviceId=\(deviceId)") }
-    func home() async throws -> HomeDigest { try await api.get("home?deviceId=\(deviceId)") }
-    func subscriptions() async throws -> [ResolvedStream] { try await api.get("subscriptions?deviceId=\(deviceId)") }
+    func stream(id: String) async throws -> StreamDetail { try await api.get("streams/\(id)") }
+    func schedule() async throws -> [ScheduleItem] { try await api.get("schedule") }
+    func home() async throws -> HomeDigest { try await api.get("home") }
+    func subscriptions() async throws -> [ResolvedStream] { try await api.get("subscriptions") }
     func materialTypes() async throws -> [MaterialType] { try await api.get("material-types") }
 
     func subscribe(streamId: String) async throws {
-        try await api.mutate("POST", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+        try await api.mutate("POST", "subscriptions", body: SubBody(streamId: streamId))
     }
     func unsubscribe(streamId: String) async throws {
-        try await api.mutate("DELETE", "subscriptions", body: SubBody(deviceId: deviceId, streamId: streamId))
+        try await api.mutate("DELETE", "subscriptions", body: SubBody(streamId: streamId))
     }
 
     private struct ApplyBody: Encodable {
-        let deviceId: String; let name: String; let contact: String; let comment: String?
+        let name: String; let contact: String; let comment: String?
     }
     private struct StatusBody: Encodable { let status: String }
 
     func application(streamId: String) async throws -> Application? {
-        try await api.get("streams/\(streamId)/application?deviceId=\(deviceId)")
+        try await api.get("streams/\(streamId)/application")
     }
     func apply(streamId: String, name: String, contact: String, comment: String?) async throws {
         try await api.mutate("POST", "streams/\(streamId)/application",
-                             body: ApplyBody(deviceId: deviceId, name: name, contact: contact, comment: comment))
+                             body: ApplyBody(name: name, contact: contact, comment: comment))
     }
     func applications(streamId: String) async throws -> [Application] {
         try await api.get("admin/streams/\(streamId)/applications")
@@ -133,28 +135,31 @@ final class RemoteCourseRepository: CourseRepository {
     }
 
     private struct DeclareBody: Encodable {
-        let deviceId: String; let amount: Int?; let receiptURL: String?; let note: String?
+        let amount: Int?; let receiptURL: String?; let note: String?
     }
     private struct PaymentStatusBody: Encodable { let status: String }
 
     func payment(sessionId: String) async throws -> Payment? {
-        try await api.get("sessions/\(sessionId)/payment?deviceId=\(deviceId)", cached: false)
+        try await api.get("sessions/\(sessionId)/payment", cached: false)
     }
     func declarePayment(sessionId: String, amount: Int?, receiptURL: String?, note: String?) async throws {
         try await api.mutate("POST", "sessions/\(sessionId)/payment",
-                             body: DeclareBody(deviceId: deviceId, amount: amount,
-                                               receiptURL: receiptURL, note: note))
+                             body: DeclareBody(amount: amount, receiptURL: receiptURL, note: note))
     }
     func uploadReceipt(paymentId: String, image: Data, facts: ReceiptFacts) async throws -> Payment {
         let parsed = (try? JSONEncoder().encode(facts)).map { String(decoding: $0, as: UTF8.self) }
         return try await api.upload(
             "payments/\(paymentId)/receipt",
             image: image,
-            fields: ["deviceId": deviceId, "parsed": parsed ?? ""])
+            fields: ["parsed": parsed ?? ""])
     }
 
+    /// Токен у query, а не в заголовку: URL іде в AsyncImage, а той заголовків
+    /// не ставить. Сервер приймає обидва шляхи.
     func receiptURL(paymentId: String) -> URL? {
-        URL(string: "payments/\(paymentId)/receipt?deviceId=\(deviceId)", relativeTo: api.baseURL)
+        guard let token = AuthTokenStore.bearer else { return nil }
+        let escaped = token.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? token
+        return URL(string: "payments/\(paymentId)/receipt?token=\(escaped)", relativeTo: api.baseURL)
     }
 
     func payments(sessionId: String) async throws -> [Payment] {
@@ -165,29 +170,29 @@ final class RemoteCourseRepository: CourseRepository {
                              body: PaymentStatusBody(status: status.rawValue))
     }
 
-    private struct PulseBody: Encodable { let deviceId: String; let rating: Int; let comment: String? }
+    private struct PulseBody: Encodable { let rating: Int; let comment: String? }
 
     func pulse(sessionId: String) async throws -> Pulse? {
-        try await api.get("sessions/\(sessionId)/pulse?deviceId=\(deviceId)")
+        try await api.get("sessions/\(sessionId)/pulse")
     }
     func ratePulse(sessionId: String, rating: Int, comment: String?) async throws {
         try await api.mutate("POST", "sessions/\(sessionId)/pulse",
-                             body: PulseBody(deviceId: deviceId, rating: rating, comment: comment))
+                             body: PulseBody(rating: rating, comment: comment))
     }
     func pulseSummary(sessionId: String) async throws -> PulseSummary {
         try await api.get("admin/sessions/\(sessionId)/pulses")
     }
 
-    private struct SubmitBody: Encodable { let deviceId: String; let text: String }
+    private struct SubmitBody: Encodable { let text: String }
     private struct FeedbackBody: Encodable { let feedback: String }
 
     /// Бекенд віддає `null`, якщо здачі ще немає — тому Optional.
     func submission(materialId: String) async throws -> Submission? {
-        try await api.get("materials/\(materialId)/submission?deviceId=\(deviceId)")
+        try await api.get("materials/\(materialId)/submission")
     }
     func submitHomework(materialId: String, text: String) async throws {
         try await api.mutate("POST", "materials/\(materialId)/submission",
-                             body: SubmitBody(deviceId: deviceId, text: text))
+                             body: SubmitBody(text: text))
     }
     func submissions(materialId: String) async throws -> [Submission] {
         try await api.get("admin/materials/\(materialId)/submissions")
@@ -210,18 +215,18 @@ final class RemoteCourseRepository: CourseRepository {
         try await api.mutate("DELETE", "admin/announcements/\(id)")
     }
 
-    private struct AskBody: Encodable { let deviceId: String; let text: String; let isAnonymous: Bool }
+    private struct AskBody: Encodable { let text: String; let isAnonymous: Bool }
     private struct AnsweredBody: Encodable { let answered: Bool }
 
     func questions(sessionId: String) async throws -> [Question] {
-        try await api.get("sessions/\(sessionId)/questions?deviceId=\(deviceId)")
+        try await api.get("sessions/\(sessionId)/questions")
     }
     func ask(sessionId: String, text: String, isAnonymous: Bool) async throws {
         try await api.mutate("POST", "sessions/\(sessionId)/questions",
-                             body: AskBody(deviceId: deviceId, text: text, isAnonymous: isAnonymous))
+                             body: AskBody(text: text, isAnonymous: isAnonymous))
     }
     func deleteQuestion(id: String) async throws {
-        try await api.mutate("DELETE", "questions/\(id)?deviceId=\(deviceId)")
+        try await api.mutate("DELETE", "questions/\(id)")
     }
     func markQuestionAnswered(id: String, answered: Bool) async throws {
         try await api.mutate("POST", "admin/questions/\(id)/answered", body: AnsweredBody(answered: answered))

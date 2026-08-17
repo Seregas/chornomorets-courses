@@ -117,6 +117,15 @@ enum LoadState<Value> {
     case loading
     case loaded(Value)
     case failed(String)
+    /// Не помилка, а стан: особисті дані живуть на акаунті, тож без входу їх
+    /// просто немає. Показувати тут «не вдалося завантажити» — брехня.
+    case needsSignIn
+
+    /// 401 від сервера — це «увійдіть», а не збій мережі.
+    static func from(_ error: Error) -> LoadState<Value> {
+        if let api = error as? APIError, api.status == 401 { return .needsSignIn }
+        return .failed(error.localizedDescription)
+    }
 }
 
 struct LoadStateView<Value, Content: View>: View {
@@ -137,6 +146,56 @@ struct LoadStateView<Value, Content: View>: View {
                 Text(msg)
             } actions: {
                 Button("Спробувати ще", action: retry)
+            }
+        case .needsSignIn:
+            SignInPrompt(retry: retry)
+        }
+    }
+}
+
+
+/// Запрошення увійти. Показується там, де без акаунта нема чого показувати:
+/// підписки, розклад, оплати й домашки належать людині, а не пристрою.
+struct SignInPrompt: View {
+    let retry: () -> Void
+
+    @Environment(AuthStore.self) private var auth
+    @State private var signingIn = false
+    @State private var error: String?
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("Потрібен вхід", systemImage: "person.crop.circle.badge.questionmark")
+        } description: {
+            Text("Ваші підписки, заняття й оплати привʼязані до Google-акаунта — "
+                 + "так вони переїжджають разом із вами на новий телефон.")
+        } actions: {
+            if signingIn {
+                ProgressView()
+            } else if GoogleAuthConfig.isConfigured {
+                Button("Увійти через Google", action: signIn)
+                    .buttonStyle(.borderedProminent).tint(.sea)
+            } else {
+                Text("Вхід через Google не налаштований у цій збірці.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let error {
+                Text(error).font(.caption).foregroundStyle(.red)
+            }
+        }
+    }
+
+    private func signIn() {
+        signingIn = true
+        Task {
+            defer { signingIn = false }
+            do {
+                let session = try await GoogleSignInService().signIn()
+                auth.connectGoogle(email: session.email, idToken: session.idToken,
+                                   accessToken: session.accessToken)
+                retry()
+            } catch {
+                self.error = error.localizedDescription
             }
         }
     }

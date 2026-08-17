@@ -92,8 +92,9 @@ export const payments = sqliteTable(
     sessionId: text("session_id")
       .notNull()
       .references(() => sessions.id, { onDelete: "cascade" }),
-    deviceId: text("device_id").notNull(),
-    authorEmail: text("author_email"),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
     status: text("status", {
       enum: ["declared", "confirmed", "free", "rejected"],
     })
@@ -118,7 +119,7 @@ export const payments = sqliteTable(
     declaredAt: text("declared_at").notNull(),
     reviewedAt: text("reviewed_at"),
   },
-  (t) => [uniqueIndex("payment_session_device").on(t.sessionId, t.deviceId)],
+  (t) => [uniqueIndex("payment_session_account").on(t.sessionId, t.accountId)],
 );
 
 /**
@@ -163,34 +164,54 @@ export const materials = sqliteTable("materials", {
   createdAt: createdAt(),
 });
 
-/** Підписка — на ПОТІК, прив'язана до анонімного deviceId. */
+/**
+ * Акаунт — Google-користувач. Ключ — `sub` із токена: номер акаунта, який
+ * Google видає раз і назавжди. Email тримаємо поруч і оновлюємо при кожному
+ * вході: він потрібен, щоб шарити відео, зіставляти з випискою й показувати
+ * в адмінці, але ключем бути не може — адресу можна змінити.
+ *
+ * Раніше все особисте трималося на deviceId. Це означало, що зміна телефона
+ * стирала людині підписки, домашки й оплати.
+ */
+export const accounts = sqliteTable("accounts", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull(),
+  name: text("name"),
+  createdAt: createdAt(),
+  lastSeenAt: text("last_seen_at"),
+});
+
+/** Підписка — на ПОТІК, прив'язана до акаунта. */
 export const enrollments = sqliteTable(
   "enrollments",
   {
     id: id(),
-    deviceId: text("device_id").notNull(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
     streamId: text("stream_id")
       .notNull()
       .references(() => streams.id, { onDelete: "cascade" }),
     subscribedAt: text("subscribed_at").notNull(),
   },
-  (t) => [uniqueIndex("enroll_device_stream").on(t.deviceId, t.streamId)],
+  (t) => [uniqueIndex("enroll_account_stream").on(t.accountId, t.streamId)],
 );
 
 /**
  * Питання до майбутнього заняття: студент кидає заздалегідь, викладач розбирає
  * на занятті. У телеграм-групі такі питання тонуть, тут — ні.
  *
- * `authorEmail` заповнюється лише якщо студент увійшов і не поставив «анонімно»;
- * бачить його тільки адмін. Для решти всі питання однаково безіменні.
+ * Автора (пошту з акаунта) віддаємо лише адміну й лише якщо питання не
+ * анонімне. Для решти всі питання однаково безіменні.
  */
 export const questions = sqliteTable("questions", {
   id: id(),
   sessionId: text("session_id")
     .notNull()
     .references(() => sessions.id, { onDelete: "cascade" }),
-  deviceId: text("device_id").notNull(),
-  authorEmail: text("author_email"),
+  accountId: text("account_id")
+    .notNull()
+    .references(() => accounts.id, { onDelete: "cascade" }),
   text: text("text").notNull(),
   isAnonymous: integer("is_anonymous", { mode: "boolean" })
     .notNull()
@@ -214,7 +235,7 @@ export const announcements = sqliteTable("announcements", {
 });
 
 /**
- * Здана домашка. Одна на пару «матеріал + пристрій»: повторна здача
+ * Здана домашка. Одна на пару «матеріал + акаунт»: повторна здача
  * перезаписує попередню, бо домашку доробляють, а не подають удруге.
  *
  * Поки лише текст. Фото потребують сховища файлів — це окреме рішення.
@@ -226,21 +247,22 @@ export const submissions = sqliteTable(
     materialId: text("material_id")
       .notNull()
       .references(() => materials.id, { onDelete: "cascade" }),
-    deviceId: text("device_id").notNull(),
-    authorEmail: text("author_email"),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
     text: text("text").notNull(),
     submittedAt: text("submitted_at").notNull(),
     /** Відповідь викладача. */
     feedback: text("feedback"),
     reviewedAt: text("reviewed_at"),
   },
-  (t) => [uniqueIndex("submission_material_device").on(t.materialId, t.deviceId)],
+  (t) => [uniqueIndex("submission_material_account").on(t.materialId, t.accountId)],
 );
 
 /**
  * «Як зайшло заняття» — оцінка 1–5 і необовʼязковий коментар. Викладачу це
  * зворотний звʼязок, студенту — привід на хвилину зупинитися й відрефлексувати.
- * Одна на пару «заняття + пристрій»: думку міняють, а не подають двічі.
+ * Одна на пару «заняття + акаунт»: думку міняють, а не подають двічі.
  */
 export const pulses = sqliteTable(
   "pulses",
@@ -249,19 +271,21 @@ export const pulses = sqliteTable(
     sessionId: text("session_id")
       .notNull()
       .references(() => sessions.id, { onDelete: "cascade" }),
-    deviceId: text("device_id").notNull(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
     rating: integer("rating").notNull(),
     comment: text("comment"),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("pulse_session_device").on(t.sessionId, t.deviceId)],
+  (t) => [uniqueIndex("pulse_session_account").on(t.sessionId, t.accountId)],
 );
 
 /**
  * Заявка на потік — заміна Google Forms. Студент лишає контакт, викладач
  * веде статус. Оплату НЕ обробляємо: у застосунку це поки просто стан заявки.
  *
- * Одна на пару «потік + пристрій»: передумати можна, подавати двічі — ні.
+ * Одна на пару «потік + акаунт»: передумати можна, подавати двічі — ні.
  */
 export const applications = sqliteTable(
   "applications",
@@ -270,7 +294,9 @@ export const applications = sqliteTable(
     streamId: text("stream_id")
       .notNull()
       .references(() => streams.id, { onDelete: "cascade" }),
-    deviceId: text("device_id").notNull(),
+    accountId: text("account_id")
+      .notNull()
+      .references(() => accounts.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     /** Як звʼязатися: email або телеграм — як зручніше людині. */
     contact: text("contact").notNull(),
@@ -282,7 +308,7 @@ export const applications = sqliteTable(
       .default("new"),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex("application_stream_device").on(t.streamId, t.deviceId)],
+  (t) => [uniqueIndex("application_stream_account").on(t.streamId, t.accountId)],
 );
 
 /**
@@ -299,6 +325,7 @@ export const clientLogs = sqliteTable("client_logs", {
   createdAt: createdAt(),
 });
 
+export type Account = typeof accounts.$inferSelect;
 export type Course = typeof courses.$inferSelect;
 export type Stream = typeof streams.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
@@ -314,6 +341,7 @@ export type Payment = typeof payments.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 
 export const schema = {
+  accounts,
   courses,
   streams,
   sessions,

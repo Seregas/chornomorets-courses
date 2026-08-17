@@ -114,7 +114,7 @@ struct HomeworkView: View {
                     }
                 } label: {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(s.authorEmail ?? s.deviceId)
+                        Text(s.authorEmail ?? s.accountId)
                             .font(.caption).foregroundStyle(.secondary)
                         Text(s.text).font(.subheadline).lineLimit(2)
                         if s.feedback != nil {

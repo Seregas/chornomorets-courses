@@ -1,4 +1,5 @@
 import type {
+  Account,
   Announcement,
   Application,
   ClientLog,
@@ -97,7 +98,7 @@ export interface PaymentDTO {
   /** Що вдалося прочитати зі скріншота (сума, дата, призначення). */
   receiptParsed: string | null;
   /** Лише адміну: хто саме заявив. */
-  deviceId?: string;
+  accountId?: string;
   authorEmail?: string | null;
 }
 
@@ -151,8 +152,9 @@ export interface QuestionDTO {
   text: string;
   createdAt: string;
   answeredAt: string | null;
-  /** Чи це питання цього пристрою — щоб показати «ваше» й дозволити видалити. */
+  /** Чи це питання того, хто питає — щоб показати «ваше» й дозволити видалити. */
   isMine: boolean;
+  /** Лише адміну: автор, якщо питання не анонімне. */
   authorEmail?: string | null;
 }
 
@@ -205,4 +207,5 @@ export type {
   Application,
   ClientLog,
   Payment,
+  Account,
 };

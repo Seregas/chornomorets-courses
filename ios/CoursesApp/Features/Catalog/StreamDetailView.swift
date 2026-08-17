@@ -9,29 +9,35 @@ final class StreamDetailViewModel {
     var types: [MaterialType] = []
     var announcements: [Announcement] = []
     var application: Application?
+    /// Чому не вдалося підписатися. Найчастіше — бо не увійшли.
+    var subscribeError: String?
 
     var current: StreamDetail? { if case .loaded(let s) = state { return s } else { return nil } }
 
     func load(_ repo: CourseRepository, id: String) async {
         do {
+            // Сторінка потоку відкрита всім — тож обовʼязковий лише сам потік.
+            // Підписка й заявка існують тільки в того, хто увійшов; їхня
+            // відсутність не має ховати опис курсу за проханням увійти.
             async let detail = repo.stream(id: id)
             async let subs = repo.subscriptions()
             async let t = repo.materialTypes()
             async let ann = repo.announcements(streamId: id)
             async let app = repo.application(streamId: id)
-            let (d, s) = try await (detail, subs)
-            isSubscribed = s.contains { $0.id == id }
+            let d = try await detail
+            isSubscribed = ((try? await subs) ?? []).contains { $0.id == id }
             types = (try? await t) ?? []
             announcements = (try? await ann) ?? []
             application = try? await app
             state = .loaded(d)
         } catch {
-            state = .failed(error.localizedDescription)
+            state = .from(error)
         }
     }
 
     func toggle(_ repo: CourseRepository, notifications: NotificationScheduler, detail: StreamDetail) async {
         working = true
+        subscribeError = nil
         defer { working = false }
         do {
             if isSubscribed {
@@ -45,7 +51,11 @@ final class StreamDetailViewModel {
                     sessions: detail.sessions.map(\.session))
                 isSubscribed = true
             }
-        } catch { /* лишаємо попередній стан */ }
+        } catch let error as APIError where error.status == 401 {
+            subscribeError = "Щоб підписатися, увійдіть через Google у «Налаштуваннях»."
+        } catch {
+            subscribeError = error.localizedDescription
+        }
     }
 }
 
@@ -371,9 +381,14 @@ struct StreamDetailView: View {
     }
 
     private func label(_ title: String) -> some View {
-        HStack {
-            if vm.working { ProgressView() }
-            Text(title)
+        VStack(spacing: 4) {
+            HStack {
+                if vm.working { ProgressView() }
+                Text(title)
+            }
+            if let error = vm.subscribeError {
+                Text(error).font(.caption).foregroundStyle(.red).multilineTextAlignment(.center)
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ final class PreviewRepository: CourseRepository {
         description: "Як не заїдати емоції — повний запис.", url: nil, dueAt: nil,
         order: 1, hasVideo: true, videoProvider: .drive, durationMinutes: 118)
 
-    func me() async throws -> Me { Me(deviceId: "preview", email: "admin@test.com", isAdmin: true) }
+    func me() async throws -> Me { Me(accountId: "preview", email: "admin@test.com", isAdmin: true) }
     func courses() async throws -> [CourseCard] { [Self.stressCard, Self.esteemCard] }
     func course(id: String) async throws -> CourseDetail {
         CourseDetail(id: "c-stress", title: Self.stressCard.title, summary: Self.stressCard.summary,
