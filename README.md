@@ -81,6 +81,7 @@ npm run dev            # старт на http://localhost:3000
 ```bash
 npx tsx src/scripts/add-biohardcore.ts             # додати реальний курс, не чіпаючи решту
 npx tsx src/scripts/add-motivation-base.ts
+npx tsx src/scripts/add-laziness.ts
 npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
 ```
 
