@@ -78,9 +78,8 @@ function addSelfEsteem() {
     courseId: COURSE_ID,
     title: "Потік (квіт 2026)",
     startDate: HELD[0]!.date,
-    // Курс іде раз на два тижні, і в оголошенні названо лише дві дати —
-    // це не те саме, що «завершено». Стан курсу все одно за викладачем.
-    status: "ongoing",
+    // Курс складався всього з двох занять і завершився — підтвердив викладач.
+    status: "finished",
     telegramGroupURL: "https://t.me/+2QoSvOcYt8hlNzIy",
     // Загальної ціни не називають: можна оплатити весь курс або кожне заняття.
     priceFull: null,
