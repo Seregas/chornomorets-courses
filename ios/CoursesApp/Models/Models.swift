@@ -55,6 +55,8 @@ struct CourseCard: Codable, Identifiable, Hashable {
 struct ResolvedStream: Codable, Identifiable, Hashable {
     let id: String
     let courseId: String
+    /// Назва курсу. Потік зветься «Потік 1» — сам по собі він нічого не каже.
+    let courseTitle: String
     let title: String
     let startDate: String?
     let status: StreamStatus
@@ -122,6 +124,8 @@ struct SessionWithMaterials: Codable, Identifiable, Hashable {
 struct StreamDetail: Codable, Identifiable, Hashable {
     let id: String
     let courseId: String
+    /// Назва курсу — заголовок екрана потоку без неї не каже, що це за курс.
+    let courseTitle: String
     let title: String
     let startDate: String?
     let status: StreamStatus

@@ -211,7 +211,7 @@ struct StreamDetailView: View {
                 .padding(16)
             }
         }
-        .navigationTitle("Потік")
+        .navigationTitle(vm.current?.courseTitle ?? "Потік")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             if auth.isAdmin {
@@ -313,8 +313,11 @@ struct StreamDetailView: View {
 
     private func header(_ stream: StreamDetail) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            // Головне — курс; «Потік 1» це вже уточнення, і саме по собі воно
+            // не каже нічого про те, що це за навчання.
+            Text(stream.courseTitle).font(.title2.bold())
             HStack {
-                Text(stream.title).font(.title2.bold())
+                Text(stream.title).font(.subheadline).foregroundStyle(.secondary)
                 StatusBadge(status: stream.status)
             }
             if let date = stream.startDate {

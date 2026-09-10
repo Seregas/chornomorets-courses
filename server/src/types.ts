@@ -42,6 +42,8 @@ export interface CourseCard {
 export interface ResolvedStream {
   id: string;
   courseId: string;
+  /** Назва курсу. Потік зветься «Потік 1» — сам по собі він нічого не каже. */
+  courseTitle: string;
   title: string;
   startDate: string | null;
   status: Stream["status"];

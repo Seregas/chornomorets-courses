@@ -33,6 +33,7 @@ struct SettingsView: View {
     @State private var googleError: String?
     @State private var showDeleteAccount = false
     @State private var deleting = false
+    @State private var confirm = DestructiveConfirm()
 
     @AppStorage("reminders_enabled") private var remindersEnabled = true
     @AppStorage("reminder_lead") private var reminderLead = 30
@@ -50,6 +51,7 @@ struct SettingsView: View {
                 aboutSection
             }
             .navigationTitle("Налаштування")
+            .destructiveConfirm(confirm)
             .alert("Видалити акаунт?", isPresented: $showDeleteAccount) {
                 Button("Скасувати", role: .cancel) {}
                 Button("Видалити", role: .destructive) { Task { await deleteAccount() } }
@@ -79,10 +81,18 @@ struct SettingsView: View {
                     }
                     Spacer()
                     Button("Вийти", role: .destructive) {
-                        google.signOut()
-                        auth.disconnect()
+                        confirm.ask(
+                            "Вийти з акаунта?",
+                            message: "Розклад, оплати й домашки поки не показуватимуться. "
+                                + "Дані лишаються — вони повернуться після входу.",
+                            confirmTitle: "Вийти"
+                        ) {
+                            google.signOut()
+                            auth.disconnect()
+                        }
                     }
                     .font(.subheadline)
+                    .buttonStyle(.borderless)
                 }
                 // Вимога App Store 5.1.1(v): акаунт має видалятися зсередини
                 // застосунку, а не листуванням із підтримкою.
@@ -91,6 +101,7 @@ struct SettingsView: View {
                 } else {
                     Button("Видалити акаунт", role: .destructive) { showDeleteAccount = true }
                         .font(.subheadline)
+                        .buttonStyle(.borderless)
                 }
             } else if GoogleAuthConfig.isConfigured {
                 Button { Task { await signInWithGoogle() } } label: {
@@ -148,6 +159,9 @@ struct SettingsView: View {
         }
     }
 
+    /// Рядок веде на сторінку потоку — саме цього тут і чекають. Відписка
+    /// живе у свайпі, а не кнопкою в рядку: кнопка в рядку `Form` забирала собі
+    /// тап усього рядка, тож людина відписувалася, просто торкнувшись назви.
     @ViewBuilder private var coursesSection: some View {
         Section("Мої курси") {
             if vm.subscriptions.isEmpty {
@@ -155,16 +169,28 @@ struct SettingsView: View {
                     .font(.subheadline).foregroundStyle(.secondary)
             } else {
                 ForEach(vm.subscriptions) { stream in
-                    HStack {
+                    NavigationLink {
+                        StreamDetailView(streamId: stream.id)
+                    } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(stream.title).font(.subheadline.weight(.medium))
-                            Text(Fmt.statusLabel(stream.status)).font(.caption).foregroundStyle(.secondary)
+                            // Назва курсу, а не «Потік 1»: сам номер потоку
+                            // не каже нічого про те, що це за навчання.
+                            Text(stream.courseTitle).font(.subheadline.weight(.medium))
+                            Text("\(stream.title) · \(Fmt.statusLabel(stream.status))")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
-                        Spacer()
+                    }
+                    .swipeActions(edge: .trailing) {
                         Button("Відписатися", role: .destructive) {
-                            Task { await vm.unsubscribe(repo, notifications: notifications, stream: stream) }
+                            confirm.ask(
+                                "Відписатися від курсу?",
+                                message: "«\(stream.courseTitle)» зникне з розкладу й «Навчання». "
+                                    + "Відмітки про оплату лишаться — підписатися можна будь-коли.",
+                                confirmTitle: "Відписатися"
+                            ) {
+                                Task { await vm.unsubscribe(repo, notifications: notifications, stream: stream) }
+                            }
                         }
-                        .font(.caption)
                     }
                 }
             }

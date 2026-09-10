@@ -15,7 +15,9 @@ final class PreviewRepository: CourseRepository {
         nextStream: StreamBrief(id: "s-esteem-3", title: "Потік 3", startDate: "2026-07-10", status: .upcoming))
 
     static let stream5 = ResolvedStream(
-        id: "s-stress-5", courseId: "c-stress", title: "Потік 5", startDate: "2026-07-08",
+        id: "s-stress-5", courseId: "c-stress",
+        courseTitle: "Стрес, втома і піклування про себе",
+        title: "Потік 5", startDate: "2026-07-08",
         status: .upcoming, telegramGroupURL: "https://t.me/petro_chornomorets",
         priceFull: 900, pricePerSession: 350,
         summary: "Міні-курс на 3 заняття.", description: "Розбираємо стрес із біологічної точки зору.",
@@ -36,7 +38,8 @@ final class PreviewRepository: CourseRepository {
                      coverImageURL: nil, streams: [Self.stream5], materials: [])
     }
     func stream(id: String) async throws -> StreamDetail {
-        StreamDetail(id: Self.stream5.id, courseId: Self.stream5.courseId, title: Self.stream5.title,
+        StreamDetail(id: Self.stream5.id, courseId: Self.stream5.courseId,
+                     courseTitle: Self.stream5.courseTitle, title: Self.stream5.title,
                      startDate: Self.stream5.startDate, status: Self.stream5.status,
                      telegramGroupURL: Self.stream5.telegramGroupURL, priceFull: Self.stream5.priceFull,
                      pricePerSession: Self.stream5.pricePerSession, summary: Self.stream5.summary,

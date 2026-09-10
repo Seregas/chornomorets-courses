@@ -289,6 +289,7 @@ function resolveStream(course: Course, stream: Stream): ResolvedStream {
   return {
     id: stream.id,
     courseId: stream.courseId,
+    courseTitle: course.title,
     title: stream.title,
     startDate: stream.startDate,
     status: stream.status,

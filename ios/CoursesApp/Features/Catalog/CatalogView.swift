@@ -16,6 +16,7 @@ struct CatalogView: View {
     @Environment(AuthStore.self) private var auth
     @State private var vm = CatalogViewModel()
     @State private var path: [Route] = []
+    @State private var confirm = DestructiveConfirm()
     @State private var showNewCourse = false
 
     var body: some View {
@@ -30,13 +31,23 @@ struct CatalogView: View {
                         .swipeActions {
                             if auth.isAdmin {
                                 Button("Видалити", role: .destructive) {
-                                    Task { try? await repo.deleteCourse(id: course.id); await vm.load(repo) }
+                                    confirm.ask(
+                                        "Видалити курс?",
+                                        message: "«\(course.title)» зникне разом з усіма потоками, "
+                                            + "заняттями й матеріалами. Це не можна скасувати."
+                                    ) {
+                                        Task {
+                                            try? await repo.deleteCourse(id: course.id)
+                                            await vm.load(repo)
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
                 .listStyle(.plain)
+                .destructiveConfirm(confirm)
             }
             .navigationTitle("Курси")
             .toolbar {

@@ -30,6 +30,7 @@
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
 		8A827D4915DD1EE753A321BE /* ReceiptScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65ABC4E02A95F96640123D39 /* ReceiptScanner.swift */; };
+		8F600C2B22BFAAFB2246EC30 /* DestructiveConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD9589F404093A375719150 /* DestructiveConfirm.swift */; };
 		982F6FC9ADC351A21E53F345 /* SharedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */; };
 		9B17ECCFF159BEC82B9755BC /* Identity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 311E25A4F06EB7E9DC544FC1 /* Identity.swift */; };
 		A0F2E23222C20925F7FFECF0 /* ReceiptParsing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51768EA5F1F861B7AE6B2186 /* ReceiptParsing.swift */; };
@@ -117,6 +118,7 @@
 		8654363C85DBACD175C3662E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8B401C57783FD8F76C2E4014 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
 		91DE23CCE4CF33ADCA210C21 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		9CD9589F404093A375719150 /* DestructiveConfirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestructiveConfirm.swift; sourceTree = "<group>"; };
 		9FCC229F2E9F45F26B497C88 /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
 		A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplyView.swift; sourceTree = "<group>"; };
 		B2C74DE8F2270766C2835F7C /* HomeworkView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeworkView.swift; sourceTree = "<group>"; };
@@ -193,6 +195,7 @@
 			children = (
 				79499B4FF5A2B4D56E72E441 /* AppEnvironment.swift */,
 				2936673C5B004580066EC142 /* CoursesApp.swift */,
+				9CD9589F404093A375719150 /* DestructiveConfirm.swift */,
 				8B401C57783FD8F76C2E4014 /* Formatting.swift */,
 				22908673233FCDC3FD42F9D1 /* SharedUI.swift */,
 			);
@@ -466,6 +469,7 @@
 				1C5D9D60F06AD6168C558135 /* CourseDetailView.swift in Sources */,
 				5C39B5D045DCD79E418013F6 /* CourseRepository.swift in Sources */,
 				E1181ECC35BDDE315096B220 /* CoursesApp.swift in Sources */,
+				8F600C2B22BFAAFB2246EC30 /* DestructiveConfirm.swift in Sources */,
 				A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */,
 				E694361F4F841C1A01A589FD /* Formatting.swift in Sources */,
 				E2D2BB9C3579A6136B51187A /* GoogleAuth.swift in Sources */,
@@ -548,7 +552,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -690,7 +694,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 16;
+				CURRENT_PROJECT_VERSION = 17;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_NS_ASSERTIONS = NO;

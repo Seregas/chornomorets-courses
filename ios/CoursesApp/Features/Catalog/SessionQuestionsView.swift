@@ -35,6 +35,7 @@ struct SessionQuestionsView: View {
     @Environment(AuthStore.self) private var auth
     @Environment(\.dismiss) private var dismiss
     @State private var vm = SessionQuestionsViewModel()
+    @State private var confirm = DestructiveConfirm()
 
     private var isUpcoming: Bool { (Fmt.date(session.startAt) ?? .distantFuture) > Date() }
 
@@ -58,6 +59,7 @@ struct SessionQuestionsView: View {
                 }
                 if isUpcoming { composer }
             }
+            .destructiveConfirm(confirm)
             .navigationTitle("Питання")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -92,7 +94,9 @@ struct SessionQuestionsView: View {
         .swipeActions(edge: .trailing) {
             if q.isMine || auth.isAdmin {
                 Button(role: .destructive) {
-                    Task { try? await repo.deleteQuestion(id: q.id); await reload() }
+                    confirm.ask("Видалити питання?", message: q.text) {
+                        Task { try? await repo.deleteQuestion(id: q.id); await reload() }
+                    }
                 } label: { Label("Видалити", systemImage: "trash") }
             }
         }

@@ -6,6 +6,7 @@ struct JournalView: View {
     @State private var journal = PracticeJournal.shared
     @State private var draft = ""
     @State private var reminderOn = JournalReminder.hour != nil
+    @State private var confirm = DestructiveConfirm()
     @FocusState private var writing: Bool
 
     var body: some View {
@@ -16,6 +17,7 @@ struct JournalView: View {
             entriesSection
             settingsSection
         }
+        .destructiveConfirm(confirm)
         .navigationTitle("Щоденник")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -121,7 +123,12 @@ struct JournalView: View {
                         }
                     }
                     .swipeActions {
-                        Button(role: .destructive) { journal.delete(entry) } label: {
+                        Button(role: .destructive) {
+                            confirm.ask("Видалити запис?",
+                                        message: "Запис зникне з телефона назавжди.") {
+                                journal.delete(entry)
+                            }
+                        } label: {
                             Label("Видалити", systemImage: "trash")
                         }
                     }

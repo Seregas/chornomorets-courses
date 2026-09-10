@@ -11,6 +11,7 @@ struct PendingApplicationsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var items: [ApplicationInContext] = []
     @State private var loaded = false
+    @State private var confirm = DestructiveConfirm()
 
     var body: some View {
         NavigationStack {
@@ -30,6 +31,7 @@ struct PendingApplicationsView: View {
                 ToolbarItem(placement: .topBarTrailing) { Button("Готово") { dismiss() } }
             }
             .refreshable { await load() }
+            .destructiveConfirm(confirm)
         }
         .task { await load() }
     }
@@ -55,7 +57,14 @@ struct PendingApplicationsView: View {
                 Button("Чекає оплати") { Task { await setStatus(app.id, .waitingPayment) } }
                     .buttonStyle(.bordered).controlSize(.small)
                 Button("Відхилити", role: .destructive) {
-                    Task { await setStatus(app.id, .declined) }
+                    confirm.ask(
+                        "Відхилити заявку?",
+                        message: "\(app.name) не отримає доступу до курсу. "
+                            + "Статус можна змінити пізніше.",
+                        confirmTitle: "Відхилити"
+                    ) {
+                        Task { await setStatus(app.id, .declined) }
+                    }
                 }
                 .buttonStyle(.bordered).controlSize(.small)
             }

@@ -14,6 +14,7 @@ final class MaterialTypesViewModel {
 struct MaterialTypesView: View {
     @Environment(\.repository) private var repo
     @State private var vm = MaterialTypesViewModel()
+    @State private var confirm = DestructiveConfirm()
     @State private var showNew = false
     @State private var editType: MaterialType?
 
@@ -35,11 +36,20 @@ struct MaterialTypesView: View {
                 }
                 .swipeActions {
                     Button("Видалити", role: .destructive) {
-                        Task { try? await repo.deleteMaterialType(id: t.id); await vm.load(repo) }
+                        confirm.ask(
+                            "Видалити тип «\(t.name)»?",
+                            message: "Матеріали цього типу лишаться — вони просто втратять ярлик."
+                        ) {
+                            Task {
+                                try? await repo.deleteMaterialType(id: t.id)
+                                await vm.load(repo)
+                            }
+                        }
                     }
                 }
             }
         }
+        .destructiveConfirm(confirm)
         .navigationTitle("Типи матеріалів")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
