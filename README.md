@@ -83,11 +83,14 @@ npx tsx src/scripts/add-biohardcore.ts             # додати реальни
 npx tsx src/scripts/add-motivation-base.ts
 npx tsx src/scripts/add-laziness.ts
 npx tsx src/scripts/add-self-esteem.ts
+npx tsx src/scripts/add-session.ts <stream-id> <YYYY-MM-DD> [посилання-на-запис]
 npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
 ```
 
-`mark-paid.ts` відмічає всі заняття потоку оплаченими для однієї людини — по пошті,
-навіть якщо вона ще жодного разу не заходила в застосунок (див. заочні акаунти нижче).
+`add-session.ts` додає чергове заняття безрозмірного курсу (дати називають по одній
+у чаті) і, якщо дано, запис до нього. `mark-paid.ts` відмічає всі заняття потоку
+оплаченими для однієї людини — по пошті, навіть якщо вона ще жодного разу не заходила
+в застосунок (див. заочні акаунти нижче). Обидва безпечно запускати повторно.
 
 ## Ендпоінти
 
