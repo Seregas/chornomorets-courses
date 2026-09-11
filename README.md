@@ -83,6 +83,7 @@ npx tsx src/scripts/add-biohardcore.ts             # додати реальни
 npx tsx src/scripts/add-motivation-base.ts
 npx tsx src/scripts/add-laziness.ts
 npx tsx src/scripts/add-self-esteem.ts
+npx tsx src/scripts/add-emotions.ts
 npx tsx src/scripts/add-session.ts <stream-id> <YYYY-MM-DD> [посилання-на-запис]
 npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
 ```

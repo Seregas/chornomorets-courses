@@ -162,6 +162,7 @@ npx tsx src/scripts/add-biohardcore.ts                    # додати кур�
 npx tsx src/scripts/add-motivation-base.ts
 npx tsx src/scripts/add-laziness.ts
 npx tsx src/scripts/add-self-esteem.ts
+npx tsx src/scripts/add-emotions.ts
 npx tsx src/scripts/add-session.ts <stream-id> <дата> [запис]  # чергове заняття
 npx tsx src/scripts/mark-paid.ts <email> <stream-id>      # відмітити оплати по пошті
 ```
