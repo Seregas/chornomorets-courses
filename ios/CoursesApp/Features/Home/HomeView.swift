@@ -51,12 +51,15 @@ struct HomeView: View {
                             // заняттями інакше зникав з екрана взагалі.
                             // Заголовок «Мої курси» без жодного рядка виглядав
                             // би загубленим, якщо всі курси вже пройдені.
-                            if digest.streams.contains(where: { $0.status != .finished }) {
+                            if digest.streams.contains(where: { $0.status != .finished && !$0.isArchived }) {
                                 streamsSection(digest.streams)
                             }
-                            if digest.streams.contains(where: { $0.status == .finished }) {
-                                finishedLink(digest.streams.filter { $0.status == .finished }.count)
+                            // Архівовані не рахуємо: їх прибрали з очей саме
+                            // для того, щоб вони не потрапляли на цей екран.
+                            let finished = digest.streams.filter {
+                                $0.status == .finished && !$0.isArchived
                             }
+                            if !finished.isEmpty { finishedLink(finished.count) }
                             if let next = digest.nextSession { nextSessionCard(next) }
                             checkInCard
                             if !digest.homework.isEmpty { homeworkSection(digest.homework) }
@@ -74,7 +77,8 @@ struct HomeView: View {
                 case .course(let id): CourseDetailView(courseId: id)
                 case .stream(let id): StreamDetailView(streamId: id)
                 case .journal: JournalView()
-                case .finishedStreams: FinishedStreamsView()
+                case .finishedStreams: EnrolledStreamsView(mode: .finished)
+                case .archivedStreams: EnrolledStreamsView(mode: .archived)
                 }
             }
             .refreshable { await vm.load(repo, isAdmin: auth.isAdmin) }
@@ -171,7 +175,7 @@ struct HomeView: View {
     private func streamsSection(_ items: [EnrolledStream]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Мої курси")
-            ForEach(items.filter { $0.status != .finished }) { item in
+            ForEach(items.filter { $0.status != .finished && !$0.isArchived }) { item in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(item.courseTitle).font(.subheadline.weight(.semibold))

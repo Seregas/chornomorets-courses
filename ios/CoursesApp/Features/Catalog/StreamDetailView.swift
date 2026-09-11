@@ -5,6 +5,8 @@ import SwiftUI
 final class StreamDetailViewModel {
     var state: LoadState<StreamDetail> = .loading
     var isSubscribed = false
+    /// Пройдений курс, прибраний з очей. Підписка при цьому жива.
+    var isArchived = false
     var working = false
     var types: [MaterialType] = []
     var announcements: [Announcement] = []
@@ -26,12 +28,27 @@ final class StreamDetailViewModel {
             async let app = repo.application(streamId: id)
             let d = try await detail
             isSubscribed = ((try? await subs) ?? []).contains { $0.id == id }
+            isArchived = d.isArchived
             types = (try? await t) ?? []
             announcements = (try? await ann) ?? []
             application = try? await app
             state = .loaded(d)
         } catch {
             state = .from(error)
+        }
+    }
+
+    /// Прибрати пройдений курс з очей або повернути. Нагадування тут не чіпаємо:
+    /// у завершеного потоку занять попереду немає.
+    func toggleArchived(_ repo: CourseRepository, detail: StreamDetail) async {
+        working = true
+        subscribeError = nil
+        defer { working = false }
+        do {
+            try await repo.setArchived(streamId: detail.id, archived: !isArchived)
+            isArchived.toggle()
+        } catch {
+            subscribeError = error.localizedDescription
         }
     }
 
@@ -360,25 +377,40 @@ struct StreamDetailView: View {
     /// вона головна дія, а підписка стає другорядною кнопкою — інакше дві
     /// однакові зелені кнопки поруч змушують гадати, яку тиснути.
     @ViewBuilder private func subscribeButton(_ stream: StreamDetail) -> some View {
-        let secondary = stream.status != .finished
-        let title = vm.isSubscribed
-            ? "Не стежити"
-            : (secondary ? "Стежити за розкладом" : "Підписатися")
-
-        if secondary {
-            Button { toggleSubscription(stream) } label: {
-                label(title).frame(maxWidth: .infinity)
+        // У пройденого курсу «не стежити» означало б «викинути»: він зник би зі
+        // «Завершених» разом із записами й відмітками про оплату. Тому там інша
+        // дія — прибрати з очей на полицю, звідки його видно й можна повернути.
+        if stream.status == .finished, vm.isSubscribed {
+            Button {
+                Task { await vm.toggleArchived(repo, detail: stream) }
+            } label: {
+                label(vm.isArchived ? "Повернути з архіву" : "Прибрати в архів")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
-            .tint(vm.isSubscribed ? .red : .sea)
+            .tint(.sea)
             .disabled(vm.working)
         } else {
-            Button { toggleSubscription(stream) } label: {
-                label(title).frame(maxWidth: .infinity)
+            let secondary = stream.status != .finished
+            let title = vm.isSubscribed
+                ? "Не стежити"
+                : (secondary ? "Стежити за розкладом" : "Підписатися")
+
+            if secondary {
+                Button { toggleSubscription(stream) } label: {
+                    label(title).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(vm.isSubscribed ? .red : .sea)
+                .disabled(vm.working)
+            } else {
+                Button { toggleSubscription(stream) } label: {
+                    label(title).frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(vm.isSubscribed ? .red : .sea)
+                .disabled(vm.working)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(vm.isSubscribed ? .red : .sea)
-            .disabled(vm.working)
         }
     }
 

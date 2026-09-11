@@ -159,6 +159,9 @@ npx tsx src/scripts/mark-paid.ts <email> <stream-id> [статус]
 **Підписки:**
 - `GET /subscriptions`
 - `POST /subscriptions` `{streamId}` · `DELETE /subscriptions` `{streamId}`
+- `POST /subscriptions/archive` `{streamId, archived}` — прибрати пройдений курс з очей
+  або повернути. Саме прапорець на підписці, а не відписка: інакше зникли б записи
+  й відмітки про оплату
 
 **Логи з телефонів** — єдине місце, де лишився `deviceId`: вони пишуться ще до входу
 й саме тоді, коли ламається вхід.

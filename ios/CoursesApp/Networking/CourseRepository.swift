@@ -16,6 +16,8 @@ protocol CourseRepository {
 
     func subscribe(streamId: String) async throws
     func unsubscribe(streamId: String) async throws
+    /// Прибрати пройдений курс з очей (або повернути). Підписка лишається жива.
+    func setArchived(streamId: String, archived: Bool) async throws
 
     // — Заявки на потік —
     func application(streamId: String) async throws -> Application?
@@ -116,6 +118,13 @@ final class RemoteCourseRepository: CourseRepository {
     }
     func unsubscribe(streamId: String) async throws {
         try await api.mutate("DELETE", "subscriptions", body: SubBody(streamId: streamId))
+    }
+
+    private struct ArchiveBody: Encodable { let streamId: String; let archived: Bool }
+
+    func setArchived(streamId: String, archived: Bool) async throws {
+        try await api.mutate("POST", "subscriptions/archive",
+                             body: ArchiveBody(streamId: streamId, archived: archived))
     }
 
     private struct ApplyBody: Encodable {

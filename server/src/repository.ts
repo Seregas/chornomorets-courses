@@ -238,6 +238,15 @@ export interface CourseRepository {
 
   // — Підписки (accountId) —
   subscribe(accountId: string, streamId: string): Promise<Enrollment>;
+  /**
+   * Прибрати підписку з очей або повернути. Саме прапорець, а не видалення:
+   * відписка від пройденого курсу забрала б і записи, і відмітки про оплату.
+   */
+  setEnrollmentArchived(
+    accountId: string,
+    streamId: string,
+    archived: boolean,
+  ): Promise<void>;
   unsubscribe(accountId: string, streamId: string): Promise<void>;
   isEnrolled(accountId: string, streamId: string): Promise<boolean>;
 
@@ -508,8 +517,22 @@ export class DrizzleCourseRepository implements CourseRepository {
           .all()
       : [];
 
+    const myEnrollment = accountId
+      ? this.db
+          .select()
+          .from(enrollments)
+          .where(
+            and(
+              eq(enrollments.accountId, accountId),
+              eq(enrollments.streamId, streamId),
+            ),
+          )
+          .get()
+      : undefined;
+
     return {
       ...resolveStream(course, stream),
+      isArchived: myEnrollment?.archivedAt != null,
       sessions: streamSessions.map((session) => ({
         session,
         materials: sessionMaterials
@@ -586,6 +609,7 @@ export class DrizzleCourseRepository implements CourseRepository {
         streamStatus: streams.status,
         courseId: courses.id,
         courseTitle: courses.title,
+        archivedAt: enrollments.archivedAt,
       })
       .from(enrollments)
       .innerJoin(streams, eq(enrollments.streamId, streams.id))
@@ -640,6 +664,7 @@ export class DrizzleCourseRepository implements CourseRepository {
         sessionsTotal: own.length,
         nextSessionAt: own.find((s) => s.startAt > now)?.startAt ?? null,
         unpaidSessions: own.filter((s) => !paidSessionIds.has(s.id)).length,
+        isArchived: row.archivedAt != null,
       };
     });
     // Спершу ті, що тривають: завершений курс — довідка, а не те, чим живуть.
@@ -1355,6 +1380,23 @@ export class DrizzleCourseRepository implements CourseRepository {
       .values({ accountId, streamId, subscribedAt: new Date().toISOString() })
       .returning()
       .get();
+  }
+
+  async setEnrollmentArchived(
+    accountId: string,
+    streamId: string,
+    archived: boolean,
+  ): Promise<void> {
+    this.db
+      .update(enrollments)
+      .set({ archivedAt: archived ? new Date().toISOString() : null })
+      .where(
+        and(
+          eq(enrollments.accountId, accountId),
+          eq(enrollments.streamId, streamId),
+        ),
+      )
+      .run();
   }
 
   async unsubscribe(accountId: string, streamId: string): Promise<void> {

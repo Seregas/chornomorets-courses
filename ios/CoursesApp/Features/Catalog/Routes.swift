@@ -6,6 +6,8 @@ enum Route: Hashable {
     case stream(String)
     /// Щоденник практик — локальний, без параметрів.
     case journal
-    /// Архів: курси, які вже завершилися.
+    /// Курси, які вже завершилися.
     case finishedStreams
+    /// Прибрані з очей — підписка жива, але на окремій полиці.
+    case archivedStreams
 }

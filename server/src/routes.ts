@@ -336,6 +336,23 @@ app.post("/subscriptions", zValidator("json", subBody), async (c) => {
   return c.json(await repo.subscribe(accountId, c.req.valid("json").streamId), 201);
 });
 
+/**
+ * Архівувати підписку або повернути з архіву. Окремо від відписки навмисно:
+ * пройдений курс прибирають з очей, а не викидають — записи й відмітки про
+ * оплату мають лишитися.
+ */
+app.post(
+  "/subscriptions/archive",
+  zValidator("json", z.object({ streamId: z.string().min(1), archived: z.boolean() })),
+  async (c) => {
+    const accountId = await accountOf(c);
+    if (!accountId) return c.json(needSignIn, 401);
+    const { streamId, archived } = c.req.valid("json");
+    await repo.setEnrollmentArchived(accountId, streamId, archived);
+    return c.body(null, 204);
+  },
+);
+
 app.delete("/subscriptions", zValidator("json", subBody), async (c) => {
   const accountId = await accountOf(c);
   if (!accountId) return c.json(needSignIn, 401);

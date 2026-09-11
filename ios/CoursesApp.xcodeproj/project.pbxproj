@@ -29,6 +29,7 @@
 		783B8E88F93C940AAF3D5467 /* SessionPaymentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 349BE3A11D4E6BA33B6751B7 /* SessionPaymentView.swift */; };
 		7E8A1D4E24A7006B95BE454B /* Routes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16415B1D3ED9D1F80AC53EF4 /* Routes.swift */; };
 		82F2CC9DF7A6D00DEB6BA889 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7612B66619C3EB87F125DFDC /* Models.swift */; };
+		893230481125508C7B5A0A90 /* EnrolledStreamsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 367C948F4F5623538C893173 /* EnrolledStreamsView.swift */; };
 		8A827D4915DD1EE753A321BE /* ReceiptScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65ABC4E02A95F96640123D39 /* ReceiptScanner.swift */; };
 		8F600C2B22BFAAFB2246EC30 /* DestructiveConfirm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CD9589F404093A375719150 /* DestructiveConfirm.swift */; };
 		982F6FC9ADC351A21E53F345 /* SharedSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5B97DBE6DD1ACF8D16A93C2 /* SharedSchedule.swift */; };
@@ -43,7 +44,6 @@
 		A724D6ABC623A116A31BE1D4 /* PendingApplicationsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C081A50882CB429ECBFDEF25 /* PendingApplicationsView.swift */; };
 		AE3BFB3C106958BFF81D1C8B /* MaterialRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4C225BFC8D39899E2EF5B88 /* MaterialRow.swift */; };
 		B12F8FC51C69ED8955215F62 /* SharedUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22908673233FCDC3FD42F9D1 /* SharedUI.swift */; };
-		B3EBC4E949143908305E87E4 /* FinishedStreamsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CC26A7DB95B61B5E7D9EC10 /* FinishedStreamsView.swift */; };
 		BCDCD44595891C3CA77BCABB /* ApplyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F04BA1B1C8FC8AA3B232DA /* ApplyView.swift */; };
 		BF274EEDFAF5817ABDB27EAC /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79499B4FF5A2B4D56E72E441 /* AppEnvironment.swift */; };
 		C136A6313DCCABBDE6EA57FF /* ResponseCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FCC229F2E9F45F26B497C88 /* ResponseCache.swift */; };
@@ -98,6 +98,7 @@
 		31B3E91DD48A53066D13E0B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		3496CE3358F9446DCA54BD00 /* InputModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputModels.swift; sourceTree = "<group>"; };
 		349BE3A11D4E6BA33B6751B7 /* SessionPaymentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionPaymentView.swift; sourceTree = "<group>"; };
+		367C948F4F5623538C893173 /* EnrolledStreamsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnrolledStreamsView.swift; sourceTree = "<group>"; };
 		3C244446BE52D80C75CEE94F /* SeenAnnouncements.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SeenAnnouncements.swift; sourceTree = "<group>"; };
 		407F0AEDE6C248D820A2F82E /* CoursesWidgets.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoursesWidgets.entitlements; sourceTree = "<group>"; };
 		4AC69E20B206F4B40FB28259 /* CourseRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CourseRepository.swift; sourceTree = "<group>"; };
@@ -118,7 +119,6 @@
 		858CEF83626F466F5C9A7091 /* CoursesApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CoursesApp.entitlements; sourceTree = "<group>"; };
 		8654363C85DBACD175C3662E /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		8B401C57783FD8F76C2E4014 /* Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatting.swift; sourceTree = "<group>"; };
-		8CC26A7DB95B61B5E7D9EC10 /* FinishedStreamsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FinishedStreamsView.swift; sourceTree = "<group>"; };
 		91DE23CCE4CF33ADCA210C21 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		9CD9589F404093A375719150 /* DestructiveConfirm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestructiveConfirm.swift; sourceTree = "<group>"; };
 		9FCC229F2E9F45F26B497C88 /* ResponseCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ResponseCache.swift; sourceTree = "<group>"; };
@@ -223,7 +223,7 @@
 		637D9266CD92F8BE999C41CA /* Home */ = {
 			isa = PBXGroup;
 			children = (
-				8CC26A7DB95B61B5E7D9EC10 /* FinishedStreamsView.swift */,
+				367C948F4F5623538C893173 /* EnrolledStreamsView.swift */,
 				E56BF3C549F5831CBB50AFDD /* HomeView.swift */,
 			);
 			path = Home;
@@ -474,7 +474,7 @@
 				E1181ECC35BDDE315096B220 /* CoursesApp.swift in Sources */,
 				8F600C2B22BFAAFB2246EC30 /* DestructiveConfirm.swift in Sources */,
 				A61694FE892C118C95D09525 /* DownloadManager.swift in Sources */,
-				B3EBC4E949143908305E87E4 /* FinishedStreamsView.swift in Sources */,
+				893230481125508C7B5A0A90 /* EnrolledStreamsView.swift in Sources */,
 				E694361F4F841C1A01A589FD /* Formatting.swift in Sources */,
 				E2D2BB9C3579A6136B51187A /* GoogleAuth.swift in Sources */,
 				3540A191BA50183D0B135094 /* HomeView.swift in Sources */,
@@ -556,7 +556,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -698,7 +698,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = "${DEVELOPMENT_TEAM}";
 				ENABLE_NS_ASSERTIONS = NO;

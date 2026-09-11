@@ -193,6 +193,13 @@ export const enrollments = sqliteTable(
       .notNull()
       .references(() => streams.id, { onDelete: "cascade" }),
     subscribedAt: text("subscribed_at").notNull(),
+    /**
+     * Архів — це стан підписки, а не її відсутність. Пройдений курс не хочеться
+     * бачити щодня, але й відписуватися від нього не можна: тоді зникнуть
+     * записи й відмітки про оплату. Тому архівована підписка жива, просто
+     * лежить на окремій полиці.
+     */
+    archivedAt: text("archived_at"),
   },
   (t) => [uniqueIndex("enroll_account_stream").on(t.accountId, t.streamId)],
 );

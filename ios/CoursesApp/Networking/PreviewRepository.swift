@@ -38,7 +38,7 @@ final class PreviewRepository: CourseRepository {
                      coverImageURL: nil, streams: [Self.stream5], materials: [])
     }
     func stream(id: String) async throws -> StreamDetail {
-        StreamDetail(id: Self.stream5.id, courseId: Self.stream5.courseId,
+        StreamDetail(id: Self.stream5.id, courseId: Self.stream5.courseId, isArchived: false,
                      courseTitle: Self.stream5.courseTitle, title: Self.stream5.title,
                      startDate: Self.stream5.startDate, status: Self.stream5.status,
                      telegramGroupURL: Self.stream5.telegramGroupURL, priceFull: Self.stream5.priceFull,
@@ -73,7 +73,8 @@ final class PreviewRepository: CourseRepository {
                 courseId: "c-stress",
                 courseTitle: "Стрес, втома і піклування про себе",
                 sessionsPassed: 1, sessionsTotal: 3,
-                nextSessionAt: items.first?.session.startAt, unpaidSessions: 2)],
+                nextSessionAt: items.first?.session.startAt, unpaidSessions: 2,
+                isArchived: false)],
             nextSession: items.first, announcements: [],
             upcoming: [], homework: [], recordings: [])
     }
@@ -84,6 +85,7 @@ final class PreviewRepository: CourseRepository {
     func pendingApplications() async throws -> [ApplicationInContext] { [] }
     func subscribe(streamId: String) async throws {}
     func unsubscribe(streamId: String) async throws {}
+    func setArchived(streamId: String, archived: Bool) async throws {}
 
     func application(streamId: String) async throws -> Application? { nil }
     func apply(streamId: String, name: String, contact: String, comment: String?) async throws {}

@@ -115,6 +115,12 @@ export interface SessionWithMaterials {
 /** Деталь потоку: злитий опис + заняття + матеріали потоку.
  *  Поля *Override — сирі значення (для адмін-редагування; null = успадковано). */
 export interface StreamDetail extends ResolvedStream {
+  /**
+   * Чи прибрав цей потік у архів той, хто питає. `false` і для неархівованих,
+   * і для тих, хто не підписаний — питання «чи на полиці» має сенс лише для
+   * підписки, а її наявність клієнт і так знає.
+   */
+  isArchived: boolean;
   sessions: SessionWithMaterials[];
   materials: MaterialDTO[];
   summaryOverride: string | null;
@@ -192,6 +198,8 @@ export interface EnrolledStream {
   nextSessionAt: string | null;
   /** За скільки занять оплата ще не підтверджена. */
   unpaidSessions: number;
+  /** Прибраний з очей на окрему полицю — але підписка жива. */
+  isArchived: boolean;
 }
 
 /**

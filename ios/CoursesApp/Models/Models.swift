@@ -124,6 +124,8 @@ struct SessionWithMaterials: Codable, Identifiable, Hashable {
 struct StreamDetail: Codable, Identifiable, Hashable {
     let id: String
     let courseId: String
+    /// Чи прибрав цей потік у архів той, хто дивиться.
+    let isArchived: Bool
     /// Назва курсу — заголовок екрана потоку без неї не каже, що це за курс.
     let courseTitle: String
     let title: String
@@ -288,6 +290,8 @@ struct EnrolledStream: Codable, Identifiable, Hashable {
     let sessionsTotal: Int
     let nextSessionAt: String?
     let unpaidSessions: Int
+    /// Прибраний з очей на окрему полицю — але підписка жива.
+    let isArchived: Bool
 }
 
 struct HomeDigest: Codable, Hashable {
