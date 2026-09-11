@@ -49,7 +49,14 @@ struct HomeView: View {
                             // Курси — вище за розклад: спершу «де я вчуся»,
                             // потім «що найближче». Курс із завершеними
                             // заняттями інакше зникав з екрана взагалі.
-                            if !digest.streams.isEmpty { streamsSection(digest.streams) }
+                            // Заголовок «Мої курси» без жодного рядка виглядав
+                            // би загубленим, якщо всі курси вже пройдені.
+                            if digest.streams.contains(where: { $0.status != .finished }) {
+                                streamsSection(digest.streams)
+                            }
+                            if digest.streams.contains(where: { $0.status == .finished }) {
+                                finishedLink(digest.streams.filter { $0.status == .finished }.count)
+                            }
                             if let next = digest.nextSession { nextSessionCard(next) }
                             checkInCard
                             if !digest.homework.isEmpty { homeworkSection(digest.homework) }
@@ -67,6 +74,7 @@ struct HomeView: View {
                 case .course(let id): CourseDetailView(courseId: id)
                 case .stream(let id): StreamDetailView(streamId: id)
                 case .journal: JournalView()
+                case .finishedStreams: FinishedStreamsView()
                 }
             }
             .refreshable { await vm.load(repo, isAdmin: auth.isAdmin) }
@@ -157,10 +165,13 @@ struct HomeView: View {
 
     // MARK: - Мої курси
 
+    /// Тільки те, що триває. Завершені курси лежать окремим екраном: до їхніх
+    /// записів повертаються місяцями, але щодня вони лише відсувають униз те,
+    /// чим людина зайнята зараз.
     private func streamsSection(_ items: [EnrolledStream]) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             SectionHeader(title: "Мої курси")
-            ForEach(items) { item in
+            ForEach(items.filter { $0.status != .finished }) { item in
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline) {
                         Text(item.courseTitle).font(.subheadline.weight(.semibold))
@@ -203,6 +214,24 @@ struct HomeView: View {
                 .onTapGesture { path.append(.stream(item.streamId)) }
             }
         }
+    }
+
+    private func finishedLink(_ count: Int) -> some View {
+        Button {
+            path.append(.finishedStreams)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.seal")
+                    .font(.title3).foregroundStyle(.secondary).frame(width: 26)
+                Text("Завершені курси (\(count))").font(.subheadline.weight(.medium))
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 
     private func progress(_ item: EnrolledStream) -> Double {

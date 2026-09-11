@@ -65,6 +65,7 @@ struct CatalogView: View {
                 case .course(let id): CourseDetailView(courseId: id)
                 case .stream(let id): StreamDetailView(streamId: id)
                 case .journal: JournalView()
+                case .finishedStreams: FinishedStreamsView()
                 }
             }
         }
