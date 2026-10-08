@@ -202,7 +202,7 @@ struct StreamDetailView: View {
                             // відкривається з будь-якого стека, а вкладені
                             // «Приєднатися» й адмін-меню лишаються натисними
                             // (усередині Button вони б перестали ловити тапи).
-                            ForEach(stream.sessions) { item in
+                            ForEach(ordered(stream.sessions)) { item in
                                 SessionRow(
                                     item: item,
                                     adminEdit: auth.isAdmin ? { sheet = .editSession(item.session.id) } : nil,
@@ -326,6 +326,24 @@ struct StreamDetailView: View {
                 Button(action: add) { Image(systemName: "plus.circle.fill") }
             }
         }
+    }
+
+    /**
+     Порядок занять: спершу найближче попереду, далі решта майбутніх, а потім
+     ті, що вже пройшли — від свіжих до старих.
+
+     Хронологічний список добре читався, поки занять було три. На курсі з
+     тринадцяти зустрічей він ховає найпотрібніше: свіжий запис опинявся в
+     самому низу, а туди ще треба догортати.
+     */
+    private func ordered(_ items: [SessionWithMaterials]) -> [SessionWithMaterials] {
+        let now = Date()
+        let isAhead = { (item: SessionWithMaterials) in
+            (Fmt.date(item.session.startAt) ?? .distantPast) > now
+        }
+        let ahead = items.filter(isAhead).sorted { $0.session.startAt < $1.session.startAt }
+        let past = items.filter { !isAhead($0) }.sorted { $0.session.startAt > $1.session.startAt }
+        return ahead + past
     }
 
     private func header(_ stream: StreamDetail) -> some View {
