@@ -56,13 +56,16 @@ cd server && npm install && cp .env.example .env   # вписати ADMIN_EMAILS
 npm run db:push && npm run seed && npm run dev      # http://localhost:3000
 npm run typecheck                                  # обовʼязково перед коммітом
 
+cd .. && npx @fission-ai/openspec validate --specs  # якщо чіпали openspec/specs/
+
 cd ios && xcodegen generate                        # ПОВТОРЮВАТИ після нових .swift
 xcodebuild -project CoursesApp.xcodeproj -scheme CoursesApp \
   -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
 Тестів немає — ні на сервері, ні в застосунку. Перевірка = `typecheck` + збірка +
-запуск у симуляторі проти локального сервера. Якщо додаєте тести, це буде добре,
+запуск у симуляторі проти локального сервера, плюс `validate --specs`, якщо
+змінювалися специфікації. Якщо додаєте тести, це буде добре,
 але не робіть це умовою для дрібної правки.
 
 ## Інваріанти
